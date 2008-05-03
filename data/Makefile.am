@@ -1,0 +1,4 @@
+SUBDIRS = themes
+
+MAINTAINERCLEANFILES = Makefile.in
+

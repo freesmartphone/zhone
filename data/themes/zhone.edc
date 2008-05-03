@@ -1,0 +1,526 @@
+fonts {
+   font: "VeraBd.ttf" "Sans";
+}
+
+images {
+   image: "background.png" COMP;
+   image: "button_contacts.png" COMP;
+   image: "button_phone.png" COMP;
+   image: "button_power.png" COMP;
+   image: "button_sms.png" COMP;
+   image: "button_main_background.png" COMP;
+   image: "button_main_background_active.png" COMP;
+   image: "button_background.png" COMP;
+   image: "button_background_active.png" COMP;
+   image: "icon_options.png" COMP;
+   image: "icon_main.png" COMP;
+   image: "icon_close.png" COMP;
+   image: "icon_left.png" COMP;
+   image: "icon_right.png" COMP;
+   image: "icon_dial.png" COMP;
+   image: "icon_accept.png" COMP;
+   image: "icon_delete.png" COMP;
+   image: "icon_up.png" COMP;
+   image: "icon_down.png" COMP;
+   image: "icon_space.png" COMP;
+   image: "icon_enter.png" COMP;
+}
+
+#define BUTTON_BOTTOM_HEIGHT 0.12;
+#define HEADER_HEIGHT 0.06;
+
+#define TRANSITION()                                                    \
+    program {                                                           \
+        name: "fadeout";                                                \
+        signal: "fadeout";                                              \
+        action: STATE_SET "invisible" 0.0;                              \
+        transition: LINEAR 0.3;                                         \
+        target: "swallow_clip";                                         \
+        after: "finish_fade";                                           \
+    }                                                                   \
+    program {                                                           \
+        name: "set_visible";                                            \
+        signal: "visible";                                              \
+        action: STATE_SET "default" 0.0;                                \
+        target: "swallow_clip";                                         \
+    }                                                                   \
+    program {                                                           \
+        name: "finish_fade";                                            \
+        action: SIGNAL_EMIT "finished_transition" "main";               \
+    }
+
+#define ACTIVATE(part_name)                                             \
+    program {                                                            \
+        name: "activate_"part_name;                                        \
+        signal: "mouse,in";                                             \
+        source: part_name;                                              \
+        action: STATE_SET "active" 0.0;                                 \
+        target: part_name;                                              \
+    }                                                                   \
+    program {                                                           \
+        name: "click_activate_"part_name;                               \
+        signal: "mouse,down,1";                                         \
+        source: part_name;                                              \
+        action: STATE_SET "active" 0.0;                                 \
+        target: part_name;                                              \
+    }                                                                   \
+    program {                                                           \
+        name: "deactivate_"part_name;                                   \
+        signal: "mouse,out";                                            \
+        source: part_name;                                              \
+        action: STATE_SET "default" 0.0;                                \
+        target: part_name;                                              \
+    }
+
+#define EMIT_TRANSITION(part_name, target)                              \
+    program {                                                           \
+        name: "emit_clicked_"part_name;                                 \
+        signal: "mouse,clicked,1";                                      \
+        source: part_name;                                              \
+        action: SIGNAL_EMIT "transition:"target part_name;              \
+    }
+
+#define SWALLOWCLIP()                                                   \
+    part {                                                              \
+        name: "swallow_clip";                                           \
+        mouse_events: 0;                                                \
+        type: RECT;                                                     \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            rel1 {                                                      \
+                relative: 0.0 0.0;                                      \
+                offset: 0 0;                                            \
+            }                                                           \
+            rel2 {                                                      \
+                relative: 1.0 1.0;                                      \
+                offset: -1 -1;                                          \
+            }                                                           \
+            color: 255 255 255 255;                                     \
+        }                                                               \
+        description {                                                   \
+            state: "invisible" 0.0;                                     \
+            inherit: "default" 0.0;                                     \
+            color: 255 255 255 0;                                       \
+        }                                                               \
+    }                                                                   \
+    part {                                                              \
+        name: "background";                                             \
+        type: IMAGE;                                                    \
+        mouse_events: 0;                                                \
+        clip_to: "swallow_clip";                                        \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            rel1 {                                                      \
+                relative: 0.0 0.0;                                      \
+                offset: 0 0;                                            \
+            }                                                           \
+            rel2 {                                                      \
+                relative: 1.0 1.0-BUTTON_BOTTOM_HEIGHT;                 \
+                offset: -1 -1;                                          \
+            }                                                           \
+            image { normal: "background.png"; }                         \
+        }                                                               \
+    }
+
+#define BUTTONS_BOTTOM()                                                \
+    part {                                                              \
+        name: "button_bottom_background";                               \
+        mouse_events: 0;                                                \
+        type: RECT;                                                     \
+        clip_to: "swallow_clip";                                        \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            rel1 {                                                      \
+                relative: 0.0 1.0-BUTTON_BOTTOM_HEIGHT;                 \
+                offset: 0 0;                                            \
+            }                                                           \
+            rel2 {                                                      \
+                relative: 1.0 1.0;                                      \
+                offset: -1 -1;                                          \
+            }                                                           \
+            color: 255 255 255 0;                                       \
+        }                                                               \
+    }                                                                   \
+    part {                                                              \
+        name: "button_bottom_left";                                     \
+        mouse_events: 1;                                                \
+        type: IMAGE;                                                    \
+        clip_to: "swallow_clip";                                        \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            rel1 {                                                      \
+                relative: 0.0 0.0;                                      \
+                offset: 1 1;                                            \
+                to: "button_bottom_background";                         \
+            }                                                           \
+            rel2 {                                                      \
+                relative: 1/3 1.0;                                      \
+                offset: -1 -2;                                          \
+                to: "button_bottom_background";                         \
+            }                                                           \
+            image { normal: "button_background.png"; }                  \
+        }                                                               \
+        description {                                                   \
+            state: "active" 0.0;                                        \
+            inherit: "default" 0.0;                                     \
+            image { normal: "button_background_active.png"; }           \
+        }                                                               \
+    }                                                                   \
+    part {                                                              \
+        name: "button_bottom_middle";                                   \
+        mouse_events: 1;                                                \
+        type: IMAGE;                                                    \
+        clip_to: "swallow_clip";                                        \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            rel1 {                                                      \
+                relative: 1/3 0.0;                                      \
+                offset: 1 1;                                            \
+                to: "button_bottom_background";                         \
+            }                                                           \
+            rel2 {                                                      \
+                relative: 2/3 1.0;                                      \
+                offset: -2 -2;                                          \
+                to: "button_bottom_background";                         \
+            }                                                           \
+            image { normal: "button_background.png"; }                  \
+        }                                                               \
+        description {                                                   \
+            state: "active" 0.0;                                        \
+            inherit: "default" 0.0;                                     \
+            image { normal: "button_background_active.png"; }           \
+        }                                                               \
+    }                                                                   \
+    part {                                                              \
+        name: "button_bottom_right";                                    \
+        mouse_events: 1;                                                \
+        type: IMAGE;                                                    \
+        clip_to: "swallow_clip";                                        \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            rel1 {                                                      \
+                relative: 2/3 0.0;                                      \
+                offset: 0 1;                                            \
+                to: "button_bottom_background";                         \
+            }                                                           \
+            rel2 {                                                      \
+                relative: 1.0 1.0;                                      \
+                offset: -2 -2;                                          \
+                to: "button_bottom_background";                         \
+            }                                                           \
+            image { normal: "button_background.png"; }                  \
+        }                                                               \
+        description {                                                   \
+            state: "active" 0.0;                                        \
+            inherit: "default" 0.0;                                     \
+            image { normal: "button_background_active.png"; }           \
+        }                                                               \
+    }
+
+#define BUTTON_OPTIONS()                                                \
+    part {                                                              \
+        name: "button_options";                                         \
+        mouse_events: 0;                                                \
+        type: IMAGE;                                                    \
+        clip_to: "swallow_clip";                                        \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            aspect: 1.0 1.0;                                            \
+            aspect_preference: BOTH;                                    \
+            rel1 {                                                      \
+                relative: 0.0 0.0;                                      \
+                offset: 0 0;                                            \
+                to: "button_bottom_left";                               \
+            }                                                           \
+            rel2 {                                                      \
+                relative: 1.0 1.0;                                      \
+                offset: -1 -1;                                          \
+                to: "button_bottom_left";                               \
+            }                                                           \
+            image { normal: "icon_options.png"; }                       \
+        }                                                               \
+    }
+
+#define BUTTON_MENU()                                                   \
+    part {                                                              \
+        name: "button_menu";                                            \
+        mouse_events: 0;                                                \
+        type: IMAGE;                                                    \
+        clip_to: "swallow_clip";                                        \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            aspect: 1.0 1.0;                                            \
+            aspect_preference: BOTH;                                    \
+            rel1 {                                                      \
+                relative: 0.0 0.0;                                      \
+                offset: 0 0;                                            \
+                to: "button_bottom_middle";                             \
+            }                                                           \
+            rel2 {                                                      \
+                relative: 1.0 1.0;                                      \
+                offset: -1 -1;                                          \
+                to: "button_bottom_middle";                             \
+            }                                                           \
+            image { normal: "icon_main.png"; }                          \
+        }                                                               \
+    }
+
+#define BUTTON_CLOSE()                                                  \
+    part {                                                              \
+        name: "button_close";                                           \
+        mouse_events: 0;                                                \
+        type: IMAGE;                                                    \
+        clip_to: "swallow_clip";                                        \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            aspect: 1.0 1.0;                                            \
+            aspect_preference: BOTH;                                    \
+            rel1 {                                                      \
+                relative: 0.0 0.0;                                      \
+                offset: 0 0;                                            \
+                to: "button_bottom_right";                              \
+            }                                                           \
+            rel2 {                                                      \
+                relative: 1.0 1.0;                                      \
+                offset: -1 -1;                                          \
+                to: "button_bottom_right";                              \
+            }                                                           \
+            image { normal: "icon_close.png"; }                         \
+        }                                                               \
+    }
+
+
+collections {
+    group {
+        name: "swallow";
+        parts {
+            part {
+                name: "background_color";
+                type: RECT;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 0.0;
+                        offset: 0 0;
+                    }
+                    rel2 {
+                        relative: 1.0 1.0;
+                        offset: -1 -1;
+                    }
+                    color: 255 128 128 255;
+                }
+            }
+            part {
+                name: "top";
+                type: RECT;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 0.0;
+                        offset: 0 0;
+                    }
+                    rel2 {
+                        relative: 1.0 HEADER_HEIGHT;
+                        offset: -1 -1;
+                    }
+                    color: 0 0 0 255;
+                }
+            }
+            part {
+                name: "button_bottom_background";
+                mouse_events: 0;
+                type: RECT;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 1.0-BUTTON_BOTTOM_HEIGHT;
+                        offset: 0 0;
+                    }
+                    rel2 {
+                        relative: 1.0 1.0;
+                        offset: -1 -1;
+                    }
+                    color: 255 255 255 255;
+                }
+            }
+            part {
+                name: "swallow1";
+                mouse_events: 1;
+                type: SWALLOW;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 HEADER_HEIGHT;
+                        offset: 0 0;
+                    }
+                    rel2 {
+                        relative: 1.0 1.0;
+                        offset: -1 -1;
+                    }
+                }
+            }
+            part {
+                name: "swallow2";
+                type: SWALLOW;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 HEADER_HEIGHT;
+                        offset: 0 0;
+                    }
+                    rel2 {
+                        relative: 1.0 1.0;
+                        offset: -1 -1;
+                    }
+                }
+            }
+        }
+    }
+    group {
+        name: "main";
+
+        parts {
+            SWALLOWCLIP();
+
+            part {
+                name: "label_background";
+                type: RECT;
+                mouse_events: 0;
+                clip_to: "swallow_clip";
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 0.1;
+                        offset: 0 0;
+                        to: "background";
+                    }
+                    rel2 {
+                        relative: 1.0 0.3;
+                        offset: -1 -1;
+                        to: "background";
+                    }
+                    color: 255 255 255 64;
+                }
+            }
+            part {
+                name: "label";
+                type: TEXT;
+                effect: SOFT_OUTLINE;
+                mouse_events: 0;
+                clip_to: "swallow_clip";
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.1 0.0;
+                        offset: 0 0;
+                        to: "label_background";
+                    }
+                    rel2 {
+                        relative: 0.9 1.0;
+                        offset: -1 -1;
+                        to: "label_background";
+                    }
+                    align: 0.5 0.5;
+                    text {
+                        font: "Sans";
+                        size: 1;
+                        fit: 1 1;
+                    }
+                }
+            }
+
+            #define ICON(part_name, xpos, ypos)                          \
+            part {                                                       \
+                name: "button_"part_name;                                \
+                mouse_events: 1;                                         \
+                type: IMAGE;                                             \
+                clip_to: "swallow_clip";                                 \
+                description {                                            \
+                    state: "default" 0.0;                                \
+                    rel1 {                                               \
+                        relative: 0.05+(xpos*0.5) 0.35+(ypos*0.3);       \
+                        offset: 0 0;                                     \
+                        to: "background";                                \
+                    }                                                    \
+                    rel2 {                                               \
+                        relative: 0.45+(xpos*0.5) 0.6+(ypos*0.3);        \
+                        offset: -1 -1;                                   \
+                        to: "background";                                \
+                    }                                                    \
+                    image {                                              \
+                        normal: "button_main_background.png";            \
+                        border: 27 27 27 27;                             \
+                    }                                                    \
+                }                                                        \
+                description {                                            \
+                    state: "active" 0.0;                                 \
+                    inherit: "default" 0.0;                              \
+                     image {                                             \
+                         normal: "button_main_background_active.png";    \
+                        border: 27 27 27 27;                             \
+                     }                                                   \
+                }                                                        \
+            }                                                            \
+            part {                                                       \
+                name: "button_icon_"part_name;                           \
+                mouse_events: 0;                                         \
+                type: IMAGE;                                             \
+                clip_to: "swallow_clip";                                 \
+                description {                                            \
+                    state: "default" 0.0;                                \
+                     aspect: 1.0 1.0;                                    \
+                     aspect_preference: BOTH;                            \
+                    rel1 {                                               \
+                        relative: 0.0 0.0;                               \
+                        offset: 0 0;                                     \
+                        to: "button_"part_name;                          \
+                    }                                                    \
+                    rel2 {                                               \
+                        relative: 1.0 1.0;                               \
+                        offset: -1 -1;                                   \
+                        to: "button_"part_name;                          \
+                    }                                                    \
+                     image {                                             \
+                         normal: "button_"part_name".png";               \
+                     }                                                   \
+                }                                                        \
+            }
+            ICON("phone", 0, 0);
+            ICON("contacts", 0, 1);
+            ICON("power", 1, 1);
+            ICON("sms", 1, 0);
+
+            BUTTONS_BOTTOM();
+        }
+        programs {
+            EMIT_TRANSITION("button_phone", "phone");
+            EMIT_TRANSITION("button_contacts", "contacts");
+            EMIT_TRANSITION("button_sms", "sms");
+            EMIT_TRANSITION("button_power", "power");
+
+            ACTIVATE("button_phone");
+            ACTIVATE("button_contacts");
+            ACTIVATE("button_sms");
+            ACTIVATE("button_power");
+
+            TRANSITION();
+        }
+    }
+
+    group {
+        name: "contacts";
+        #include "zhone_contacts.edc"
+    }
+    group {
+        name: "phone";
+        #include "zhone_dial.edc"
+    }
+    group {
+        name: "sms";
+        #include "zhone_message.edc"
+    }
+    group {
+        name: "power";
+        #include "zhone_location.edc"
+    }
+}

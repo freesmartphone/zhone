@@ -1,0 +1,327 @@
+
+parts {
+    SWALLOWCLIP()
+
+	part {
+		name: "label_background";
+		type: RECT;
+		mouse_events: 0;
+		clip_to: "swallow_clip";
+		description {
+			state: "default" 0.0;
+			rel1 {
+			    relative: 0.0 0.1;
+				offset: 0 0;
+				to: "background";
+			}
+			rel2 {
+			    relative: 1.0 0.4;
+				offset: -1 -1;
+				to: "background";
+			}
+			color: 255 255 255 64;
+		}
+	}
+	part {
+		name: "label";
+		type: TEXT;
+		effect: SOFT_OUTLINE;
+		mouse_events: 0;
+		clip_to: "swallow_clip";
+		description {
+			state: "default" 0.0;
+			rel1 {
+			    relative: 0.0 0.2;
+				offset: 0 0;
+				to: "label_background";
+			}
+			rel2 {
+			    relative: 1.0 0.8;
+				offset: -1 -1;
+				to: "label_background";
+			}
+			text {
+				font: "Sans";
+				size: 1;
+				fit: 1 1;
+    			align: 0.0 0.5;
+			}
+		}
+	}
+	part {
+		name: "kb_box";
+		type: RECT;
+		mouse_events: 0;
+		clip_to: "swallow_clip";
+		description {
+			state: "default" 0.0;
+			rel1 {
+				relative: 0.0 0.42;
+				offset: 0 0;
+				to: "background";
+			}
+			rel2 {
+				relative: 1.0 1.0;
+				offset: -1 -1;
+				to: "background";
+			}
+			color: 255 255 255 255;
+		}
+	}
+	
+	#define KB_ICON(xpos, ypos)                         		\
+	part {																\
+		name: "button_"xpos"_"ypos;										\
+		type: IMAGE;													\
+		mouse_events: 1;												\
+		pointer_mode: NOGRAB;                                           \
+		clip_to: "swallow_clip";                                		\
+		description {													\
+			state: "default" 0.0;										\
+			rel1 {														\
+				relative: 0.25*xpos 0.25*ypos;							\
+				offset: 1 1;											\
+				to: "kb_box";					            		    \
+			}															\
+			rel2 {														\
+				relative: 0.25+(0.25*xpos) 0.25+(0.25*ypos);			\
+				offset: -2 -2;											\
+				to: "kb_box";					            		    \
+			}															\
+			image { normal: "button_background.png"; }	        		\
+		}																\
+		description {													\
+			state: "active" 0.0;										\
+			inherit: "default" 0.0;										\
+			image { normal: "button_background_active.png"; }   		\
+		}																\
+	}																	\
+	part {																\
+		name: "label_"xpos"_"ypos;										\
+		type: TEXT;														\
+		effect: SOFT_OUTLINE;											\
+		mouse_events: 0;												\
+		clip_to: "swallow_clip";                                		\
+		description {													\
+			state: "default" 0.0;										\
+			align: 0.5 0.5;												\
+			rel1 {														\
+				relative: 0.0 0.0;										\
+				offset: 0 0;											\
+				to: "button_"xpos"_"ypos;									\
+			}															\
+			rel2 {														\
+				relative: 1.0 0.8;										\
+				offset: -1 -1;											\
+				to: "button_"xpos"_"ypos;									\
+			}															\
+			text {														\
+				font: "Sans";											\
+				size: 1;												\
+				fit: 1 1;												\
+			}															\
+		}																\
+	}																	\
+	part {																\
+		name: "label2_"xpos"_"ypos;										\
+		type: TEXT;														\
+		effect: SOFT_OUTLINE;											\
+		mouse_events: 0;												\
+		clip_to: "swallow_clip";                                		\
+		description {													\
+			state: "default" 0.0;										\
+			align: 0.5 0.5;												\
+			rel1 {														\
+				relative: 0.0 0.7;										\
+				offset: 0 0;											\
+				to: "button_"xpos"_"ypos;									\
+			}															\
+			rel2 {														\
+				relative: 1.0 1.0;										\
+				offset: -1 -1;											\
+				to: "button_"xpos"_"ypos;									\
+			}															\
+			text {														\
+				font: "Sans";											\
+				size: 1;												\
+				fit: 1 1;												\
+			}															\
+		}																\
+	}
+	KB_ICON(0, 0);
+	KB_ICON(1, 0);
+	KB_ICON(2, 0);
+	KB_ICON(3, 0);
+	KB_ICON(0, 1);
+	KB_ICON(1, 1);
+	KB_ICON(2, 1);
+	KB_ICON(3, 1);
+	KB_ICON(0, 2);
+	KB_ICON(1, 2);
+	KB_ICON(2, 2);
+	KB_ICON(3, 2);
+	KB_ICON(0, 3);
+	KB_ICON(1, 3);
+	KB_ICON(2, 3);
+	KB_ICON(3, 3);
+	
+	part {
+	    name: "preview_box";
+	    mouse_events: 0;
+	    type: IMAGE;
+	    clip_to: "swallow_clip";
+	    description {
+	        state: "default" 0.0;
+	        rel1 {
+	            relative: 0.2 0.1;
+	        }
+	        rel2 {
+	            relative: 0.8 0.35;
+	        }
+	 		image {
+	 			normal: "button_main_background.png";
+				border: 27 27 27 27;
+	 		}
+	 		visible: 0;
+	    }
+	    description {
+	        state: "visible" 0.0;
+	        inherit: "default" 0.0;
+	        visible: 1;
+	    }
+	}
+	part {
+		name: "label_preview";
+		type: TEXT;
+		effect: SOFT_OUTLINE;
+		mouse_events: 0;
+		clip_to: "swallow_clip";
+		description {
+			state: "default" 0.0;
+			align: 0.5 0.5;
+			rel1 {
+				relative: 0.0 0.0;
+				offset: 0 0;
+				to: "preview_box";
+			}
+			rel2 {
+				relative: 1.0 1.0;
+				offset: -1 -1;
+				to: "preview_box";
+			}
+			text {
+				font: "Sans";
+				size: 1;
+				fit: 1 1;
+			}
+	 		visible: 0;
+	    }
+	    description {
+	        state: "visible" 0.0;
+	        inherit: "default" 0.0;
+	        visible: 1;
+	    }
+	}
+	
+	BUTTONS_BOTTOM();
+	BUTTON_OPTIONS();
+	BUTTON_MENU();
+	BUTTON_CLOSE();
+}
+programs {
+    EMIT_TRANSITION("button_bottom_right", "main");
+    
+	ACTIVATE("button_bottom_right");
+    
+	ACTIVATE("button_0_0");
+	ACTIVATE("button_0_1");
+	ACTIVATE("button_0_2");
+	ACTIVATE("button_0_3");
+	ACTIVATE("button_1_0");
+	ACTIVATE("button_1_1");
+	ACTIVATE("button_1_2");
+	ACTIVATE("button_1_3");
+	ACTIVATE("button_2_0");
+	ACTIVATE("button_2_1");
+	ACTIVATE("button_2_2");
+	ACTIVATE("button_2_3");
+	ACTIVATE("button_3_0");
+	ACTIVATE("button_3_1");
+	ACTIVATE("button_3_2");
+	ACTIVATE("button_3_3");
+	
+	program {
+	    name: "show_preview";
+	    action: STATE_SET "visible" 0.0;
+	    target: "preview_box";
+	    target: "label_preview";
+	}
+	program {
+	    name: "hide_preview";
+	    action: STATE_SET "normal" 0.0;
+	    target: "preview_box";
+	    target: "label_preview";
+	    after: "deactivate_all";
+	}
+	program {
+	    name: "deactivate_all";
+	    action: STATE_SET "normal" 0.0;
+	    target: "button_0_0";
+	    target: "button_0_1";
+	    target: "button_0_2";
+	    target: "button_0_3";
+	    target: "button_1_0";
+	    target: "button_1_1";
+	    target: "button_1_2";
+	    target: "button_1_3";
+	    target: "button_2_0";
+	    target: "button_2_1";
+	    target: "button_2_2";
+	    target: "button_2_3";
+	    target: "button_3_0";
+	    target: "button_3_1";
+	    target: "button_3_2";
+	    target: "button_3_3";
+	}
+	
+	#define EMIT_KB_BUTTON_PRESSED(part_name)         				    \
+	program {								        					\
+		name: "emit_kb_button_mouse_down_"part_name;					\
+		signal: "mouse,down,1";			        					    \
+		source: part_name;					                			\
+		action: SIGNAL_EMIT "kb_button_mouse_down" part_name;	        \
+		after: "show_preview";                                          \
+	}                                                                   \
+	program {								        					\
+		name: "emit_kb_button_mouse_up_"part_name;					    \
+		signal: "mouse,up,1";			        					    \
+		source: part_name;					                			\
+		action: SIGNAL_EMIT "kb_button_mouse_up" part_name;	            \
+		after: "hide_preview";                                          \
+	}                                                                   \
+	program {                                                           \
+	    name: "emit_kb_button_mouse_in_"part_name;                      \
+	    signal: "mouse,in";                                             \
+	    source: part_name;                                              \
+	    action: SIGNAL_EMIT "kb_mutton_mouse_in" part_name;             \
+	}
+	
+	EMIT_KB_BUTTON_PRESSED("button_0_0");
+	EMIT_KB_BUTTON_PRESSED("button_0_1");
+	EMIT_KB_BUTTON_PRESSED("button_0_2");
+	EMIT_KB_BUTTON_PRESSED("button_0_3");
+	EMIT_KB_BUTTON_PRESSED("button_1_0");
+	EMIT_KB_BUTTON_PRESSED("button_1_1");
+	EMIT_KB_BUTTON_PRESSED("button_1_2");
+	EMIT_KB_BUTTON_PRESSED("button_1_3");
+	EMIT_KB_BUTTON_PRESSED("button_2_0");
+	EMIT_KB_BUTTON_PRESSED("button_2_1");
+	EMIT_KB_BUTTON_PRESSED("button_2_2");
+	EMIT_KB_BUTTON_PRESSED("button_2_3");
+	EMIT_KB_BUTTON_PRESSED("button_3_0");
+	EMIT_KB_BUTTON_PRESSED("button_3_1");
+	EMIT_KB_BUTTON_PRESSED("button_3_2");
+	EMIT_KB_BUTTON_PRESSED("button_3_3");
+	
+    TRANSITION();
+}
