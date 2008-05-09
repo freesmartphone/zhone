@@ -4,9 +4,9 @@
 WIDTH = 480
 HEIGHT = 640
 
-TITLE = "pyphone"
-WM_NAME = "pyphone"
-WM_CLASS = "swallow"
+TITLE = "zhone"
+WM_NAME = "zhone"
+WM_CLASS = "zhone"
 
 import os
 import sys
@@ -245,7 +245,7 @@ class pyphone_sms(edje_group):
             for j in xrange(4):
                 self.part_text_set("label2_%d_%d" % (i,j) , self.button_labels2[num][j][i])
 
-class TestView(object):
+class GUI(object):
     def on_key_down(self, obj, event):
         if event.keyname in ("F6", "f"):
             self.evas_canvas.evas_obj.fullscreen = not self.evas_canvas.evas_obj.fullscreen
@@ -276,6 +276,8 @@ class TestView(object):
         self.groups["swallow"].show()
         self.groups["swallow"].on_key_down_add(self.on_key_down)
 
+        self.groups["swallow"].part_text_set("label_top_left", "zhone!");
+
         self.groups["swallow"].part_swallow("swallow2", self.groups["main"])
         self.current_group = self.groups["main"]
         self.previous_group = self.groups["phone"]
@@ -283,9 +285,36 @@ class TestView(object):
         ecore.timer_add(60.0, self.display_time)
         self.display_time()
 
+        dbus.onResourceChanged.append(self.display_resources)
+        self.display_resources()
+
     def display_time(self):
         self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()));
+        self.groups["swallow"].part_text_set("label_top_center", time.strftime("%Y-%m-%d", time.localtime()));
         return True;
+
+    def display_resources( self, **args ):
+        items = []
+        names = {
+            "GSM": "G",
+            "WiFi": "W",
+            "GPS": "S",
+            "Bluetooth": "B",
+        }
+        for resourcename in dbus.usage_iface.ListResources():
+            if dbus.usage_iface.GetResourceState( resourcename ):
+                users = dbus.usage_iface.GetResourceUsers( resourcename )
+                items.append( "%s%s" % ( names[resourcename], len( users ) ) )
+            else:
+                items.append( "%s" % ( names[resourcename].lower() ) )
+            policy = dbus.usage_iface.GetResourcePolicy( resourcename )
+            if policy == 'enabled':
+                items[-1] = "+" + items[-1]
+                continue
+            elif policy == 'disabled':
+                items[-1] = "-" + items[-1]
+                continue
+        self.groups["swallow"].part_text_set( "label_top_right", " ".join( items ) );
 
     def transition_to(self, target):
         print "transition to", target
@@ -370,46 +399,27 @@ class myOptionParser(OptionParser):
             raise optparse.OptionValueError("Invalid format for %s" % option)
         parser.values.geometry = (w, h)
 
-class dbus(object):
-    def __init__(self):
+class DBus( object ):
+    def __init__( self ):
         try:
-            obj = SystemBus(mainloop=e_dbus.DBusEcoreMainLoop()).get_object('org.mobile.gsm', '/org/mobile/gsm/RemoteObject')
+            self.bus = SystemBus( mainloop=e_dbus.DBusEcoreMainLoop())
+            self.usage_obj = self.bus.get_object('org.freesmartphone.Usage', '/org/freesmartphone/Usage')
+            self.usage_iface = Interface(self.usage_obj, 'org.freesmartphone.Usage')
         except Exception, e:
             print e
             raise SystemExit
 
+        self.onResourceChanged = []
+
         #connect functions to dbus events
-        dbus_interface = 'org.mobile.gsm.RemoteInterface'
-        for fkt in (self.modem_info, self.sim_info, self.network_info, self.gsmCRING, self.gsmNO_CARRIER, self.gsmBUSY, self.error,):
-            obj.connect_to_signal(fkt.__name__, fkt, dbus_interface=dbus_interface)
-        gsm = Interface(obj, dbus_interface)
+        for cb in ( self.ResourceChanged, ):
+            self.usage_obj.connect_to_signal( cb.__name__, cb )
 
-        #get status info on startup
-        gsm.FireModemInfo()
-        gsm.FireNetworkInfo()
-    
-    def modem_info(self, array):
-        print array
-
-    def sim_info(self, array):
-        print array
-        
-    def network_info(self, array):
-        print array
-        
-    def gsmBUSY(self, string):
-        print string
-
-    def gsmCRING(self, string):
-        print string
-
-    def gsmNO_CARRIER(self, *values):
-        print values
-
-    def error(self, string):
-        print string
+    def ResourceChanged( self, resourcename ):
+        for cb in self.onResourceChanged:
+            cb( resourcename=resourcename )
 
 if __name__ == "__main__":
-    TestView()
-    #dbus()
+    dbus = DBus()
+    gui = GUI()
     ecore.main_loop_begin()
