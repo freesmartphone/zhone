@@ -253,14 +253,12 @@ class GUI(object):
             ecore.main_loop_quit()
 
     def __init__(self):
-        self.options, self.args = myOptionParser(usage="usage: %prog [options]").parse_args()
-
-        edje.frametime_set(1.0 / self.options.fps)
+        edje.frametime_set(1.0 / options.fps)
 
         self.evas_canvas = EvasCanvas(
-            fullscreen=not self.options.no_fullscreen,
-            engine=self.options.engine,
-            size=self.options.geometry
+            fullscreen = options.fullscreen,
+            engine = options.engine,
+            size = options.geometry
         )
 
         self.groups = {}
@@ -349,7 +347,7 @@ class EvasCanvas(object):
 
         self.evas_obj.title = TITLE
         self.evas_obj.name_class = (WM_NAME, WM_CLASS)
-        self.evas_obj.fullscreen = False #fullscreen
+        self.evas_obj.fullscreen = fullscreen
         self.evas_obj.size = size
         self.evas_obj.show()
 
@@ -362,9 +360,10 @@ class EvasCanvas(object):
     def on_delete_request(self, evas_obj):
         ecore.main_loop_quit()
 
-class myOptionParser(OptionParser):
-    def __init__(self, usage):
-        OptionParser.__init__(self, usage)
+class MyOptionParser(OptionParser):
+    def __init__(self):
+        OptionParser.__init__(self)
+        self.set_defaults(fullscreen = False)
         self.add_option("-e",
                       "--engine",
                       type="choice",
@@ -372,10 +371,14 @@ class myOptionParser(OptionParser):
                       default="x11-16",
                       help=("which display engine to use (x11, x11-16), "
                             "default=%default"))
-        self.add_option("-n",
-                      "--no-fullscreen",
+        self.add_option("--fullscreen",
                       action="store_true",
-                      help="do not launch in fullscreen")
+                      dest="fullscreen",
+                      help="launch in fullscreen")
+        self.add_option("--no-fullscreen",
+                      action="store_false",
+                      dest="fullscreen",
+                      help="launch in a window")
         self.add_option("-g",
                       "--geometry",
                       type="string",
@@ -420,6 +423,8 @@ class DBus( object ):
             cb( resourcename=resourcename )
 
 if __name__ == "__main__":
+    options, args = MyOptionParser().parse_args()
     dbus = DBus()
     gui = GUI()
     ecore.main_loop_begin()
+
