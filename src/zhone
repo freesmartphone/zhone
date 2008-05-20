@@ -66,13 +66,13 @@ class pyphone_phone(edje_group):
             key = source.split("_", 1)[1]
             if key in ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "#"):
                 self.text.append(key)
-                self.part_text_set("label", "".join(self.text))
+                self.part_text_set("label", "".join(self.text)+" ")
             elif key in "star":
                 self.text.append("*")
-                self.part_text_set("label", "".join(self.text))
+                self.part_text_set("label", "".join(self.text)+" ")
             elif key in "delete":
                 self.text = self.text[:-1]
-                self.part_text_set("label", "".join(self.text))
+                self.part_text_set("label", "".join(self.text)+" ")
         else:
             key = source
         #self.text.append(source)
@@ -210,7 +210,7 @@ class pyphone_sms(edje_group):
         y = int(source[-1:])
         key = self.button_labels[self.active][y][x]
         self.text.append(key)
-        self.part_text_set("label", "".join(self.text))
+        self.part_text_set("label", "".join(self.text)+" ")
         self.set_button_text(0)
         print "mouse up:", time.time()-now
 
