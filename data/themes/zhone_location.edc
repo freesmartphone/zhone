@@ -1,15 +1,15 @@
 parts {
     SWALLOWCLIP()
 
-	BUTTONS_BOTTOM();
-	BUTTON_OPTIONS();
-	BUTTON_MENU();
-	BUTTON_CLOSE();
+    BUTTONS_BOTTOM();
+    BUTTON_OPTIONS();
+    BUTTON_MENU();
+    BUTTON_CLOSE();
 }
 programs {
     EMIT_TRANSITION("button_bottom_right", "main");
     
-	ACTIVATE("button_bottom_right");
-	
+    ACTIVATE("button_bottom_right");
+    
     TRANSITION();
 }
