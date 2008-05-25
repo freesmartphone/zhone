@@ -18,6 +18,7 @@ import edje.decorators
 import ecore
 import ecore.evas
 from dbus import SystemBus, Interface
+from dbus.exceptions import DBusException
 from optparse import OptionParser
 import time
 
@@ -388,7 +389,7 @@ class GUI(object):
             try:
                 dbus.gsm_device_iface.SetAntennaPower(True)
                 dbus.gsm_network_iface.Register()
-            except dbus.exceptions.DBusException, e:
+            except DBusException, e:
                 # TODO handle this better
                 print e
                 self.transition_to("pin")
