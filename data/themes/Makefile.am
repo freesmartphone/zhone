@@ -11,7 +11,7 @@ theme_DATA = $(EET)
 
 all: $(EDC)
 
-zhone.edj: zhone.edc zhone_dial.edc zhone_contacts.edc zhone_message.edc zhone_location.edc zhone_call.edc
+zhone.edj: zhone.edc zhone_dial.edc zhone_contacts.edc zhone_message.edc zhone_location.edc zhone_call.edc zhone_pin.edc
 
 .edc.edj:
 	edje_cc -v -id ../images -fd ../fonts $< $@

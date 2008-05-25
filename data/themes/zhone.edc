@@ -599,4 +599,8 @@ collections {
         name: "call";
         #include "zhone_call.edc"
     }
+    group {
+        name: "pin";
+        #include "zhone_pin.edc"
+    }
 }

@@ -42,18 +42,14 @@ class edje_group(edje.Edje):
 
     @edje.decorators.signal_callback("transition:*", "*")
     def on_edje_signal_transition(self, emission, source):
-        # TODO better state management
-        if not self.main.in_transition:
-            target = emission.split(':')[1]
-            if target == "phone" and not self.main.groups["call"].status in ["idle" , "released"]:
-                target = "call"
-            self.main.in_transition = True
-            self.main.transition_to(target)
+        target = emission.split(':')[1]
+        if target == "phone" and not self.main.groups["call"].status in ["idle" , "released"]:
+            target = "call"
+        self.main.transition_to(target)
 
     @edje.decorators.signal_callback("finished_transition", "*")
     def on_edje_signal_finished_transition(self, emission, source):
         self.main.transition_finished()
-        self.main.in_transition = False
 
 class pyphone_main(edje_group):
     def __init__(self, main):
@@ -81,7 +77,7 @@ class pyphone_phone(edje_group):
                 self.part_text_set("label", "".join(self.text)+" ")
             elif key in "dial":
                 if dbus.gsm_device_obj:
-                    dbus.gsm_call_iface.Initiate("".join(self.text), "")
+                    dbus.gsm_call_iface.Initiate("".join(self.text), "voice")
                 else:
                     # Fake onCallStatus...
                     self.main.groups["call"].onCallStatus( None, "outgoing", {"number": "".join(self.text)} )
@@ -144,9 +140,8 @@ class pyphone_call(edje_group):
             self.part_text_set( "label_left", "" )
             self.part_text_set( "label_right", "" )
         if status in ["incoming", "outgoing"] and not self.status == status:
-            # TODO Make sure we get displayed
+            # TODO make sure we get displayed
             if not self.main.in_transition:
-                self.main.in_transition = True
                 self.main.transition_to("call")
         self.status = status
 
@@ -319,6 +314,28 @@ class pyphone_sms(edje_group):
             for j in xrange(4):
                 self.part_text_set("label2_%d_%d" % (i,j) , self.button_labels2[num][j][i])
 
+class pyphone_pin(edje_group):
+    def __init__(self, main):
+        edje_group.__init__(self, main, "pin")
+        self.text = []
+
+    @edje.decorators.signal_callback("pin_button_pressed", "*")
+    def on_edje_signal_pin_button_pressed(self, emission, source):
+        key = source.split("_", 1)[1]
+        if key in ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"):
+            self.text.append(key)
+            # The trailing whitespace is a workaround for the one char invisible
+            # bug due to some problems with scaling of text parts.
+            self.part_text_set("label", "".join(self.text)+" ")
+        elif key in "delete":
+            self.text = self.text[:-1]
+            self.part_text_set("label", "".join(self.text)+" ")
+        elif key in "done":
+            if dbus.gsm_device_obj:
+                dbus.gsm_sim_iface.SendAuthCode("".join(self.text))
+                dbus.gsm_device_iface.SetAntennaPower(True)
+                dbus.gsm_network_iface.Register()
+
 class GUI(object):
     def on_key_down(self, obj, event):
         if event.keyname in ("F6", "f"):
@@ -336,7 +353,7 @@ class GUI(object):
         )
 
         self.groups = {}
-        for part in ("swallow", "main", "contacts", "power", "call"):
+        for part in ("swallow", "main", "contacts", "power"):
             self.groups[part] = edje_group(self, part)
             self.evas_canvas.evas_obj.data[part] = self.groups[part]
 
@@ -346,6 +363,8 @@ class GUI(object):
         self.evas_canvas.evas_obj.data["phone"] = self.groups["phone"]
         self.groups["call"] = pyphone_call(self)
         self.evas_canvas.evas_obj.data["call"] = self.groups["call"]
+        self.groups["pin"] = pyphone_pin(self)
+        self.evas_canvas.evas_obj.data["pin"] = self.groups["pin"]
 
         self.groups["swallow"].show()
         self.groups["swallow"].on_key_down_add(self.on_key_down)
@@ -359,11 +378,23 @@ class GUI(object):
         ecore.timer_add(60.0, self.display_time)
         self.display_time()
 
-        if dbus:
+        if dbus.usage_obj:
             dbus.onResourceChanged.append(self.display_resources)
             self.display_resources()
         else:
             self.groups["swallow"].part_text_set( "label_top_right", "no dbus" );
+
+        if dbus.gsm_device_obj:
+            try:
+                dbus.gsm_device_iface.SetAntennaPower(True)
+                dbus.gsm_network_iface.Register()
+            except dbus.exceptions.DBusException, e:
+                # TODO handle this better
+                print e
+                self.transition_to("pin")
+
+        if options.start:
+            self.transition_to(options.start)
 
     def display_time(self):
         self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()));
@@ -393,10 +424,12 @@ class GUI(object):
                 continue
         self.groups["swallow"].part_text_set( "label_top_right", " ".join( items ) );
 
+    # TODO better state management for transitions
     def transition_to(self, target):
         if self.current_group == self.groups[target]:
             return
         print "transition to", target
+        self.in_transition = True
 
         self.previous_group = self.current_group
 
@@ -409,6 +442,7 @@ class GUI(object):
         print "finished"
         self.previous_group.hide()
         self.groups["swallow"].part_swallow("swallow2", self.current_group)
+        self.in_transition = False
 
 
 class EvasCanvas(object):
@@ -473,6 +507,11 @@ class MyOptionParser(OptionParser):
                       type="int",
                       default=20,
                       help="frames per second to use, default=%default")
+        self.add_option("-s",
+                      "--start",
+                      type="string",
+                      default=None,
+                      help="start with the given page")
 
     def parse_geometry(option, opt, value, parser):
         try:
