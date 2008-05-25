@@ -42,9 +42,13 @@ class edje_group(edje.Edje):
 
     @edje.decorators.signal_callback("transition:*", "*")
     def on_edje_signal_transition(self, emission, source):
+        # TODO better state management
         if not self.main.in_transition:
+            target = emission.split(':')[1]
+            if target == "phone" and not self.main.groups["call"].state == "idle":
+                target = "call"
             self.main.in_transition = True
-            self.main.transition_to(emission.split(':')[1])
+            self.main.transition_to(target)
 
     @edje.decorators.signal_callback("finished_transition", "*")
     def on_edje_signal_finished_transition(self, emission, source):
@@ -75,10 +79,50 @@ class pyphone_phone(edje_group):
             elif key in "delete":
                 self.text = self.text[:-1]
                 self.part_text_set("label", "".join(self.text)+" ")
+            elif key in "dial":
+                if not self.main.in_transition:
+                    self.main.groups["call"].update_state("calling")
+                    self.main.in_transition = True
+                    self.main.transition_to("call")
         else:
             key = source
         #self.text.append(source)
         #self.part_text_set("label", "".join(self.text))
+
+class pyphone_call(edje_group):
+    def __init__(self, main):
+        edje_group.__init__(self, main, "call")
+        self.update_state("idle")
+
+    @edje.decorators.signal_callback("call_button_pressed", "button_left")
+    def on_edje_signal_call_button_left_pressed(self, emission, source):
+        if self.state == "ringing":
+            self.update_state("talking")
+
+    @edje.decorators.signal_callback("call_button_pressed", "button_right")
+    def on_edje_signal_call_button_right_pressed(self, emission, source):
+        if self.state == "calling":
+            self.update_state("idle")
+        elif self.state == "talking":
+            self.update_state("idle")
+        elif self.state == "ringing":
+            self.update_state("idle")
+
+    def update_state(self, state):
+        self.state = state
+        self.part_text_set( "label_description", state )
+        if state == "calling":
+            self.part_text_set( "label_left", "" )
+            self.part_text_set( "label_right", "cancel" )
+        elif state == "talking":
+            self.part_text_set( "label_left", "" )
+            self.part_text_set( "label_right", "hangup" )
+        elif state == "ringing":
+            self.part_text_set( "label_left", "answer" )
+            self.part_text_set( "label_right", "reject" )
+        elif state == "idle":
+            self.part_text_set( "label_left", "" )
+            self.part_text_set( "label_right", "" )
 
 class pyphone_sms(edje_group):
     def __init__(self, main):
@@ -266,7 +310,7 @@ class GUI(object):
         )
 
         self.groups = {}
-        for part in ("swallow", "main", "contacts", "power"):
+        for part in ("swallow", "main", "contacts", "power", "call"):
             self.groups[part] = edje_group(self, part)
             self.evas_canvas.evas_obj.data[part] = self.groups[part]
 
@@ -274,6 +318,8 @@ class GUI(object):
         self.evas_canvas.evas_obj.data["sms"] = self.groups["sms"]
         self.groups["phone"] = pyphone_phone(self)
         self.evas_canvas.evas_obj.data["phone"] = self.groups["phone"]
+        self.groups["call"] = pyphone_call(self)
+        self.evas_canvas.evas_obj.data["call"] = self.groups["call"]
 
         self.groups["swallow"].show()
         self.groups["swallow"].on_key_down_add(self.on_key_down)
@@ -287,8 +333,11 @@ class GUI(object):
         ecore.timer_add(60.0, self.display_time)
         self.display_time()
 
-        dbus.onResourceChanged.append(self.display_resources)
-        self.display_resources()
+        if dbus:
+            dbus.onResourceChanged.append(self.display_resources)
+            self.display_resources()
+        else:
+            self.groups["swallow"].part_text_set( "label_top_right", "no dbus" );
 
     def display_time(self):
         self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()));
@@ -429,6 +478,7 @@ class DBus( object ):
 if __name__ == "__main__":
     options, args = MyOptionParser().parse_args()
     dbus = DBus()
+#    dbus = None
     gui = GUI()
     ecore.main_loop_begin()
 

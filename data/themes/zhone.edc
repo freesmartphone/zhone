@@ -595,4 +595,8 @@ collections {
         name: "power";
         #include "zhone_location.edc"
     }
+    group {
+        name: "call";
+        #include "zhone_call.edc"
+    }
 }
