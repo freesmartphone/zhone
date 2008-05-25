@@ -45,7 +45,7 @@ class edje_group(edje.Edje):
         # TODO better state management
         if not self.main.in_transition:
             target = emission.split(':')[1]
-            if target == "phone" and not self.main.groups["call"].state == "idle":
+            if target == "phone" and not self.main.groups["call"].status in ["idle" , "released"]:
                 target = "call"
             self.main.in_transition = True
             self.main.transition_to(target)
@@ -80,10 +80,11 @@ class pyphone_phone(edje_group):
                 self.text = self.text[:-1]
                 self.part_text_set("label", "".join(self.text)+" ")
             elif key in "dial":
-                if not self.main.in_transition:
-                    self.main.groups["call"].update_state("calling")
-                    self.main.in_transition = True
-                    self.main.transition_to("call")
+                if dbus.gsm_device_obj:
+                    dbus.gsm_call_iface.Initiate("".join(self.text), "")
+                else:
+                    # Fake onCallStatus...
+                    self.main.groups["call"].onCallStatus( None, "outgoing", {"number": "".join(self.text)} )
         else:
             key = source
         #self.text.append(source)
@@ -92,37 +93,62 @@ class pyphone_phone(edje_group):
 class pyphone_call(edje_group):
     def __init__(self, main):
         edje_group.__init__(self, main, "call")
-        self.update_state("idle")
+        self.update_status("idle")
+        self.call = None
+
+        if dbus:
+            dbus.onCallStatus.append(self.onCallStatus)
+
+    def onCallStatus( self, id, status, properties ):
+        self.call = id
+        self.update_status(status)
+        self.part_text_set( "label", properties.get( "number" ) )
 
     @edje.decorators.signal_callback("call_button_pressed", "button_left")
     def on_edje_signal_call_button_left_pressed(self, emission, source):
-        if self.state == "ringing":
-            self.update_state("talking")
+        if self.status == "active":
+            if dbus.gsm_device_obj:
+                #dbus.gsm_call_iface.Hold(self.call)
+                pass
+            else:
+                self.update_status("held")
+        elif self.status in ["incoming", "held"]:
+            if dbus.gsm_device_obj:
+                dbus.gsm_call_iface.Activate(self.call)
+            else:
+                self.update_status("active")
 
     @edje.decorators.signal_callback("call_button_pressed", "button_right")
     def on_edje_signal_call_button_right_pressed(self, emission, source):
-        if self.state == "calling":
-            self.update_state("idle")
-        elif self.state == "talking":
-            self.update_state("idle")
-        elif self.state == "ringing":
-            self.update_state("idle")
+        if self.status in ["outgoing", "active", "incoming", "held"]:
+            if dbus.gsm_device_obj:
+                dbus.gsm_call_iface.Release(self.call)
+            else:
+                self.update_status("released")
 
-    def update_state(self, state):
-        self.state = state
-        self.part_text_set( "label_description", state )
-        if state == "calling":
+    def update_status(self, status):
+        self.part_text_set( "label_description", status )
+        if status == "outgoing":
             self.part_text_set( "label_left", "" )
             self.part_text_set( "label_right", "cancel" )
-        elif state == "talking":
-            self.part_text_set( "label_left", "" )
+        elif status == "active":
+            self.part_text_set( "label_left", "hold" )
             self.part_text_set( "label_right", "hangup" )
-        elif state == "ringing":
+        elif status == "incoming":
             self.part_text_set( "label_left", "answer" )
             self.part_text_set( "label_right", "reject" )
-        elif state == "idle":
+        elif status == "held":
+            self.part_text_set( "label_left", "resume" )
+            self.part_text_set( "label_right", "hangup" )
+        else:
             self.part_text_set( "label_left", "" )
             self.part_text_set( "label_right", "" )
+        if status in ["incoming", "outgoing"] and not self.status == status:
+            # TODO Make sure we get displayed
+            if not self.main.in_transition:
+                self.main.in_transition = True
+                self.main.transition_to("call")
+        self.status = status
 
 class pyphone_sms(edje_group):
     def __init__(self, main):
@@ -368,6 +394,8 @@ class GUI(object):
         self.groups["swallow"].part_text_set( "label_top_right", " ".join( items ) );
 
     def transition_to(self, target):
+        if self.current_group == self.groups[target]:
+            return
         print "transition to", target
 
         self.previous_group = self.current_group
@@ -457,23 +485,42 @@ class MyOptionParser(OptionParser):
 
 class DBus( object ):
     def __init__( self ):
+        self.bus = SystemBus( mainloop=e_dbus.DBusEcoreMainLoop())
+
         try:
-            self.bus = SystemBus( mainloop=e_dbus.DBusEcoreMainLoop())
             self.usage_obj = self.bus.get_object('org.freesmartphone.Usage', '/org/freesmartphone/Usage')
             self.usage_iface = Interface(self.usage_obj, 'org.freesmartphone.Usage')
+
+            self.usage_obj.connect_to_signal( "ResourceChanged", self.ResourceChanged )
+
+            self.usage_iface.RequestResource("GSM")
         except Exception, e:
             print e
-            raise SystemExit
+            self.usage_obj = None
+
+        try:
+            self.gsm_device_obj = self.bus.get_object('org.freesmartphone.ophoned', '/org/freesmartphone/GSM/Device')
+            self.gsm_device_iface = Interface(self.usage_obj, 'org.freesmartphone.GSM.Device')
+            self.gsm_sim_iface = Interface(self.usage_obj, 'org.freesmartphone.GSM.SIM')
+            self.gsm_network_iface = Interface(self.usage_obj, 'org.freesmartphone.GSM.Network')
+            self.gsm_call_iface = Interface(self.usage_obj, 'org.freesmartphone.GSM.Call')
+            self.gsm_test_iface = Interface(self.usage_obj, 'org.freesmartphone.GSM.Test')
+
+            self.gsm_device_obj.connect_to_signal( "CallStatus", self.CallStatus )
+        except Exception, e:
+            print e
+            self.gsm_device_obj = None
 
         self.onResourceChanged = []
-
-        #connect functions to dbus events
-        for cb in ( self.ResourceChanged, ):
-            self.usage_obj.connect_to_signal( cb.__name__, cb )
+        self.onCallStatus = []
 
     def ResourceChanged( self, resourcename ):
         for cb in self.onResourceChanged:
             cb( resourcename=resourcename )
+
+    def CallStatus( self, id, status, properties ):
+        for cb in self.onCallStatus:
+            cb( id=id, status=status, properties=properties )
 
 if __name__ == "__main__":
     options, args = MyOptionParser().parse_args()
