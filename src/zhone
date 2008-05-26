@@ -44,8 +44,18 @@ class edje_group(edje.Edje):
     @edje.decorators.signal_callback("transition:*", "*")
     def on_edje_signal_transition(self, emission, source):
         target = emission.split(':')[1]
-        if target == "phone" and not self.main.groups["call"].status in ["idle" , "released"]:
+        if target == "phone" and not self.main.groups["call"].status in ["idle" , "release"]:
             target = "call"
+        if target == "phone":
+            if dbus.gsm_device_obj and dbus.gsm_network_iface.GetStatus()[0] == 'unregistered':
+                try:
+                    dbus.gsm_device_iface.SetAntennaPower(True)
+                    dbus.gsm_network_iface.Register()
+                except DBusException, e:
+                    # TODO handle this better
+                    print e
+                    self.transition_to("pin")
+
         self.main.transition_to(target)
 
     @edje.decorators.signal_callback("finished_transition", "*")
@@ -99,7 +109,7 @@ class pyphone_call(edje_group):
     def onCallStatus( self, id, status, properties ):
         self.call = id
         self.update_status(status)
-        self.part_text_set( "label", properties.get( "number" ) )
+        self.part_text_set( "label", properties.get( "number", "unknown number" ) )
 
     @edje.decorators.signal_callback("call_button_pressed", "button_left")
     def on_edje_signal_call_button_left_pressed(self, emission, source):
@@ -318,6 +328,7 @@ class pyphone_sms(edje_group):
 class pyphone_pin(edje_group):
     def __init__(self, main):
         edje_group.__init__(self, main, "pin")
+        self.part_text_set( "label_description", "enter pin" )
         self.text = []
 
     @edje.decorators.signal_callback("pin_button_pressed", "*")
@@ -336,6 +347,7 @@ class pyphone_pin(edje_group):
                 dbus.gsm_sim_iface.SendAuthCode("".join(self.text))
                 dbus.gsm_device_iface.SetAntennaPower(True)
                 dbus.gsm_network_iface.Register()
+                self.main.transition_to("main")
 
 class GUI(object):
     def on_key_down(self, obj, event):
@@ -540,11 +552,11 @@ class DBus( object ):
 
         try:
             self.gsm_device_obj = self.bus.get_object('org.freesmartphone.ophoned', '/org/freesmartphone/GSM/Device')
-            self.gsm_device_iface = Interface(self.usage_obj, 'org.freesmartphone.GSM.Device')
-            self.gsm_sim_iface = Interface(self.usage_obj, 'org.freesmartphone.GSM.SIM')
-            self.gsm_network_iface = Interface(self.usage_obj, 'org.freesmartphone.GSM.Network')
-            self.gsm_call_iface = Interface(self.usage_obj, 'org.freesmartphone.GSM.Call')
-            self.gsm_test_iface = Interface(self.usage_obj, 'org.freesmartphone.GSM.Test')
+            self.gsm_device_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Device')
+            self.gsm_sim_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.SIM')
+            self.gsm_network_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Network')
+            self.gsm_call_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Call')
+            self.gsm_test_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Test')
 
             self.gsm_device_obj.connect_to_signal( "CallStatus", self.CallStatus )
         except Exception, e:
