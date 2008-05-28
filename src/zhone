@@ -477,6 +477,8 @@ class EvasCanvas(object):
         self.evas_obj.name_class = (WM_NAME, WM_CLASS)
         self.evas_obj.fullscreen = fullscreen
         self.evas_obj.size = size
+        self.evas_obj.evas.image_cache_set( 6*1024*1024 )
+        self.evas_obj.evas.font_cache_set( 2*1024*1024 )
         self.evas_obj.show()
 
     def on_resize(self, evas_obj):
