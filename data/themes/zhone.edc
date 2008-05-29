@@ -34,7 +34,7 @@ images {
         name: "fadeout";                                                \
         signal: "fadeout";                                              \
         action: STATE_SET "invisible" 0.0;                              \
-        transition: LINEAR 0.3;                                         \
+        transition: LINEAR 0.0;                                         \
         target: "swallow_clip";                                         \
         after: "finish_fade";                                           \
     }                                                                   \
@@ -50,8 +50,8 @@ images {
     }
 
 #define ACTIVATE(part_name)                                             \
-    program {                                                            \
-        name: "activate_"part_name;                                        \
+    program {                                                           \
+        name: "activate_"part_name;                                     \
         signal: "mouse,in";                                             \
         source: part_name;                                              \
         action: STATE_SET "active" 0.0;                                 \
