@@ -384,8 +384,8 @@ class GUI(object):
 
         self.groups["swallow"].part_text_set("label_top_left", "zhone!")
 
-        self.groups["swallow"].message_send(1, 0.3) # GSM signal strength
-        self.groups["swallow"].message_send(2, 0.3) # battery charge
+        self.groups["swallow"].message_send(1, 0.0) # GSM signal strength
+        self.groups["swallow"].message_send(2, 0.0) # battery charge
 
         self.groups["swallow"].part_swallow("swallow2", self.groups["main"])
         self.current_group = self.groups["main"]
@@ -401,6 +401,7 @@ class GUI(object):
             self.groups["swallow"].part_text_set( "label_top_right", "no dbus" );
 
         if dbus.gsm_device_obj:
+            dbus.onNetworkStatus.append(self.update_network)
             try:
                 dbus.gsm_device_iface.SetAntennaPower(True)
                 dbus.gsm_network_iface.Register()
@@ -439,6 +440,19 @@ class GUI(object):
                 items[-1] = "-" + items[-1]
                 continue
         self.groups["swallow"].part_text_set( "label_top_right", " ".join( items ) );
+
+    def update_network( self, **args):
+        self.groups["swallow"].message_send(1, args['strength']/100.0)
+        if args["status"] == "denied":
+            self.groups["swallow"].part_text_set("label_top_left", "SOS only")
+        elif args["status"] == "unregistered":
+            self.groups["swallow"].part_text_set("label_top_left", "No Service")
+        elif args["status"] == "busy":
+            self.groups["swallow"].part_text_set("label_top_left", "Searching...")
+        elif args["status"] == "unknown":
+            self.groups["swallow"].part_text_set("label_top_left", "[Unknown]")
+        else:
+            self.groups["swallow"].part_text_set("label_top_left", args['provider_name'])
 
     # TODO better state management for transitions
     def transition_to(self, target):
@@ -563,13 +577,15 @@ class DBus( object ):
             self.gsm_call_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Call')
             self.gsm_test_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Test')
 
-            self.gsm_device_obj.connect_to_signal( "CallStatus", self.CallStatus )
+            self.gsm_call_iface.connect_to_signal( "CallStatus", self.CallStatus )
+            self.gsm_network_iface.connect_to_signal( "Status", self.NetworkStatus )
         except Exception, e:
             print e
             self.gsm_device_obj = None
 
         self.onResourceChanged = []
         self.onCallStatus = []
+        self.onNetworkStatus = []
 
     def ResourceChanged( self, resourcename ):
         for cb in self.onResourceChanged:
@@ -578,6 +594,10 @@ class DBus( object ):
     def CallStatus( self, id, status, properties ):
         for cb in self.onCallStatus:
             cb( id=id, status=status, properties=properties )
+
+    def NetworkStatus( self, status, provider_name, strength ):
+        for cb in self.onNetworkStatus:
+            cb( provider_name=provider_name, status=status, strength=strength )
 
 if __name__ == "__main__":
     options, args = MyOptionParser().parse_args()
