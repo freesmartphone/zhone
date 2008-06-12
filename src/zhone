@@ -131,7 +131,7 @@ class pyphone_call(edje_group):
             if dbus.gsm_device_obj:
                 dbus.gsm_call_iface.Release(self.call)
             else:
-                self.update_status("released")
+                self.update_status("release")
 
     def update_status(self, status):
         self.part_text_set( "label_description", status )
@@ -382,7 +382,10 @@ class GUI(object):
         self.groups["swallow"].show()
         self.groups["swallow"].on_key_down_add(self.on_key_down)
 
-        self.groups["swallow"].part_text_set("label_top_left", "zhone!");
+        self.groups["swallow"].part_text_set("label_top_left", "zhone!")
+
+        self.groups["swallow"].message_send(1, 0.3) # GSM signal strength
+        self.groups["swallow"].message_send(2, 0.3) # battery charge
 
         self.groups["swallow"].part_swallow("swallow2", self.groups["main"])
         self.current_group = self.groups["main"]

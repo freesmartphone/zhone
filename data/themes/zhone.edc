@@ -27,7 +27,7 @@ images {
 }
 
 #define BUTTON_BOTTOM_HEIGHT 0.12;
-#define HEADER_HEIGHT 0.06;
+#define HEADER_HEIGHT 0.07;
 
 #define TRANSITION()                                                    \
     program {                                                           \
@@ -293,6 +293,22 @@ images {
 collections {
     group {
         name: "swallow";
+        script {
+            public message(Msg_Type:type, id, ...) {
+                if ((type == MSG_FLOAT) && (id == 1)) {
+                    new Float:value = getfarg(2);
+                    custom_state(PART:"bar_top_left", "default", 0.0);
+                    set_state_val(PART:"bar_top_left", STATE_REL2, value, 1.0);
+                    set_state(PART:"bar_top_left", "custom", 0.0);
+                }
+                if ((type == MSG_FLOAT) && (id == 2)) {
+                    new Float:value = 1.0 - getfarg(2);
+                    custom_state(PART:"bar_top_right", "default", 0.0);
+                    set_state_val(PART:"bar_top_right", STATE_REL1, value, 0.0);
+                    set_state(PART:"bar_top_right", "custom", 0.0);
+                }
+            }
+        }
         parts {
             part {
                 name: "background_color";
@@ -333,12 +349,12 @@ collections {
                 description {
                     state: "default" 0.0;
                     rel1 {
-                        relative: 0.0 0.2;
+                        relative: 0.0 0.1;
                         offset: 0 0;
                         to: "top";
                     }
                     rel2 {
-                        relative: 1/3 0.8;
+                        relative: 1/3 0.7;
                         offset: -1 -1;
                         to: "top";
                     }
@@ -357,12 +373,12 @@ collections {
                 description {
                     state: "default" 0.0;
                     rel1 {
-                        relative: 1/3 0.2;
+                        relative: 1/3 0.1;
                         offset: 0 0;
                         to: "top";
                     }
                     rel2 {
-                        relative: 2/3 0.8;
+                        relative: 2/3 0.7;
                         offset: -1 -1;
                         to: "top";
                     }
@@ -381,12 +397,12 @@ collections {
                 description {
                     state: "default" 0.0;
                     rel1 {
-                        relative: 2/3 0.2;
+                        relative: 2/3 0.1;
                         offset: 0 0;
                         to: "top";
                     }
                     rel2 {
-                        relative: 1.0 0.8;
+                        relative: 1.0 0.7;
                         offset: -1 -1;
                         to: "top";
                     }
@@ -413,6 +429,120 @@ collections {
                         offset: -1 -1;
                     }
                     color: 255 255 255 255;
+                }
+            }
+            part {
+                name: "bar_border_top_left";
+                mouse_events: 0;
+                type: RECT;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0/3 0.8;
+                        offset: 0 0;
+                        to: "top";
+                    }
+                    rel2 {
+                        relative: 1/3 1.0;
+                        offset: -1 -1;
+                        to: "top";
+                    }
+                    color: 255 255 255 255;
+                }
+            }
+            part {
+                name: "bar_background_top_left";
+                mouse_events: 0;
+                type: RECT;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 0.0;
+                        offset: 1 1;
+                        to: "bar_border_top_left";
+                    }
+                    rel2 {
+                        relative: 1.0 1.0;
+                        offset: -2 -2;
+                        to: "bar_border_top_left";
+                    }
+                    color: 0 0 0 255;
+                }
+            }
+            part {
+                name: "bar_top_left";
+                mouse_events: 0;
+                type: RECT;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 0.0;
+                        offset: 1 1;
+                        to: "bar_border_top_left";
+                    }
+                    rel2 {
+                        relative: 1.0 1.0;
+                        offset: -2 -2;
+                        to: "bar_border_top_left";
+                    }
+                    color: 0 0 255 255;
+                }
+            }
+            part {
+                name: "bar_border_top_right";
+                mouse_events: 0;
+                type: RECT;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 2/3 0.8;
+                        offset: 0 0;
+                        to: "top";
+                    }
+                    rel2 {
+                        relative: 3/3 1.0;
+                        offset: -1 -1;
+                        to: "top";
+                    }
+                    color: 255 255 255 255;
+                }
+            }
+            part {
+                name: "bar_background_top_right";
+                mouse_events: 0;
+                type: RECT;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 0.0;
+                        offset: 1 1;
+                        to: "bar_border_top_right";
+                    }
+                    rel2 {
+                        relative: 1.0 1.0;
+                        offset: -2 -2;
+                        to: "bar_border_top_right";
+                    }
+                    color: 0 0 0 255;
+                }
+            }
+            part {
+                name: "bar_top_right";
+                mouse_events: 0;
+                type: RECT;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 0.0;
+                        offset: 1 1;
+                        to: "bar_border_top_right";
+                    }
+                    rel2 {
+                        relative: 1.0 1.0;
+                        offset: -2 -2;
+                        to: "bar_border_top_right";
+                    }
+                    color: 0 255 0 255;
                 }
             }
             part {
