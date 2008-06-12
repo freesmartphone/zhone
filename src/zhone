@@ -416,6 +416,8 @@ class GUI(object):
     def display_time(self):
         self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()));
         self.groups["swallow"].part_text_set("label_top_center", time.strftime("%Y-%m-%d", time.localtime()));
+        batcharge = dbus.device_power_iface.GetChargingPercentage()
+        self.groups["swallow"].message_send(2, batcharge/100.0) # battery charge
         return True;
 
     def display_resources( self, **args ):
@@ -582,6 +584,14 @@ class DBus( object ):
         except Exception, e:
             print e
             self.gsm_device_obj = None
+
+        try:
+            # TODO: Don't pick APM interface blindly, but check what is there
+            self.device_power_obj = self.bus.get_object('org.freesmartphone.Device', '/org/freesmartphone/Device/PowerSupply/apm')
+            self.device_power_iface = Interface(self.device_power_obj, 'org.freesmartphone.Device.PowerSupply')
+        except Exception, e:
+            print e
+            self.device_obj = None
 
         self.onResourceChanged = []
         self.onCallStatus = []
