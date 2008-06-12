@@ -12,12 +12,12 @@ parts {
             rel1 {
                 relative: 0.0 0.1;
                 offset: 0 0;
-                to: "background";
+                to: "swallow_main";
             }
             rel2 {
                 relative: 1.0 0.4;
                 offset: -1 -1;
-                to: "background";
+                to: "swallow_main";
             }
             color: 255 255 255 64;
         }
@@ -58,12 +58,12 @@ parts {
             rel1 {
                 relative: 0.0 0.42;
                 offset: 0 0;
-                to: "background";
+                to: "swallow_main";
             }
             rel2 {
                 relative: 1.0 1.0;
                 offset: -1 -1;
-                to: "background";
+                to: "swallow_main";
             }
             color: 255 255 255 255;
         }

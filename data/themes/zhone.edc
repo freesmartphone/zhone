@@ -104,10 +104,9 @@ images {
         }                                                               \
     }                                                                   \
     part {                                                              \
-        name: "background";                                             \
-        type: IMAGE;                                                    \
+        name: "swallow_main";                                           \
+        type: RECT;                                                     \
         mouse_events: 0;                                                \
-        clip_to: "swallow_clip";                                        \
         description {                                                   \
             state: "default" 0.0;                                       \
             rel1 {                                                      \
@@ -118,7 +117,7 @@ images {
                 relative: 1.0 1.0-BUTTON_BOTTOM_HEIGHT;                 \
                 offset: -1 -1;                                          \
             }                                                           \
-            image { normal: "background.png"; }                         \
+            color: 255 255 255 0;                                       \
         }                                                               \
     }
 
@@ -138,7 +137,7 @@ images {
                 relative: 1.0 1.0;                                      \
                 offset: -1 -1;                                          \
             }                                                           \
-            color: 255 255 255 0;                                       \
+            color: 255 255 255 255;                                     \
         }                                                               \
     }                                                                   \
     part {                                                              \
@@ -415,23 +414,6 @@ collections {
                 }
             }
             part {
-                name: "button_bottom_background";
-                mouse_events: 0;
-                type: RECT;
-                description {
-                    state: "default" 0.0;
-                    rel1 {
-                        relative: 0.0 1.0-BUTTON_BOTTOM_HEIGHT;
-                        offset: 0 0;
-                    }
-                    rel2 {
-                        relative: 1.0 1.0;
-                        offset: -1 -1;
-                    }
-                    color: 255 255 255 255;
-                }
-            }
-            part {
                 name: "bar_border_top_left";
                 mouse_events: 0;
                 type: RECT;
@@ -546,6 +528,23 @@ collections {
                 }
             }
             part {
+                name: "background";
+                type: IMAGE;
+                mouse_events: 0;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 HEADER_HEIGHT;
+                        offset: 0 0;
+                    }
+                    rel2 {
+                        relative: 1.0 1.0;
+                        offset: -1 -1;
+                    }
+                    image { normal: "background.png"; }
+                }
+            }
+            part {
                 name: "swallow1";
                 mouse_events: 1;
                 type: SWALLOW;
@@ -594,12 +593,12 @@ collections {
                     rel1 {
                         relative: 0.0 0.1;
                         offset: 0 0;
-                        to: "background";
+                        to: "swallow_clip";
                     }
                     rel2 {
                         relative: 1.0 0.3;
                         offset: -1 -1;
-                        to: "background";
+                        to: "swallow_clip";
                     }
                     color: 255 255 255 64;
                 }
@@ -642,12 +641,12 @@ collections {
                     rel1 {                                               \
                         relative: 0.05+(xpos*0.5) 0.35+(ypos*0.3);       \
                         offset: 0 0;                                     \
-                        to: "background";                                \
+                        to: "swallow_clip";                              \
                     }                                                    \
                     rel2 {                                               \
                         relative: 0.45+(xpos*0.5) 0.6+(ypos*0.3);        \
                         offset: -1 -1;                                   \
-                        to: "background";                                \
+                        to: "swallow_clip";                              \
                     }                                                    \
                     image {                                              \
                         normal: "button_main_background.png";            \
@@ -691,8 +690,6 @@ collections {
             ICON("contacts", 0, 1);
             ICON("power", 1, 1);
             ICON("sms", 1, 0);
-
-            BUTTONS_BOTTOM();
         }
         programs {
             EMIT_TRANSITION("button_phone", "phone");
