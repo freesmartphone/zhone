@@ -1,6 +1,17 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #coding=utf8
+"""
+Zen Phone - A Phone UI
 
+(C) 2007 Johannes 'Josch' Schauer
+(C) 2008 Michael 'Mickey' Lauer <mlauer@vanille-media.de>
+(C) 2008 Jan 'Shoragan' Luebbe
+(C) 2008 Daniel 'Alphaone' Willmann
+(C) 2008 Openmoko, Inc.
+GPLv2 or later
+"""
+
+#----------------------------------------------------------------------------#
 WIDTH = 480
 HEIGHT = 640
 
@@ -8,6 +19,7 @@ TITLE = "zhone"
 WM_NAME = "zhone"
 WM_CLASS = "zhone"
 
+#----------------------------------------------------------------------------#
 import os
 import sys
 import e_dbus
@@ -22,6 +34,7 @@ from dbus.exceptions import DBusException
 from optparse import OptionParser
 import time
 
+#----------------------------------------------------------------------------#
 for i in "../data/themes/zhone.edj /usr/local/share/zhone/zhone.edj /usr/share/zhone/zhone.edj".split():
     if os.path.exists( i ):
        global edjepath
@@ -30,7 +43,9 @@ for i in "../data/themes/zhone.edj /usr/local/share/zhone/zhone.edj /usr/share/z
 else:
     raise "Edje not found"
 
+#----------------------------------------------------------------------------#
 class edje_group(edje.Edje):
+#----------------------------------------------------------------------------#
     def __init__(self, main, group):
         self.main = main
         global edjepath
@@ -62,11 +77,15 @@ class edje_group(edje.Edje):
     def on_edje_signal_finished_transition(self, emission, source):
         self.main.transition_finished()
 
+#----------------------------------------------------------------------------#
 class pyphone_main(edje_group):
+#----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "main")
 
+#----------------------------------------------------------------------------#
 class pyphone_phone(edje_group):
+#----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "phone")
         self.text = []
@@ -97,7 +116,9 @@ class pyphone_phone(edje_group):
         #self.text.append(source)
         #self.part_text_set("label", "".join(self.text))
 
+#----------------------------------------------------------------------------#
 class pyphone_call(edje_group):
+#----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "call")
         self.update_status("idle")
@@ -156,7 +177,9 @@ class pyphone_call(edje_group):
                 self.main.transition_to("call")
         self.status = status
 
+#----------------------------------------------------------------------------#
 class pyphone_sms(edje_group):
+#----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "sms")
         self.text = []
@@ -325,7 +348,9 @@ class pyphone_sms(edje_group):
             for j in xrange(4):
                 self.part_text_set("label2_%d_%d" % (i,j) , self.button_labels2[num][j][i])
 
+#----------------------------------------------------------------------------#
 class pyphone_pin(edje_group):
+#----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "pin")
         self.part_text_set( "label_description", "enter pin" )
@@ -349,7 +374,9 @@ class pyphone_pin(edje_group):
                 dbus.gsm_network_iface.Register()
                 self.main.transition_to("main")
 
+#----------------------------------------------------------------------------#
 class GUI(object):
+#----------------------------------------------------------------------------#
     def on_key_down(self, obj, event):
         if event.keyname in ("F6", "f"):
             self.evas_canvas.evas_obj.fullscreen = not self.evas_canvas.evas_obj.fullscreen
@@ -477,7 +504,9 @@ class GUI(object):
         self.in_transition = False
 
 
+#----------------------------------------------------------------------------#
 class EvasCanvas(object):
+#----------------------------------------------------------------------------#
     def __init__(self, fullscreen, engine, size):
         if engine == "x11":
             f = ecore.evas.SoftwareX11
@@ -509,7 +538,9 @@ class EvasCanvas(object):
     def on_delete_request(self, evas_obj):
         ecore.main_loop_quit()
 
+#----------------------------------------------------------------------------#
 class MyOptionParser(OptionParser):
+#----------------------------------------------------------------------------#
     def __init__(self):
         OptionParser.__init__(self)
         self.set_defaults(fullscreen = False)
@@ -556,10 +587,13 @@ class MyOptionParser(OptionParser):
             raise optparse.OptionValueError("Invalid format for %s" % option)
         parser.values.geometry = (w, h)
 
+#----------------------------------------------------------------------------#
 class DBus( object ):
+#----------------------------------------------------------------------------#
     def __init__( self ):
-        self.bus = SystemBus( mainloop=e_dbus.DBusEcoreMainLoop())
+        self.bus = SystemBus( mainloop=e_dbus.DBusEcoreMainLoop() )
 
+        # Usage
         try:
             self.usage_obj = self.bus.get_object('org.freesmartphone.Usage', '/org/freesmartphone/Usage')
             self.usage_iface = Interface(self.usage_obj, 'org.freesmartphone.Usage')
@@ -571,6 +605,7 @@ class DBus( object ):
             print e
             self.usage_obj = None
 
+        # Phone
         try:
             self.gsm_device_obj = self.bus.get_object('org.freesmartphone.ophoned', '/org/freesmartphone/GSM/Device')
             self.gsm_device_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Device')
@@ -585,10 +620,27 @@ class DBus( object ):
             print e
             self.gsm_device_obj = None
 
+        # Device
         try:
-            # TODO: Don't pick APM interface blindly, but check what is there
+            #FIXME Don't pick objects blindly, but check what is there
             self.device_power_obj = self.bus.get_object('org.freesmartphone.Device', '/org/freesmartphone/Device/PowerSupply/apm')
             self.device_power_iface = Interface(self.device_power_obj, 'org.freesmartphone.Device.PowerSupply')
+
+            self.idlenotifier_obj = self.bus.get_object( "org.freesmartphone.Device", "/org/freesmartphone/Device/IdleNotifier/0" )
+            self.idlenotifier = Interface( self.idlenotifier_obj, "org.freesmartphone.Device.IdleNotifier" )
+            self.idlenotifier.connect_to_signal( "State", self.cbStateChanged )
+
+            self.inputnotifier_obj = self.bus.get_object( "org.freesmartphone.Device", "/org/freesmartphone/Device/Input" )
+            self.inputnotifier = Interface( self.inputnotifier_obj, "org.freesmartphone.Device.Input" )
+            self.inputnotifier.connect_to_signal( "Event", self.cbEvent )
+
+            try:
+                self.display_obj = self.bus.get_object( "org.freesmartphone.Device", "/org/freesmartphone/Device/Display/pcf50633_bl" )
+            except DBusException:
+                pass
+            self.display = Interface( self.display_obj, "org.freesmartphone.Device.Display" )
+            self.display.SetBrightness( 90 )
+
         except Exception, e:
             print e
             self.device_obj = None
@@ -609,10 +661,28 @@ class DBus( object ):
         for cb in self.onNetworkStatus:
             cb( provider_name=provider_name, status=status, strength=strength )
 
+    def cbStateChanged( self, state ):
+        print "IDLE STATE=", state
+        if state == "BUSY":
+            self.display.SetBrightness( 90 )
+        elif state == "IDLE_DIM":
+            self.display.SetBrightness( 20 )
+        elif state == "IDLE_PRELOCK":
+            self.display.SetBrightness( 0 )
+
+    def cbEvent( self, name, action, seconds ):
+        print "INPUT EVENT=", name, action, seconds
+        if name+action == "AUXpressed":
+            pass
+            # FIXME launch transition to main screen
+
 if __name__ == "__main__":
     options, args = MyOptionParser().parse_args()
+    #FIXME all initialization needs to be done from within the mainloop
     dbus = DBus()
-#    dbus = None
+    #dbus = None
     gui = GUI()
-    ecore.main_loop_begin()
-
+    try:
+        ecore.main_loop_begin()
+    except KeyboardInterrupt:
+        ecore.main_loop_quit()
