@@ -622,7 +622,7 @@ class DBus( object ):
 
         # Device
         try:
-            #FIXME Don't pick objects blindly, but check what is there
+            # FIXME Don't pick objects blindly, but check what is there
             self.device_power_obj = self.bus.get_object('org.freesmartphone.Device', '/org/freesmartphone/Device/PowerSupply/apm')
             self.device_power_iface = Interface(self.device_power_obj, 'org.freesmartphone.Device.PowerSupply')
 
@@ -634,12 +634,22 @@ class DBus( object ):
             self.inputnotifier = Interface( self.inputnotifier_obj, "org.freesmartphone.Device.Input" )
             self.inputnotifier.connect_to_signal( "Event", self.cbEvent )
 
+            self.display_obj = None
             try:
                 self.display_obj = self.bus.get_object( "org.freesmartphone.Device", "/org/freesmartphone/Device/Display/pcf50633_bl" )
             except DBusException:
                 pass
-            self.display = Interface( self.display_obj, "org.freesmartphone.Device.Display" )
-            self.display.SetBrightness( 90 )
+            if self.display_obj is None:
+                try:
+                    self.display_obj = self.bus.get_object( "org.freesmartphone.Device", "/org/freesmartphone/Device/Display/gta01_bl" )
+                except DBusException:
+                    pass
+
+            if self.display_obj is not None:
+                self.display = Interface( self.display_obj, "org.freesmartphone.Device.Display" )
+                self.display.SetBrightness( 90 )
+            else:
+                self.display = None
 
         except Exception, e:
             print e
@@ -664,11 +674,14 @@ class DBus( object ):
     def cbStateChanged( self, state ):
         print "IDLE STATE=", state
         if state == "BUSY":
-            self.display.SetBrightness( 90 )
+            if self.display is not None:
+                self.display.SetBrightness( 90 )
         elif state == "IDLE_DIM":
-            self.display.SetBrightness( 20 )
+            if self.display is not None:
+                self.display.SetBrightness( 20 )
         elif state == "IDLE_PRELOCK":
-            self.display.SetBrightness( 0 )
+            if self.display is not None:
+                self.display.SetBrightness( 0 )
 
     def cbEvent( self, name, action, seconds ):
         print "INPUT EVENT=", name, action, seconds
@@ -678,7 +691,7 @@ class DBus( object ):
 
 if __name__ == "__main__":
     options, args = MyOptionParser().parse_args()
-    #FIXME all initialization needs to be done from within the mainloop
+    # FIXME all initialization needs to be done from within the mainloop
     dbus = DBus()
     #dbus = None
     gui = GUI()
