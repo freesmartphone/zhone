@@ -686,8 +686,15 @@ class DBus( object ):
     def cbEvent( self, name, action, seconds ):
         print "INPUT EVENT=", name, action, seconds
         if name+action == "AUXpressed":
-            pass
             # FIXME launch transition to main screen
+            pass
+        elif name+action == "POWERpressed":
+            self.gsm_device_iface.PrepareForSuspend()
+            print "ENTERING SUSPEND"
+            os.system( "apm -s" )
+            print "RETURN FROM SUSPEND"
+            self.gsm_device_iface.RecoverFromSuspend()
+            self.display.SetBrightness( 90 )
 
 if __name__ == "__main__":
     options, args = MyOptionParser().parse_args()
