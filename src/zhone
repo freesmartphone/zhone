@@ -62,10 +62,10 @@ class edje_group(edje.Edje):
         if target == "phone" and not self.main.groups["call"].status in ["idle" , "release"]:
             target = "call"
         if target == "phone":
-            if dbus.gsm_device_obj and dbus.gsm_network_iface.GetStatus()[0] == 'unregistered':
+            if ( dbus_object.gsm_device_obj is not None ) and dbus_object.gsm_network_iface.GetStatus()[0] == 'unregistered':
                 try:
-                    dbus.gsm_device_iface.SetAntennaPower(True)
-                    dbus.gsm_network_iface.Register()
+                    dbus_object.gsm_device_iface.SetAntennaPower(True)
+                    dbus_object.gsm_network_iface.Register()
                 except DBusException, e:
                     # TODO handle this better
                     print e
@@ -106,8 +106,8 @@ class pyphone_phone(edje_group):
                 self.text = self.text[:-1]
                 self.part_text_set("label", "".join(self.text)+" ")
             elif key in "dial":
-                if dbus.gsm_device_obj:
-                    dbus.gsm_call_iface.Initiate("".join(self.text), "voice")
+                if dbus_object.gsm_device_obj:
+                    dbus_object.gsm_call_iface.Initiate("".join(self.text), "voice")
                 else:
                     # Fake onCallStatus...
                     self.main.groups["call"].onCallStatus( None, "outgoing", {"number": "".join(self.text)} )
@@ -124,33 +124,36 @@ class pyphone_call(edje_group):
         self.update_status("idle")
         self.call = None
 
-        if dbus:
-            dbus.onCallStatus.append(self.onCallStatus)
+        if dbus_object:
+            dbus_object.onCallStatus.append(self.onCallStatus)
 
     def onCallStatus( self, id, status, properties ):
         self.call = id
         self.update_status(status)
-        self.part_text_set( "label", properties.get( "peer", "unknown number" ) )
+        try:
+            self.part_text_set( "label", properties[ "peer" ] )
+        except KeyError:
+            pass
 
     @edje.decorators.signal_callback("call_button_pressed", "button_left")
     def on_edje_signal_call_button_left_pressed(self, emission, source):
         if self.status == "active":
-            if dbus.gsm_device_obj:
-                #dbus.gsm_call_iface.Hold(self.call)
+            if dbus_object.gsm_device_obj:
+                #dbus_object.gsm_call_iface.Hold(self.call)
                 pass
             else:
                 self.update_status("held")
         elif self.status in ["incoming", "held"]:
-            if dbus.gsm_device_obj:
-                dbus.gsm_call_iface.Activate(self.call)
+            if dbus_object.gsm_device_obj:
+                dbus_object.gsm_call_iface.Activate(self.call)
             else:
                 self.update_status("active")
 
     @edje.decorators.signal_callback("call_button_pressed", "button_right")
     def on_edje_signal_call_button_right_pressed(self, emission, source):
         if self.status in ["outgoing", "active", "incoming", "held"]:
-            if dbus.gsm_device_obj:
-                dbus.gsm_call_iface.Release(self.call)
+            if dbus_object.gsm_device_obj:
+                dbus_object.gsm_call_iface.Release(self.call)
             else:
                 self.update_status("release")
 
@@ -353,7 +356,7 @@ class pyphone_pin(edje_group):
 #----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "pin")
-        self.part_text_set( "label_description", "enter pin" )
+        self.part_text_set( "label_description", "SIM PIN?" )
         self.text = []
 
     @edje.decorators.signal_callback("pin_button_pressed", "*")
@@ -368,22 +371,23 @@ class pyphone_pin(edje_group):
             self.text = self.text[:-1]
             self.part_text_set("label", "".join(self.text)+" ")
         elif key in "done":
-            if dbus.gsm_device_obj:
-                dbus.gsm_sim_iface.SendAuthCode("".join(self.text))
-                dbus.gsm_device_iface.SetAntennaPower(True)
-                dbus.gsm_network_iface.Register()
-                self.main.transition_to("main")
+            if dbus_object.gsm_device_obj:
+                try:
+                    self.part_text_set( "label_description", "Sending..." )
+                    dbus_object.gsm_sim_iface.SendAuthCode("".join(self.text))
+                except DBusException, e:
+                    self.part_text_set( "label_description", "Invalid. SIM PIN?" )
+                else:
+                    self.part_text_set("label", "")
+                    dbus_object.gsm_device_iface.SetAntennaPower(True)
+                    dbus_object.gsm_network_iface.Register()
+                    self.main.transition_to("main")
 
 #----------------------------------------------------------------------------#
 class GUI(object):
 #----------------------------------------------------------------------------#
-    def on_key_down(self, obj, event):
-        if event.keyname in ("F6", "f"):
-            self.evas_canvas.evas_obj.fullscreen = not self.evas_canvas.evas_obj.fullscreen
-        elif event.keyname == "Escape":
-            ecore.main_loop_quit()
+    def __init__( self, options, args ):
 
-    def __init__(self):
         edje.frametime_set(1.0 / options.fps)
 
         self.evas_canvas = EvasCanvas(
@@ -421,17 +425,39 @@ class GUI(object):
         ecore.timer_add(60.0, self.display_time)
         self.display_time()
 
-        if dbus.usage_obj:
-            dbus.onResourceChanged.append(self.display_resources)
-            self.display_resources()
-        else:
-            self.groups["swallow"].part_text_set( "label_top_right", "no dbus" );
+        self.groups["swallow"].part_text_set( "label_top_right", "no dbus" )
+        ecore.idle_enterer_add( self.dbus_objectInit )
 
-        if dbus.gsm_device_obj:
-            dbus.onNetworkStatus.append(self.update_network)
+    def run( self ):
+        ecore.main_loop_begin()
+
+    def shutdown( self ):
+        ecore.main_loop_quit()
+
+    def dbus_objectInit( self ):
+        print "dbus_objectInit..."
+        global dbus_object
+        if dbus_object is None:
+            dbus_object = DBusObject()
+        if not dbus_object.initialize():
+            # try again later
+            ecore.timer_add( 10.0, self.dbus_objectInit )
+            return False
+        else:
+            self.dbus_objectInitOK()
+        return False
+
+    def dbus_objectInitOK( self ):
+        print "dbus_objectInitOK!"
+        if dbus_object.usage_obj is not None:
+            dbus_object.onResourceChanged.append(self.display_resources)
+            self.display_resources()
+
+        if dbus_object.gsm_device_obj is not None:
+            dbus_object.onNetworkStatus.append(self.update_network)
             try:
-                dbus.gsm_device_iface.SetAntennaPower(True)
-                dbus.gsm_network_iface.Register()
+                dbus_object.gsm_device_iface.SetAntennaPower(True)
+                dbus_object.gsm_network_iface.Register()
             except DBusException, e:
                 # TODO handle this better
                 print e
@@ -441,11 +467,12 @@ class GUI(object):
             self.transition_to(options.start)
 
     def display_time(self):
-        self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()));
-        self.groups["swallow"].part_text_set("label_top_center", time.strftime("%Y-%m-%d", time.localtime()));
-        batcharge = dbus.device_power_iface.GetChargingPercentage()
-        self.groups["swallow"].message_send(2, batcharge/100.0) # battery charge
-        return True;
+        self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()))
+        self.groups["swallow"].part_text_set("label_top_center", time.strftime("%Y-%m-%d", time.localtime()))
+        if ( dbus_object is not None ) and ( dbus_object.device_power_iface is not None ):
+            batcharge = dbus_object.device_power_iface.GetChargingPercentage()
+            self.groups["swallow"].message_send(2, batcharge/100.0) # battery charge
+        return True
 
     def display_resources( self, **args ):
         items = []
@@ -455,20 +482,20 @@ class GUI(object):
             "GPS": "S",
             "Bluetooth": "B",
         }
-        for resourcename in dbus.usage_iface.ListResources():
-            if dbus.usage_iface.GetResourceState( resourcename ):
-                users = dbus.usage_iface.GetResourceUsers( resourcename )
+        for resourcename in dbus_object.usage_iface.ListResources():
+            if dbus_object.usage_iface.GetResourceState( resourcename ):
+                users = dbus_object.usage_iface.GetResourceUsers( resourcename )
                 items.append( "%s%s" % ( names[resourcename], len( users ) ) )
             else:
                 items.append( "%s" % ( names[resourcename].lower() ) )
-            policy = dbus.usage_iface.GetResourcePolicy( resourcename )
+            policy = dbus_object.usage_iface.GetResourcePolicy( resourcename )
             if policy == 'enabled':
                 items[-1] = "+" + items[-1]
                 continue
             elif policy == 'disabled':
                 items[-1] = "-" + items[-1]
                 continue
-        self.groups["swallow"].part_text_set( "label_top_right", " ".join( items ) );
+        self.groups["swallow"].part_text_set( "label_top_right", " ".join( items ) )
 
     def update_network( self, **args):
         self.groups["swallow"].message_send(1, args['strength']/100.0)
@@ -502,6 +529,12 @@ class GUI(object):
         self.previous_group.hide()
         self.groups["swallow"].part_swallow("swallow2", self.current_group)
         self.in_transition = False
+
+    def on_key_down(self, obj, event):
+        if event.keyname in ("F6", "f"):
+            self.evas_canvas.evas_obj.fullscreen = not self.evas_canvas.evas_obj.fullscreen
+        elif event.keyname == "Escape":
+            ecore.main_loop_quit()
 
 
 #----------------------------------------------------------------------------#
@@ -588,45 +621,87 @@ class MyOptionParser(OptionParser):
         parser.values.geometry = (w, h)
 
 #----------------------------------------------------------------------------#
-class DBus( object ):
+class DBusObject( object ):
 #----------------------------------------------------------------------------#
     def __init__( self ):
-        self.bus = SystemBus( mainloop=e_dbus.DBusEcoreMainLoop() )
+        self.objects = {}
+        self.onResourceChanged = []
+        self.onCallStatus = []
+        self.onNetworkStatus = []
+        self.ignoreSuspend = False
+
+        self.gsm_device_obj = None
+        self.gsm_device_iface = None
+        self.usage_iface = None
+        self.device_iface = None
+        self.device_power_iface = None
+        self.display = None
+
+        self.fullinit = False
+
+    def tryGetProxy( self, busname, objname ):
+        object = None
+        try:
+            object = self.objects[ "%s:%s" % ( busname, objname ) ]
+        except KeyError:
+            try:
+                object = self.bus.get_object( busname, objname )
+            except DBusException, e:
+                print "could not create proxy for %s:%s" % ( busname, objname ), e
+            else:
+                self.objects[ "%s:%s" % ( busname, objname ) ] = object
+        return object
+
+    def initialize( self ):
+        if self.fullinit:
+            return True
+        try:
+            self.bus = SystemBus( mainloop=e_dbus.DBusEcoreMainLoop() )
+        except DBusException, e:
+            print "could not connect to dbus_object system bus:", e
+            return False
+
+        failcount = 0
 
         # Usage
-        try:
-            self.usage_obj = self.bus.get_object('org.freesmartphone.Usage', '/org/freesmartphone/Usage')
+        self.usage_obj = self.tryGetProxy( 'org.freesmartphone.Usage', '/org/freesmartphone/Usage' )
+        if ( self.usage_obj is not None ) and ( self.usage_iface is None ):
             self.usage_iface = Interface(self.usage_obj, 'org.freesmartphone.Usage')
-
-            self.usage_obj.connect_to_signal( "ResourceChanged", self.ResourceChanged )
-
+            self.usage_iface.connect_to_signal( "ResourceChanged", self.ResourceChanged )
             self.usage_iface.RequestResource("GSM")
-        except Exception, e:
-            print e
-            self.usage_obj = None
+        if self.usage_obj is None:
+            failcount += 1
+        else:
+            print "usage ok", self.usage_iface
 
         # Phone
-        try:
-            self.gsm_device_obj = self.bus.get_object('org.freesmartphone.ophoned', '/org/freesmartphone/GSM/Device')
+        self.gsm_device_obj = self.tryGetProxy( 'org.freesmartphone.ophoned', '/org/freesmartphone/GSM/Device' )
+        print self.gsm_device_obj
+
+        if ( self.gsm_device_obj is not None ) and ( self.gsm_device_iface is None ):
+            print "creating gsm interfaces"
             self.gsm_device_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Device')
             self.gsm_sim_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.SIM')
             self.gsm_network_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Network')
             self.gsm_call_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Call')
             self.gsm_test_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Test')
-
             self.gsm_call_iface.connect_to_signal( "CallStatus", self.CallStatus )
             self.gsm_network_iface.connect_to_signal( "Status", self.NetworkStatus )
-        except Exception, e:
-            print e
-            self.gsm_device_obj = None
+        if self.gsm_device_obj is None:
+            failcount += 1
+        else:
+            print "gsm ok", self.gsm_network_iface
 
         # Device
-        try:
-            # FIXME Don't pick objects blindly, but check what is there
-            self.device_power_obj = self.bus.get_object('org.freesmartphone.Device', '/org/freesmartphone/Device/PowerSupply/apm')
+        self.device_obj = self.tryGetProxy( 'org.freesmartphone.Device', '/org/freesmartphone/Device' )
+        if ( self.device_obj is not None ) and ( self.device_iface is None ):
+            self.device_iface = Interface( self.device_obj, 'org.freesmartphone.Device' )
+
+            self.device_power_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.List( "org.freesmartphone.Device.PowerSupply" )[0] )
             self.device_power_iface = Interface(self.device_power_obj, 'org.freesmartphone.Device.PowerSupply')
 
-            self.idlenotifier_obj = self.bus.get_object( "org.freesmartphone.Device", "/org/freesmartphone/Device/IdleNotifier/0" )
+            self.idlenotifier_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.List( "org.freesmartphone.Device.IdleNotifier" )[0] )
+
             self.idlenotifier = Interface( self.idlenotifier_obj, "org.freesmartphone.Device.IdleNotifier" )
             self.idlenotifier.connect_to_signal( "State", self.cbStateChanged )
 
@@ -634,32 +709,19 @@ class DBus( object ):
             self.inputnotifier = Interface( self.inputnotifier_obj, "org.freesmartphone.Device.Input" )
             self.inputnotifier.connect_to_signal( "Event", self.cbEvent )
 
-            self.display_obj = None
-            try:
-                self.display_obj = self.bus.get_object( "org.freesmartphone.Device", "/org/freesmartphone/Device/Display/pcf50633_bl" )
-            except DBusException:
-                pass
+            self.display_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.List( "org.freesmartphone.Device.Display" )[0] )
             if self.display_obj is None:
-                try:
-                    self.display_obj = self.bus.get_object( "org.freesmartphone.Device", "/org/freesmartphone/Device/Display/gta01_bl" )
-                except DBusException:
-                    pass
-
-            if self.display_obj is not None:
                 self.display = Interface( self.display_obj, "org.freesmartphone.Device.Display" )
                 self.display.SetBrightness( 90 )
-            else:
-                self.display = None
+        if self.device_obj is None:
+            failcount += 1
+        else:
+            print "device ok", self.device_iface
 
-        except Exception, e:
-            print e
-            self.device_obj = None
-
-        self.onResourceChanged = []
-        self.onCallStatus = []
-        self.onNetworkStatus = []
-
-        self.ignoreSuspend = False
+        print "failcount=", failcount
+        if failcount == 0:
+            self.fullinit = True
+        return self.fullinit
 
     def ResourceChanged( self, resourcename ):
         for cb in self.onResourceChanged:
@@ -706,12 +768,12 @@ class DBus( object ):
             self.idlenotifier.SetState("BUSY")
 
 if __name__ == "__main__":
+
     options, args = MyOptionParser().parse_args()
-    # FIXME all initialization needs to be done from within the mainloop
-    dbus = DBus()
-    #dbus = None
-    gui = GUI()
+    dbus_object = None
+    gui = GUI( options, args )
     try:
-        ecore.main_loop_begin()
+        gui.run()
     except KeyboardInterrupt:
-        ecore.main_loop_quit()
+        gui.shutdown()
+        del gui
