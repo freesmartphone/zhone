@@ -124,9 +124,6 @@ class pyphone_call(edje_group):
         self.update_status("idle")
         self.call = None
 
-        if dbus_object:
-            dbus_object.onCallStatus.append(self.onCallStatus)
-
     def onCallStatus( self, id, status, properties ):
         self.call = id
         self.update_status(status)
@@ -454,6 +451,7 @@ class GUI(object):
             self.display_resources()
 
         if dbus_object.gsm_device_obj is not None:
+            dbus_object.onCallStatus.append( self.groups["call"].onCallStatus )
             dbus_object.onNetworkStatus.append(self.update_network)
             try:
                 dbus_object.gsm_device_iface.SetAntennaPower(True)
@@ -629,7 +627,9 @@ class DBusObject( object ):
         self.onCallStatus = []
         self.onNetworkStatus = []
         self.ignoreSuspend = False
+        self.idlenotifier = None
 
+        self.device_obj = None
         self.gsm_device_obj = None
         self.gsm_device_iface = None
         self.usage_iface = None
@@ -709,8 +709,9 @@ class DBusObject( object ):
             self.inputnotifier = Interface( self.inputnotifier_obj, "org.freesmartphone.Device.Input" )
             self.inputnotifier.connect_to_signal( "Event", self.cbEvent )
 
+            print "displays:", self.device_obj.List( "org.freesmartphone.Device.Display" )
             self.display_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.List( "org.freesmartphone.Device.Display" )[0] )
-            if self.display_obj is None:
+            if self.display_obj is not None:
                 self.display = Interface( self.display_obj, "org.freesmartphone.Device.Display" )
                 self.display.SetBrightness( 90 )
         if self.device_obj is None:
@@ -728,7 +729,8 @@ class DBusObject( object ):
             cb( resourcename=resourcename )
 
     def CallStatus( self, id, status, properties ):
-        if self.idlenotifier:
+        print "CALL STATUS=", id, status, properties
+        if self.idlenotifier is not None:
             self.idlenotifier.SetState("BUSY")
         for cb in self.onCallStatus:
             cb( id=id, status=status, properties=properties )
