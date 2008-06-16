@@ -664,6 +664,8 @@ class DBus( object ):
             cb( resourcename=resourcename )
 
     def CallStatus( self, id, status, properties ):
+        if self.idlenotifier:
+            self.idlenotifier.SetState("BUSY")
         for cb in self.onCallStatus:
             cb( id=id, status=status, properties=properties )
 
