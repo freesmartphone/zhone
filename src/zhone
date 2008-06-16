@@ -659,6 +659,8 @@ class DBus( object ):
         self.onCallStatus = []
         self.onNetworkStatus = []
 
+        self.ignoreSuspend = False
+
     def ResourceChanged( self, resourcename ):
         for cb in self.onResourceChanged:
             cb( resourcename=resourcename )
@@ -691,12 +693,17 @@ class DBus( object ):
             # FIXME launch transition to main screen
             pass
         elif name+action == "POWERpressed":
+            # FIXME should the kernel filter out the button event that triggerd the wakeup?
+            if self.ignoreSuspend: # we've just resumed
+                self.ignoreSuspend = False
+                return
+            self.ignoreSuspend = True
             self.gsm_device_iface.PrepareForSuspend()
             print "ENTERING SUSPEND"
             os.system( "apm -s" )
             print "RETURN FROM SUSPEND"
             self.gsm_device_iface.RecoverFromSuspend()
-            self.display.SetBrightness( 90 )
+            self.idlenotifier.SetState("BUSY")
 
 if __name__ == "__main__":
     options, args = MyOptionParser().parse_args()
