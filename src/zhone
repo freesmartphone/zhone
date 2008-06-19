@@ -381,6 +381,36 @@ class pyphone_pin(edje_group):
                     self.main.transition_to("main")
 
 #----------------------------------------------------------------------------#
+class pyphone_lock( edje_group ):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        edje_group.__init__( self, main, "lock" )
+        self.deactivate()
+
+    @edje.decorators.signal_callback( "mouse,down,1", "target_*" )
+    def on_edje_signal_button_pressed( self, emission, source ):
+        print emission, source
+        id = int( source.split( "_", 1 )[1] )
+        if id == self.step+1: # correct button
+            self.signal_emit( "activate_%i" % id, "" )
+            self.step += 1
+        else:
+            for id in range( 1, 5 ):
+                self.signal_emit( "deactivate_%i" % id, "" )
+            self.step = 0
+        if self.step == 4:
+            self.signal_emit("invisible", "")
+
+    def activate( self ):
+        self.step = 0
+        for id in range( 1, 5 ):
+            self.signal_emit( "deactivate_%i" % id, "" )
+        self.signal_emit("visible", "")
+
+    def deactivate( self ):
+        self.signal_emit("invisible", "")
+
+#----------------------------------------------------------------------------#
 class GUI(object):
 #----------------------------------------------------------------------------#
     def __init__( self, options, args ):
@@ -394,7 +424,7 @@ class GUI(object):
         )
 
         self.groups = {}
-        for part in ("swallow", "main", "contacts", "power"):
+        for part in ("swallow", "main", "contacts", "power", "error"):
             self.groups[part] = edje_group(self, part)
             self.evas_canvas.evas_obj.data[part] = self.groups[part]
 
@@ -406,6 +436,9 @@ class GUI(object):
         self.evas_canvas.evas_obj.data["call"] = self.groups["call"]
         self.groups["pin"] = pyphone_pin(self)
         self.evas_canvas.evas_obj.data["pin"] = self.groups["pin"]
+        self.groups["lock"] = pyphone_lock(self)
+        self.evas_canvas.evas_obj.data["lock"] = self.groups["lock"]
+        self.groups["swallow"].part_swallow( "lock", self.groups["lock"] )
 
         self.groups["swallow"].show()
         self.groups["swallow"].on_key_down_add(self.on_key_down)
@@ -461,8 +494,15 @@ class GUI(object):
                 print e
                 self.transition_to("pin")
 
+        if dbus_object.idlenotifier_iface is not None:
+            dbus_object.onIdleStateChanged.append(self.lock_on_idle)
+
         if options.start:
             self.transition_to(options.start)
+
+    def lock_on_idle( self, state ):
+        if state == "LOCK":
+            self.groups["lock"].activate()
 
     def display_time(self):
         self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()))
@@ -626,8 +666,8 @@ class DBusObject( object ):
         self.onResourceChanged = []
         self.onCallStatus = []
         self.onNetworkStatus = []
+        self.onIdleStateChanged = []
         self.ignoreSuspend = False
-        self.idlenotifier = None
 
         self.device_obj = None
         self.gsm_device_obj = None
@@ -635,7 +675,12 @@ class DBusObject( object ):
         self.usage_iface = None
         self.device_iface = None
         self.device_power_iface = None
-        self.display = None
+        self.idlenotifier_obj = None
+        self.idlenotifier_iface = None
+        self.inputnotifier_obj = None
+        self.inputnotifier_iface = None
+        self.display_obj = None
+        self.display_iface = None
 
         self.fullinit = False
 
@@ -667,7 +712,7 @@ class DBusObject( object ):
         self.usage_obj = self.tryGetProxy( 'org.freesmartphone.Usage', '/org/freesmartphone/Usage' )
         if ( self.usage_obj is not None ) and ( self.usage_iface is None ):
             self.usage_iface = Interface(self.usage_obj, 'org.freesmartphone.Usage')
-            self.usage_iface.connect_to_signal( "ResourceChanged", self.ResourceChanged )
+            self.usage_iface.connect_to_signal( "ResourceChanged", self.cbResourceChanged )
             self.usage_iface.RequestResource("GSM")
         if self.usage_obj is None:
             failcount += 1
@@ -685,8 +730,8 @@ class DBusObject( object ):
             self.gsm_network_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Network')
             self.gsm_call_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Call')
             self.gsm_test_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Test')
-            self.gsm_call_iface.connect_to_signal( "CallStatus", self.CallStatus )
-            self.gsm_network_iface.connect_to_signal( "Status", self.NetworkStatus )
+            self.gsm_call_iface.connect_to_signal( "CallStatus", self.cbCallStatus )
+            self.gsm_network_iface.connect_to_signal( "Status", self.cbNetworkStatus )
         if self.gsm_device_obj is None:
             failcount += 1
         else:
@@ -702,18 +747,18 @@ class DBusObject( object ):
 
             self.idlenotifier_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.List( "org.freesmartphone.Device.IdleNotifier" )[0] )
 
-            self.idlenotifier = Interface( self.idlenotifier_obj, "org.freesmartphone.Device.IdleNotifier" )
-            self.idlenotifier.connect_to_signal( "State", self.cbStateChanged )
+            self.idlenotifier_iface = Interface( self.idlenotifier_obj, "org.freesmartphone.Device.IdleNotifier" )
+            self.idlenotifier_iface.connect_to_signal( "State", self.cbIdleStateChanged )
 
             self.inputnotifier_obj = self.bus.get_object( "org.freesmartphone.Device", "/org/freesmartphone/Device/Input" )
-            self.inputnotifier = Interface( self.inputnotifier_obj, "org.freesmartphone.Device.Input" )
-            self.inputnotifier.connect_to_signal( "Event", self.cbEvent )
+            self.inputnotifier_iface = Interface( self.inputnotifier_obj, "org.freesmartphone.Device.Input" )
+            self.inputnotifier_iface.connect_to_signal( "Event", self.cbEvent )
 
             print "displays:", self.device_obj.List( "org.freesmartphone.Device.Display" )
             self.display_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.List( "org.freesmartphone.Device.Display" )[0] )
             if self.display_obj is not None:
-                self.display = Interface( self.display_obj, "org.freesmartphone.Device.Display" )
-                self.display.SetBrightness( 90 )
+                self.display_iface = Interface( self.display_obj, "org.freesmartphone.Device.Display" )
+                self.display_iface.SetBrightness( 90 )
         if self.device_obj is None:
             failcount += 1
         else:
@@ -724,32 +769,34 @@ class DBusObject( object ):
             self.fullinit = True
         return self.fullinit
 
-    def ResourceChanged( self, resourcename ):
+    def cbResourceChanged( self, resourcename ):
         for cb in self.onResourceChanged:
             cb( resourcename=resourcename )
 
-    def CallStatus( self, id, status, properties ):
+    def cbCallStatus( self, id, status, properties ):
         print "CALL STATUS=", id, status, properties
-        if self.idlenotifier is not None:
-            self.idlenotifier.SetState("BUSY")
+        if self.idlenotifier_iface is not None:
+            self.idlenotifier_iface.SetState("BUSY")
         for cb in self.onCallStatus:
             cb( id=id, status=status, properties=properties )
 
-    def NetworkStatus( self, status, provider_name, strength ):
+    def cbNetworkStatus( self, status, provider_name, strength ):
         for cb in self.onNetworkStatus:
             cb( provider_name=provider_name, status=status, strength=strength )
 
-    def cbStateChanged( self, state ):
+    def cbIdleStateChanged( self, state ):
         print "IDLE STATE=", state
+        for cb in self.onIdleStateChanged:
+            cb( state=state )
         if state == "BUSY":
-            if self.display is not None:
-                self.display.SetBrightness( 90 )
+            if self.display_iface is not None:
+                self.display_iface.SetBrightness( 90 )
         elif state == "IDLE_DIM":
-            if self.display is not None:
-                self.display.SetBrightness( 20 )
+            if self.display_iface is not None:
+                self.display_iface.SetBrightness( 20 )
         elif state == "IDLE_PRELOCK":
-            if self.display is not None:
-                self.display.SetBrightness( 0 )
+            if self.display_iface is not None:
+                self.display_iface.SetBrightness( 0 )
 
     def cbEvent( self, name, action, seconds ):
         print "INPUT EVENT=", name, action, seconds
@@ -767,7 +814,7 @@ class DBusObject( object ):
             os.system( "apm -s" )
             print "RETURN FROM SUSPEND"
             self.gsm_device_iface.RecoverFromSuspend()
-            self.idlenotifier.SetState("BUSY")
+            self.idlenotifier_iface.SetState("BUSY")
 
 if __name__ == "__main__":
 

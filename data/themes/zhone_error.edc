@@ -1,0 +1,133 @@
+parts {
+    part {
+        name: "error_background";
+        type: RECT;
+        repeat_events: 0;
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+            }
+            color: 0 0 0 192;
+        }
+    }
+
+    part {
+        name: "description";
+        type: TEXT;
+        effect: SOFT_OUTLINE;
+        mouse_events: 0;
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.1 0.05;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 0.9 0.15;
+                offset: -1 -1;
+            }
+            text {
+                font: "Sans";
+                size: 1;
+                fit: 1 1;
+                align: 0.5 0.5;
+            }
+        }
+    }
+
+    part {
+        name: "button_box";
+        type: RECT;
+        mouse_events: 0;
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.7;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 1.0 0.9;
+                offset: -1 -1;
+            }
+            color: 255 255 255 255;
+        }
+    }
+    
+    #define ERROR_XSIZE (1/2)
+    #define ERROR_YSIZE (1/1)
+    #define ERROR_BUTTON(part_name, xpos, ypos, label)                  \
+    part {                                                              \
+        name: "button_"part_name;                                       \
+        type: IMAGE;                                                    \
+        mouse_events: 1;                                                \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            rel1 {                                                      \
+                relative: ERROR_XSIZE*xpos ERROR_YSIZE*ypos;            \
+                offset: 1 1;                                            \
+                to: "button_box";                                       \
+            }                                                           \
+            rel2 {                                                      \
+                relative: ERROR_XSIZE+(ERROR_XSIZE*xpos)                \
+                          ERROR_YSIZE+(ERROR_YSIZE*ypos);               \
+                offset: -2 -2;                                          \
+                to: "button_box";                                       \
+            }                                                           \
+            image { normal: "button_background.png"; }                  \
+        }                                                               \
+        description {                                                   \
+            state: "active" 0.0;                                        \
+            inherit: "default" 0.0;                                     \
+            image { normal: "button_background_active.png"; }           \
+        }                                                               \
+    }                                                                   \
+    part {                                                              \
+        name: "label_"part_name;                                        \
+        type: TEXT;                                                     \
+        effect: SOFT_OUTLINE;                                           \
+        mouse_events: 0;                                                \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            align: 0.5 0.5;                                             \
+            rel1 {                                                      \
+                relative: 0.1 0.1;                                      \
+                offset: 0 0;                                            \
+                to: "button_"part_name;                                 \
+            }                                                           \
+            rel2 {                                                      \
+                relative: 0.9 0.9;                                      \
+                offset: -1 -1;                                          \
+                to: "button_"part_name;                                 \
+            }                                                           \
+            text {                                                      \
+                font: "Sans";                                           \
+                text: label;                                            \
+                size: 1;                                                \
+                fit: 1 1;                                               \
+            }                                                           \
+        }                                                               \
+    }
+    ERROR_BUTTON("left", 0, 0, "");
+    ERROR_BUTTON("right", 1, 0, "");
+}
+programs {
+    ACTIVATE("button_left");
+    ACTIVATE("button_right");
+    
+    #define EMIT_ERROR_BUTTON_PRESSED(part_name)                        \
+    program {                                                           \
+        name: "emit_error_button_pressed_"part_name;                    \
+        signal: "mouse,clicked,1";                                      \
+        source: part_name;                                              \
+        action: SIGNAL_EMIT "call_error_pressed" part_name;             \
+    }
+    
+    EMIT_ERROR_BUTTON_PRESSED("button_left");
+    EMIT_ERROR_BUTTON_PRESSED("button_right");
+}
