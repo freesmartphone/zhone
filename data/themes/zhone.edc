@@ -65,13 +65,6 @@ styles {
 #define ACTIVATE(part_name)                                             \
     program {                                                           \
         name: "activate_"part_name;                                     \
-        signal: "mouse,in";                                             \
-        source: part_name;                                              \
-        action: STATE_SET "active" 0.0;                                 \
-        target: part_name;                                              \
-    }                                                                   \
-    program {                                                           \
-        name: "click_activate_"part_name;                               \
         signal: "mouse,down,1";                                         \
         source: part_name;                                              \
         action: STATE_SET "active" 0.0;                                 \
@@ -79,6 +72,13 @@ styles {
     }                                                                   \
     program {                                                           \
         name: "deactivate_"part_name;                                   \
+        signal: "mouse,up,1";                                           \
+        source: part_name;                                              \
+        action: STATE_SET "default" 0.0;                                \
+        target: part_name;                                              \
+    }                                                                   \
+    program {                                                           \
+        name: "leave_"part_name;                                        \
         signal: "mouse,out";                                            \
         source: part_name;                                              \
         action: STATE_SET "default" 0.0;                                \
