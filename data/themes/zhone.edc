@@ -26,6 +26,13 @@ images {
    image: "icon_enter.png" COMP;
 }
 
+styles {
+   style {
+      name: "error_style";
+      base: "font=Sans font_size=36 align=center valign=center color=#fff wrap=word style=soft_outline";
+   }
+}
+
 #define BUTTON_BOTTOM_HEIGHT 0.12;
 #define HEADER_HEIGHT 0.07;
 
