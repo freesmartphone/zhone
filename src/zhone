@@ -389,7 +389,6 @@ class pyphone_lock( edje_group ):
 
     @edje.decorators.signal_callback( "mouse,down,1", "target_*" )
     def on_edje_signal_button_pressed( self, emission, source ):
-        print emission, source
         id = int( source.split( "_", 1 )[1] )
         if id == self.step+1: # correct button
             self.signal_emit( "activate_%i" % id, "" )
@@ -399,16 +398,63 @@ class pyphone_lock( edje_group ):
                 self.signal_emit( "deactivate_%i" % id, "" )
             self.step = 0
         if self.step == 4:
-            self.signal_emit("invisible", "")
+            self.signal_emit( "invisible", "" )
 
     def activate( self ):
         self.step = 0
         for id in range( 1, 5 ):
             self.signal_emit( "deactivate_%i" % id, "" )
-        self.signal_emit("visible", "")
+        self.signal_emit( "visible", "" )
 
     def deactivate( self ):
-        self.signal_emit("invisible", "")
+        self.signal_emit( "invisible", "" )
+
+#----------------------------------------------------------------------------#
+class pyphone_error( edje_group ):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        edje_group.__init__( self, main, "error" )
+        self.buttons = None
+        self.cb = None
+        self.deactivate()
+
+    @edje.decorators.signal_callback( "mouse,down,1", "button_*" )
+    def on_edje_signal_button_pressed( self, emission, source ):
+        id = int( source.split( "_", 1 )[1] )
+        self.deactivate()
+        self.cb( self.part_text_get( "label_%i" % id ) )
+
+    def activate( self, description, buttons, cb ):
+        self.buttons = buttons
+        self.cb = cb
+        count = len( buttons )
+        assert 1 <= count <= 3
+        self.part_text_set( "description", description )
+        if count == 1:
+            self.signal_emit( "hide_0", "" )
+            self.part_text_set( "label_0", "" )
+            self.signal_emit( "show_1", "" )
+            self.part_text_set( "label_1", buttons[0] )
+            self.signal_emit( "hide_2", "" )
+            self.part_text_set( "label_2", "" )
+        elif count == 2:
+            self.signal_emit( "show_0", "" )
+            self.part_text_set( "label_0", buttons[0] )
+            self.signal_emit( "hide_1", "" )
+            self.part_text_set( "label_1", "" )
+            self.signal_emit( "show_2", "" )
+            self.part_text_set( "label_2", buttons[1] )
+        elif count == 3:
+            self.signal_emit( "show_0", "" )
+            self.part_text_set( "label_0", buttons[0] )
+            self.signal_emit( "show_1", "" )
+            self.part_text_set( "label_1", buttons[1] )
+            self.signal_emit( "show_2", "" )
+            self.part_text_set( "label_2", buttons[2] )
+        self.signal_emit( "visible", "" )
+
+    def deactivate( self ):
+        self.signal_emit( "invisible", "" )
 
 #----------------------------------------------------------------------------#
 class GUI(object):
@@ -424,7 +470,7 @@ class GUI(object):
         )
 
         self.groups = {}
-        for part in ("swallow", "main", "contacts", "power", "error"):
+        for part in ("swallow", "main", "contacts", "power"):
             self.groups[part] = edje_group(self, part)
             self.evas_canvas.evas_obj.data[part] = self.groups[part]
 
@@ -439,6 +485,9 @@ class GUI(object):
         self.groups["lock"] = pyphone_lock(self)
         self.evas_canvas.evas_obj.data["lock"] = self.groups["lock"]
         self.groups["swallow"].part_swallow( "lock", self.groups["lock"] )
+        self.groups["error"] = pyphone_error(self)
+        self.evas_canvas.evas_obj.data["error"] = self.groups["error"]
+        self.groups["swallow"].part_swallow( "error", self.groups["error"] )
 
         self.groups["swallow"].show()
         self.groups["swallow"].on_key_down_add(self.on_key_down)

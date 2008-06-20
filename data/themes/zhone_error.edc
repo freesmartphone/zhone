@@ -1,8 +1,11 @@
 parts {
+    SWALLOWCLIP();
+
     part {
         name: "error_background";
         type: RECT;
         repeat_events: 0;
+        clip_to: "swallow_clip";
         description {
             state: "default" 0.0;
             rel1 {
@@ -22,6 +25,7 @@ parts {
         type: TEXT;
         effect: SOFT_OUTLINE;
         mouse_events: 0;
+        clip_to: "swallow_clip";
         description {
             state: "default" 0.0;
             rel1 {
@@ -29,7 +33,7 @@ parts {
                 offset: 0 0;
             }
             rel2 {
-                relative: 0.9 0.15;
+                relative: 0.9 0.65;
                 offset: -1 -1;
             }
             text {
@@ -45,6 +49,7 @@ parts {
         name: "button_box";
         type: RECT;
         mouse_events: 0;
+        clip_to: "swallow_clip";
         description {
             state: "default" 0.0;
             rel1 {
@@ -55,29 +60,55 @@ parts {
                 relative: 1.0 0.9;
                 offset: -1 -1;
             }
-            color: 255 255 255 255;
+            color: 0 0 0 0;
         }
     }
     
-    #define ERROR_XSIZE (1/2)
-    #define ERROR_YSIZE (1/1)
-    #define ERROR_BUTTON(part_name, xpos, ypos, label)                  \
+    #define ERROR_BUTTON(part_name, xpos, ypos, xcount, ycount, label)  \
+    part {                                                              \
+        name: "border_"part_name;                                       \
+        type: RECT;                                                     \
+        mouse_events: 0;                                                \
+        clip_to: "swallow_clip";                                        \
+        description {                                                   \
+            state: "default" 0.0;                                       \
+            visible: 1;                                                 \
+            rel1 {                                                      \
+                relative: 1/xcount*xpos 1/ycount*ypos;                  \
+                offset: 0 0;                                            \
+                to: "button_box";                                       \
+            }                                                           \
+            rel2 {                                                      \
+                relative: (1/xcount+(1/xcount*xpos))                    \
+                          (1/ycount+(1/ycount*ypos));                   \
+                offset: -1 -1;                                          \
+                to: "button_box";                                       \
+            }                                                           \
+            color: 255 255 255 255;                                     \
+        }                                                               \
+        description {                                                   \
+            state: "invisible" 0.0;                                     \
+            inherit: "default" 0.0;                                     \
+            visible: 0;                                                 \
+        }                                                               \
+    }                                                                   \
     part {                                                              \
         name: "button_"part_name;                                       \
         type: IMAGE;                                                    \
         mouse_events: 1;                                                \
+        clip_to: "swallow_clip";                                        \
         description {                                                   \
             state: "default" 0.0;                                       \
+            visible: 1;                                                 \
             rel1 {                                                      \
-                relative: ERROR_XSIZE*xpos ERROR_YSIZE*ypos;            \
+                relative: 0.0 0.0;                                      \
                 offset: 1 1;                                            \
-                to: "button_box";                                       \
+                to: "border_"part_name;                                 \
             }                                                           \
             rel2 {                                                      \
-                relative: ERROR_XSIZE+(ERROR_XSIZE*xpos)                \
-                          ERROR_YSIZE+(ERROR_YSIZE*ypos);               \
+                relative: 1.0 1.0;                                      \
                 offset: -2 -2;                                          \
-                to: "button_box";                                       \
+                to: "border_"part_name;                                 \
             }                                                           \
             image { normal: "button_background.png"; }                  \
         }                                                               \
@@ -86,22 +117,28 @@ parts {
             inherit: "default" 0.0;                                     \
             image { normal: "button_background_active.png"; }           \
         }                                                               \
+        description {                                                   \
+            state: "invisible" 0.0;                                     \
+            inherit: "default" 0.0;                                     \
+            visible: 0;                                                 \
+        }                                                               \
     }                                                                   \
     part {                                                              \
         name: "label_"part_name;                                        \
         type: TEXT;                                                     \
         effect: SOFT_OUTLINE;                                           \
         mouse_events: 0;                                                \
+        clip_to: "swallow_clip";                                        \
         description {                                                   \
             state: "default" 0.0;                                       \
             align: 0.5 0.5;                                             \
             rel1 {                                                      \
-                relative: 0.1 0.1;                                      \
+                relative: 0.1 0.3;                                      \
                 offset: 0 0;                                            \
                 to: "button_"part_name;                                 \
             }                                                           \
             rel2 {                                                      \
-                relative: 0.9 0.9;                                      \
+                relative: 0.9 0.7;                                      \
                 offset: -1 -1;                                          \
                 to: "button_"part_name;                                 \
             }                                                           \
@@ -112,22 +149,40 @@ parts {
                 fit: 1 1;                                               \
             }                                                           \
         }                                                               \
+    }                                                                   \
+    program {                                                           \
+        name: "show_border_"part_name;                                  \
+        signal: "show_"part_name;                                       \
+        action: STATE_SET "default" 0.0;                                \
+        target: "border_"part_name;                                     \
+    }                                                                   \
+    program {                                                           \
+        name: "show_button_"part_name;                                  \
+        signal: "show_"part_name;                                       \
+        action: STATE_SET "default" 0.0;                                \
+        target: "button_"part_name;                                     \
+    }                                                                   \
+    program {                                                           \
+        name: "hide_border_"part_name;                                  \
+        signal: "hide_"part_name;                                       \
+        action: STATE_SET "invisible" 0.0;                              \
+        target: "border_"part_name;                                     \
+    }                                                                   \
+    program {                                                           \
+        name: "hide_button_"part_name;                                  \
+        signal: "hide_"part_name;                                       \
+        action: STATE_SET "invisible" 0.0;                              \
+        target: "button_"part_name;                                     \
     }
-    ERROR_BUTTON("left", 0, 0, "");
-    ERROR_BUTTON("right", 1, 0, "");
+
+    ERROR_BUTTON("0", 0, 0, 3, 1, "");
+    ERROR_BUTTON("1", 1, 0, 3, 1, "");
+    ERROR_BUTTON("2", 2, 0, 3, 1, "");
+
+    TRANSITION();
 }
 programs {
-    ACTIVATE("button_left");
-    ACTIVATE("button_right");
-    
-    #define EMIT_ERROR_BUTTON_PRESSED(part_name)                        \
-    program {                                                           \
-        name: "emit_error_button_pressed_"part_name;                    \
-        signal: "mouse,clicked,1";                                      \
-        source: part_name;                                              \
-        action: SIGNAL_EMIT "call_error_pressed" part_name;             \
-    }
-    
-    EMIT_ERROR_BUTTON_PRESSED("button_left");
-    EMIT_ERROR_BUTTON_PRESSED("button_right");
+    ACTIVATE("button_0");
+    ACTIVATE("button_1");
+    ACTIVATE("button_2");
 }

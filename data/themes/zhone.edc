@@ -584,7 +584,7 @@ collections {
                 }
             }
             part {
-                name: "overlay";
+                name: "error";
                 type: SWALLOW;
                 description {
                     state: "default" 0.0;
