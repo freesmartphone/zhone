@@ -69,7 +69,14 @@ class edje_group(edje.Edje):
                 except DBusException, e:
                     # TODO handle this better
                     print e
-                    self.transition_to("pin")
+                    try:
+                        authstatus = dbus_object.gsm_sim_iface.GetAuthStatus()
+                        if authstatus == "SIM PUK":
+                            target = "puk"
+                        elif authstatus == "SIM PIN":
+                            target = "pin"
+                    except DBusException, e:
+                        print e
 
         self.main.transition_to(target)
 
@@ -373,9 +380,56 @@ class pyphone_pin(edje_group):
                     self.part_text_set( "label_description", "Sending..." )
                     dbus_object.gsm_sim_iface.SendAuthCode("".join(self.text))
                 except DBusException, e:
-                    self.part_text_set( "label_description", "Invalid. SIM PIN?" )
+                    try:
+                        authstatus = dbus_object.gsm_sim_iface.GetAuthStatus()
+                        if authstatus == "SIM PUK":
+                            gui.transition_to("puk")
+                        elif authstatus == "SIM PIN":
+                            self.part_text_set( "label_description", "Invalid. SIM PIN?" )
+                    except DBusException, e:
+                        print e
                 else:
                     self.part_text_set("label", "")
+                    dbus_object.gsm_device_iface.SetAntennaPower(True)
+                    dbus_object.gsm_network_iface.Register()
+                    self.main.transition_to("main")
+
+#----------------------------------------------------------------------------#
+class pyphone_puk(edje_group):
+#----------------------------------------------------------------------------#
+    def __init__(self, main):
+        edje_group.__init__(self, main, "puk")
+        self.part_text_set( "label_description", "SIM PUK?" )
+        self.text = []
+        self.puk = []
+
+    @edje.decorators.signal_callback("pin_button_pressed", "*")
+    def on_edje_signal_puk_button_pressed(self, emission, source):
+        key = source.split("_", 1)[1]
+        if key in ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"):
+            self.text.append(key)
+            # The trailing whitespace is a workaround for the one char invisible
+            # bug due to some problems with scaling of text parts.
+            self.part_text_set("label", "".join(self.text)+" ")
+        elif key in "delete":
+            self.text = self.text[:-1]
+            self.part_text_set("label", "".join(self.text)+" ")
+        elif key in "done":
+            if self.puk == []:
+              self.part_text_set( "label_description", "New PIN?" )
+              self.puk = self.text
+              self.text = []
+            elif dbus_object.gsm_device_obj:
+                try:
+                    self.part_text_set( "label_description", "Sending..." )
+                    dbus_object.gsm_sim_iface.Unlock("".join(self.puk), "".join(self.text))
+                except DBusException, e:
+                    print e
+                    self.part_text_set( "label_description", "Invalid. SIM PUK?" )
+                else:
+                    self.part_text_set("label", "")
+                    self.text = []
+                    self.puk = []
                     dbus_object.gsm_device_iface.SetAntennaPower(True)
                     dbus_object.gsm_network_iface.Register()
                     self.main.transition_to("main")
@@ -482,6 +536,8 @@ class GUI(object):
         self.evas_canvas.evas_obj.data["call"] = self.groups["call"]
         self.groups["pin"] = pyphone_pin(self)
         self.evas_canvas.evas_obj.data["pin"] = self.groups["pin"]
+        self.groups["puk"] = pyphone_puk(self)
+        self.evas_canvas.evas_obj.data["puk"] = self.groups["puk"]
         self.groups["lock"] = pyphone_lock(self)
         self.evas_canvas.evas_obj.data["lock"] = self.groups["lock"]
         self.groups["swallow"].part_swallow( "lock", self.groups["lock"] )
@@ -541,7 +597,14 @@ class GUI(object):
             except DBusException, e:
                 # TODO handle this better
                 print e
-                self.transition_to("pin")
+                try:
+                    authstatus = dbus_object.gsm_sim_iface.GetAuthStatus()
+                    if authstatus == "SIM PUK":
+                        self.transition_to("puk")
+                    elif authstatus == "SIM PIN":
+                        self.transition_to("pin")
+                except DBusException, e:
+                    print e
 
         if dbus_object.idlenotifier_iface is not None:
             dbus_object.onIdleStateChanged.append(self.lock_on_idle)

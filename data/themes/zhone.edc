@@ -784,4 +784,8 @@ collections {
         name: "pin";
         #include "zhone_pin.edc"
     }
+    group {
+        name: "puk";
+        #include "zhone_pin.edc"
+    }
 }
