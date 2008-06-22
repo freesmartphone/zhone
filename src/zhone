@@ -609,6 +609,11 @@ class GUI(object):
         if dbus_object.idlenotifier_iface is not None:
             dbus_object.onIdleStateChanged.append(self.lock_on_idle)
 
+        if dbus_object.device_power_iface is not None:
+            # Update Battery charge as soon as we have DBus
+            batcharge = dbus_object.device_power_iface.GetChargingPercentage()
+            self.groups["swallow"].message_send(2, batcharge/100.0) # battery charge
+
         if options.start:
             self.transition_to(options.start)
 
