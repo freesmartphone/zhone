@@ -859,10 +859,10 @@ class DBusObject( object ):
         if ( self.device_obj is not None ) and ( self.device_iface is None ):
             self.device_iface = Interface( self.device_obj, 'org.freesmartphone.Device' )
 
-            self.device_power_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.List( "org.freesmartphone.Device.PowerSupply" )[0] )
+            self.device_power_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.ListObjectsByInterface( "org.freesmartphone.Device.PowerSupply" )[0] )
             self.device_power_iface = Interface(self.device_power_obj, 'org.freesmartphone.Device.PowerSupply')
 
-            self.idlenotifier_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.List( "org.freesmartphone.Device.IdleNotifier" )[0] )
+            self.idlenotifier_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.ListObjectsByInterface( "org.freesmartphone.Device.IdleNotifier" )[0] )
 
             self.idlenotifier_iface = Interface( self.idlenotifier_obj, "org.freesmartphone.Device.IdleNotifier" )
             self.idlenotifier_iface.connect_to_signal( "State", self.cbIdleStateChanged )
@@ -871,8 +871,8 @@ class DBusObject( object ):
             self.inputnotifier_iface = Interface( self.inputnotifier_obj, "org.freesmartphone.Device.Input" )
             self.inputnotifier_iface.connect_to_signal( "Event", self.cbEvent )
 
-            print "displays:", self.device_obj.List( "org.freesmartphone.Device.Display" )
-            self.display_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.List( "org.freesmartphone.Device.Display" )[0] )
+            print "displays:", self.device_obj.ListObjectsByInterface( "org.freesmartphone.Device.Display" )
+            self.display_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.ListObjectsByInterface( "org.freesmartphone.Device.Display" )[0] )
             if self.display_obj is not None:
                 self.display_iface = Interface( self.display_obj, "org.freesmartphone.Device.Display" )
                 self.display_iface.SetBrightness( 90 )
