@@ -611,7 +611,7 @@ class GUI(object):
 
         if dbus_object.device_power_iface is not None:
             # Update Battery charge as soon as we have DBus
-            batcharge = dbus_object.device_power_iface.GetChargingPercentage()
+            batcharge = dbus_object.device_power_iface.GetEnergyPercentage()
             self.groups["swallow"].message_send(2, batcharge/100.0) # battery charge
 
         if options.start:
@@ -625,7 +625,7 @@ class GUI(object):
         self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()))
         self.groups["swallow"].part_text_set("label_top_center", time.strftime("%Y-%m-%d", time.localtime()))
         if ( dbus_object is not None ) and ( dbus_object.device_power_iface is not None ):
-            batcharge = dbus_object.device_power_iface.GetChargingPercentage()
+            batcharge = dbus_object.device_power_iface.GetEnergyPercentage()
             self.groups["swallow"].message_send(2, batcharge/100.0) # battery charge
         return True
 
