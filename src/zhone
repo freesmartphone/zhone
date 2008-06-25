@@ -35,13 +35,16 @@ from optparse import OptionParser
 import time
 
 #----------------------------------------------------------------------------#
-for i in "../data/themes/zhone.edj /usr/local/share/zhone/zhone.edj /usr/share/zhone/zhone.edj".split():
+
+edjepaths = "../data/themes/zhone.edj ../share/zhone.edj /usr/local/share/zhone/zhone.edj /usr/share/zhone/zhone.edj".split()
+
+for i in edjepaths:
     if os.path.exists( i ):
        global edjepath
        edjepath = i
        break
 else:
-    raise "Edje not found"
+    raise Exception( "zhone.edj not found. looked in %s" % edjepaths )
 
 #----------------------------------------------------------------------------#
 class edje_group(edje.Edje):
@@ -786,7 +789,7 @@ class DBusObject( object ):
         self.onIdleStateChanged = []
         self.ignoreSuspend = False
 
-        self.device_obj = None
+        self.framework_obj = None
         self.gsm_device_obj = None
         self.gsm_device_iface = None
         self.usage_iface = None
@@ -823,10 +826,17 @@ class DBusObject( object ):
             print "could not connect to dbus_object system bus:", e
             return False
 
+        # Framework
+        fw_obj = self.tryGetProxy( 'org.freesmartphone.frameworkd', '/org/freesmartphone/Framework' )
+        if fw_obj is None:
+            print ( "could not connect to org.freesmartphone.frameworkd -- is the framework daemon started?" )
+            return False
+        else:
+            self.fw = Interface( fw_obj, "org.freesmartphone.Objects" )
         failcount = 0
 
         # Usage
-        self.usage_obj = self.tryGetProxy( 'org.freesmartphone.Usage', '/org/freesmartphone/Usage' )
+        self.usage_obj = self.tryGetProxy( 'org.freesmartphone.ousaged', '/org/freesmartphone/Usage' )
         if ( self.usage_obj is not None ) and ( self.usage_iface is None ):
             self.usage_iface = Interface(self.usage_obj, 'org.freesmartphone.Usage')
             self.usage_iface.connect_to_signal( "ResourceChanged", self.cbResourceChanged )
@@ -854,25 +864,24 @@ class DBusObject( object ):
         else:
             print "gsm ok", self.gsm_network_iface
 
-        # Device
-        self.device_obj = self.tryGetProxy( 'org.freesmartphone.Device', '/org/freesmartphone/Device' )
+        self.device_obj = self.tryGetProxy( 'org.freesmartphone.odeviced', '/org/freesmartphone/Device' )
         if ( self.device_obj is not None ) and ( self.device_iface is None ):
             self.device_iface = Interface( self.device_obj, 'org.freesmartphone.Device' )
 
-            self.device_power_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.ListObjectsByInterface( "org.freesmartphone.Device.PowerSupply" )[0] )
+            self.device_power_obj = self.tryGetProxy( "org.freesmartphone.odeviced", self.fw.ListObjectsByInterface( "org.freesmartphone.Device.PowerSupply" )[0] )
             self.device_power_iface = Interface(self.device_power_obj, 'org.freesmartphone.Device.PowerSupply')
 
-            self.idlenotifier_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.ListObjectsByInterface( "org.freesmartphone.Device.IdleNotifier" )[0] )
+            self.idlenotifier_obj = self.tryGetProxy( "org.freesmartphone.odeviced", self.fw.ListObjectsByInterface( "org.freesmartphone.Device.IdleNotifier" )[0] )
 
             self.idlenotifier_iface = Interface( self.idlenotifier_obj, "org.freesmartphone.Device.IdleNotifier" )
             self.idlenotifier_iface.connect_to_signal( "State", self.cbIdleStateChanged )
 
-            self.inputnotifier_obj = self.bus.get_object( "org.freesmartphone.Device", "/org/freesmartphone/Device/Input" )
+            self.inputnotifier_obj = self.bus.get_object( "org.freesmartphone.odeviced", "/org/freesmartphone/Device/Input" )
             self.inputnotifier_iface = Interface( self.inputnotifier_obj, "org.freesmartphone.Device.Input" )
             self.inputnotifier_iface.connect_to_signal( "Event", self.cbEvent )
 
-            print "displays:", self.device_obj.ListObjectsByInterface( "org.freesmartphone.Device.Display" )
-            self.display_obj = self.tryGetProxy( "org.freesmartphone.Device", self.device_obj.ListObjectsByInterface( "org.freesmartphone.Device.Display" )[0] )
+            print "displays:", self.fw.ListObjectsByInterface( "org.freesmartphone.Device.Display" )
+            self.display_obj = self.tryGetProxy( "org.freesmartphone.odeviced", self.fw.ListObjectsByInterface( "org.freesmartphone.Device.Display" )[0] )
             if self.display_obj is not None:
                 self.display_iface = Interface( self.display_obj, "org.freesmartphone.Device.Display" )
                 self.display_iface.SetBrightness( 90 )
