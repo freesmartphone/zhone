@@ -383,7 +383,7 @@ class pyphone_pin(edje_group):
                     try:
                         authstatus = dbus_object.gsm_sim_iface.GetAuthStatus()
                         if authstatus == "SIM PUK":
-                            gui.transition_to("puk")
+                            self.main.transition_to("puk")
                         elif authstatus == "SIM PIN":
                             self.part_text_set( "label_description", "Invalid. SIM PIN?" )
                     except DBusException, e:
