@@ -65,7 +65,7 @@ class edje_group(edje.Edje):
         if target == "phone" and not self.main.groups["call"].status in ["idle" , "release"]:
             target = "call"
         if target == "phone":
-            if ( dbus_object.gsm_device_obj is not None ) and dbus_object.gsm_network_iface.GetStatus()[0] == 'unregistered':
+            if ( dbus_object.gsm_device_obj is not None ) and dbus_object.gsm_network_iface.GetStatus()["registration"] == 'unregistered':
                 try:
                     dbus_object.gsm_device_iface.SetAntennaPower(True)
                     dbus_object.gsm_network_iface.Register()
@@ -656,17 +656,18 @@ class GUI(object):
         self.groups["swallow"].part_text_set( "label_top_right", " ".join( items ) )
 
     def update_network( self, **args):
-        self.groups["swallow"].message_send(1, args['strength']/100.0)
-        if args["status"] == "denied":
+        status = args["status"]
+        self.groups["swallow"].message_send(1, status["strength"]/100.0)
+        if status["registration"] == "denied":
             self.groups["swallow"].part_text_set("label_top_left", "SOS only")
-        elif args["status"] == "unregistered":
+        elif status["registration"] == "unregistered":
             self.groups["swallow"].part_text_set("label_top_left", "No Service")
-        elif args["status"] == "busy":
+        elif status["registration"] == "busy":
             self.groups["swallow"].part_text_set("label_top_left", "Searching...")
-        elif args["status"] == "unknown":
+        elif status["registration"] == "unknown":
             self.groups["swallow"].part_text_set("label_top_left", "[Unknown]")
         else:
-            self.groups["swallow"].part_text_set("label_top_left", args['provider_name'])
+            self.groups["swallow"].part_text_set("label_top_left", status["provider"])
 
     # TODO better state management for transitions
     def transition_to(self, target):
@@ -906,9 +907,9 @@ class DBusObject( object ):
         for cb in self.onCallStatus:
             cb( id=id, status=status, properties=properties )
 
-    def cbNetworkStatus( self, status, provider_name, strength ):
+    def cbNetworkStatus( self, status ):
         for cb in self.onNetworkStatus:
-            cb( provider_name=provider_name, status=status, strength=strength )
+            cb( status=status )
 
     def cbIdleStateChanged( self, state ):
         print "IDLE STATE=", state
