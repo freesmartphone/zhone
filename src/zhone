@@ -848,7 +848,7 @@ class DBusObject( object ):
             print "usage ok", self.usage_iface
 
         # Phone
-        self.gsm_device_obj = self.tryGetProxy( 'org.freesmartphone.ophoned', '/org/freesmartphone/GSM/Device' )
+        self.gsm_device_obj = self.tryGetProxy( 'org.freesmartphone.ogmsd', '/org/freesmartphone/GSM/Device' )
         print self.gsm_device_obj
 
         if ( self.gsm_device_obj is not None ) and ( self.gsm_device_iface is None ):
