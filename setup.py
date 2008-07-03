@@ -5,6 +5,8 @@ from Cython.Distutils import build_ext
 # compile theme files
 import subprocess
 result = subprocess.call( "cd ./data/themes; edje_cc -v -id ../images -fd ../fonts zhone.edc", shell=True )
+if result != 0:
+    raise Exception( "Can't build theme files. Built edje_cc?" )
 
 setup(
     name = "Zen Phone",
