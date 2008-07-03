@@ -18,6 +18,6 @@ setup(
     cmdclass = { 'build_ext': build_ext },
     scripts = [ "src/zhone" ],
     data_files = [
-        ( "share/zhone/", ["data/themes/zhone.edj"] ),
+        ( "zhone/", ["data/themes/zhone.edj"] ),
         ]
 )
