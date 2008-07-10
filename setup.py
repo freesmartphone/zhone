@@ -15,7 +15,7 @@ setup(
     author_email = "mlauer@vanille-media.de",
     url = "http://www.freesmartphone.org",
     ext_modules = [
-        Extension( "illume", ["src/illume.pyx"], libraries = [] )
+        Extension( "illume", ["src/illume.pyx"], libraries = ["ecore", "ecore_x"] )
         ],
     cmdclass = { 'build_ext': build_ext },
     scripts = [ "src/zhone" ],
