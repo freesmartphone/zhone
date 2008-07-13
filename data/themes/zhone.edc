@@ -85,6 +85,20 @@ styles {
         target: part_name;                                              \
     }
 
+#define SELECTABLE(part_name)                                           \
+    program {                                                           \
+        name: "activate_"part_name;                                     \
+        signal: "activate_"part_name;                                   \
+        action: STATE_SET "active" 0.0;                                 \
+        target: part_name;                                              \
+    }                                                                   \
+    program {                                                           \
+        name: "deactivate_"part_name;                                   \
+        signal: "deactivate_"part_name;                                 \
+        action: STATE_SET "default" 0.0;                                \
+        target: part_name;                                              \
+    }
+
 #define EMIT_TRANSITION(part_name, target)                              \
     program {                                                           \
         name: "emit_clicked_"part_name;                                 \
@@ -591,6 +605,21 @@ collections {
                 }
             }
             part {
+                name: "menu";
+                type: SWALLOW;
+                description {
+                    state: "default" 0.0;
+                    rel1 {
+                        relative: 0.0 HEADER_HEIGHT;
+                        offset: 0 0;
+                    }
+                    rel2 {
+                        relative: 1.0 1.0;
+                        offset: -1 -1;
+                    }
+                }
+            }
+            part {
                 name: "error";
                 type: SWALLOW;
                 description {
@@ -751,6 +780,10 @@ collections {
         }
     }
 
+    group {
+        name: "menu";
+        #include "zhone_menu.edc"
+    }
     group {
         name: "error";
         #include "zhone_error.edc"

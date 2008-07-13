@@ -1,0 +1,118 @@
+parts {
+    SWALLOWCLIP();
+
+    part {
+        name: "menu_background";
+        type: RECT;
+        repeat_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+            }
+            color: 0 0 0 192;
+        }
+    }
+
+    part {
+        name: "menu_target_box";
+        type: RECT;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.05 0.05;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 0.95 0.95;
+                offset: -1 -1;
+            }
+            color: 0 0 0 0;
+        }
+    }
+
+    #define TARGET(container_name, part_name, xpos, ypos, xcount, ycount, label)    \
+    part {                                                                          \
+        name: "target_"part_name;                                                   \
+        mouse_events: 1;                                                            \
+        type: IMAGE;                                                                \
+        clip_to: "swallow_clip";                                                    \
+        description {                                                               \
+            state: "default" 0.0;                                                   \
+            rel1 {                                                                  \
+                relative: (0.15/xcount+(1/xcount*xpos))                             \
+                          (0.15/ycount+(1/ycount*ypos));                            \
+                offset: 0 0;                                                        \
+                to: container_name;                                                 \
+            }                                                                       \
+            rel2 {                                                                  \
+                relative: (0.85/xcount+(1/xcount*xpos))                             \
+                          (0.85/ycount+(1/ycount*ypos));                            \
+                offset: -1 -1;                                                      \
+                to: container_name;                                                 \
+            }                                                                       \
+            image {                                                                 \
+                normal: "button_main_background.png";                               \
+                border: 27 27 27 27;                                                \
+            }                                                                       \
+        }                                                                           \
+        description {                                                               \
+            state: "active" 0.0;                                                    \
+            inherit: "default" 0.0;                                                 \
+            image {                                                                 \
+                normal: "button_main_background_active.png";                        \
+                border: 27 27 27 27;                                                \
+            }                                                                       \
+        }                                                                           \
+    }                                                                               \
+    part {                                                                          \
+        name: "target_label_"part_name;                                             \
+        mouse_events: 0;                                                            \
+        type: TEXT;                                                                 \
+        effect: SOFT_OUTLINE;                                                       \
+        clip_to: "swallow_clip";                                                    \
+        description {                                                               \
+            state: "default" 0.0;                                                   \
+            align: 0.5 0.5;                                                         \
+            rel1 {                                                                  \
+                relative: 0.1 0.3;                                                  \
+                offset: 0 0;                                                        \
+                to: "target_"part_name;                                             \
+            }                                                                       \
+            rel2 {                                                                  \
+                relative: 0.9 0.7;                                                  \
+                offset: -1 -1;                                                      \
+                to: "target_"part_name;                                             \
+            }                                                                       \
+            text {                                                                  \
+                font: "Sans";                                                       \
+                text: label;                                                        \
+                size: 1;                                                            \
+                fit: 1 1;                                                           \
+            }                                                                       \
+        }                                                                           \
+    }
+
+    TARGET("menu_target_box", "0", 0, 0, 2, 3, "");
+    TARGET("menu_target_box", "1", 1, 0, 2, 3, "");
+    TARGET("menu_target_box", "2", 0, 1, 2, 3, "");
+    TARGET("menu_target_box", "3", 1, 1, 2, 3, "");
+    TARGET("menu_target_box", "cancel", 0, 2, 1, 3, "cancel");
+
+    TRANSITION();
+}
+programs {
+    ACTIVATE("target_0");
+    ACTIVATE("target_1");
+    ACTIVATE("target_2");
+    ACTIVATE("target_3");
+    ACTIVATE("target_cancel");
+}

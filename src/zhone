@@ -188,6 +188,30 @@ class pyphone_call(edje_group):
         self.status = status
 
 #----------------------------------------------------------------------------#
+class pyphone_contacts(edje_group):
+#----------------------------------------------------------------------------#
+    def __init__(self, main):
+        edje_group.__init__(self, main, "contacts")
+
+    def cbMenu( self, result ):
+        print result
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_list_*" )
+    def on_edje_signal_button_list_pressed( self, emission, source ):
+        id = int( source.split( "_" )[-1] )
+        self.signal_emit( "deactivate_button_list_0", "" )
+        self.signal_emit( "deactivate_button_list_1", "" )
+        self.signal_emit( "deactivate_button_list_2", "" )
+        self.signal_emit( "deactivate_button_list_3", "" )
+        self.signal_emit( "deactivate_button_list_4", "" )
+        self.signal_emit( "deactivate_button_list_5", "" )
+        self.signal_emit( "activate_button_list_%i" % id, "" )
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
+    def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
+    	self.main.groups["menu"].activate(("edit name", "edit number", "new", "delete"), self.cbMenu)
+
+#----------------------------------------------------------------------------#
 class pyphone_sms(edje_group):
 #----------------------------------------------------------------------------#
     def __init__(self, main):
@@ -438,6 +462,40 @@ class pyphone_puk(edje_group):
                     self.main.transition_to("main")
 
 #----------------------------------------------------------------------------#
+class pyphone_menu( edje_group ):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        edje_group.__init__( self, main, "menu" )
+        self.buttons = None
+        self.cb = None
+        self.deactivate()
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "target_*" )
+    def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
+        if source == "target_cancel":
+            self.deactivate()
+            self.cb( "cancel" )
+        else:
+            id = int( source.split( "_", 1 )[1] )
+            self.deactivate()
+            self.cb( self.part_text_get( "target_label_%i" % id ) )
+
+    def activate( self, buttons, cb ):
+        self.buttons = buttons
+        self.cb = cb
+        count = len( buttons )
+        assert count == 4
+        self.part_text_set( "target_label_0", buttons[0] )
+        self.part_text_set( "target_label_1", buttons[1] )
+        self.part_text_set( "target_label_2", buttons[2] )
+        self.part_text_set( "target_label_3", buttons[3] )
+        self.signal_emit( "visible", "" )
+
+    def deactivate( self ):
+        self.signal_emit( "invisible", "" )
+
+
+#----------------------------------------------------------------------------#
 class pyphone_lock( edje_group ):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
@@ -527,7 +585,7 @@ class GUI(object):
         )
 
         self.groups = {}
-        for part in ("swallow", "main", "contacts", "power"):
+        for part in ("swallow", "main", "power"):
             self.groups[part] = edje_group(self, part)
             self.evas_canvas.evas_obj.data[part] = self.groups[part]
 
@@ -537,10 +595,15 @@ class GUI(object):
         self.evas_canvas.evas_obj.data["phone"] = self.groups["phone"]
         self.groups["call"] = pyphone_call(self)
         self.evas_canvas.evas_obj.data["call"] = self.groups["call"]
+        self.groups["contacts"] = pyphone_contacts(self)
+        self.evas_canvas.evas_obj.data["contacts"] = self.groups["contacts"]
         self.groups["pin"] = pyphone_pin(self)
         self.evas_canvas.evas_obj.data["pin"] = self.groups["pin"]
         self.groups["puk"] = pyphone_puk(self)
         self.evas_canvas.evas_obj.data["puk"] = self.groups["puk"]
+        self.groups["menu"] = pyphone_menu(self)
+        self.evas_canvas.evas_obj.data["menu"] = self.groups["menu"]
+        self.groups["swallow"].part_swallow( "menu", self.groups["menu"] )
         self.groups["lock"] = pyphone_lock(self)
         self.evas_canvas.evas_obj.data["lock"] = self.groups["lock"]
         self.groups["swallow"].part_swallow( "lock", self.groups["lock"] )

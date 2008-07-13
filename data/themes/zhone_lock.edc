@@ -20,7 +20,7 @@ parts {
         }
     }
 
-    #define TARGET(part_name, xpos, ypos)                        \
+    #define LOCK_TARGET(part_name, xpos, ypos)                   \
     part {                                                       \
         name: "target_"part_name;                                \
         mouse_events: 1;                                         \
@@ -90,10 +90,10 @@ parts {
         action: STATE_SET "default" 0.0;                         \
         target: "target_"part_name;                              \
     }
-    TARGET("1", 0, 0);
-    TARGET("2", 0, 1);
-    TARGET("3", 1, 1);
-    TARGET("4", 1, 0);
+    LOCK_TARGET("1", 0, 0);
+    LOCK_TARGET("2", 0, 1);
+    LOCK_TARGET("3", 1, 1);
+    LOCK_TARGET("4", 1, 0);
 
     TRANSITION();
 }
