@@ -131,7 +131,7 @@ class pyphone_phone(edje_group):
                     dbus_object.gsm_call_iface.Initiate( "".join(self.text), "voice" )
                 else:
                     # Fake onCallStatus...
-                    self.main.groups["call"].onCallStatus( None, "outgoing", {"number": "".join(self.text)} )
+                    self.main.groups["call"].onCallStatus( None, "outgoing", {"peer": "".join(self.text)} )
         else:
             key = source
         #self.text.append(source)
@@ -287,7 +287,7 @@ class pyphone_contacts(edje_group):
                 dbus_object.gsm_call_iface.Initiate( self.current[self.selected][2], "voice" )
             else:
                 # Fake onCallStatus...
-                self.main.groups["call"].onCallStatus( None, "outgoing", {"number": self.current[self.selected][1]} )
+                self.main.groups["call"].onCallStatus( None, "outgoing", {"peer": self.current[self.selected][2]} )
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
