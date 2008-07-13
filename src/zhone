@@ -221,6 +221,15 @@ class pyphone_location(edje_group):
 #----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "location")
+        self.part_text_set("status", "Lat: 52.3234243\nLon: 16.34322\nSVs: 5")
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_select_*" )
+    def on_edje_signal_button_list_pressed( self, emission, source ):
+        selected = source.split( "_" )[-1]
+        self.signal_emit( "deactivate_button_select_left", "" )
+        self.signal_emit( "deactivate_button_select_middle", "" )
+        self.signal_emit( "deactivate_button_select_right", "" )
+        self.signal_emit( "activate_button_select_%s" % selected, "" )
 
 #----------------------------------------------------------------------------#
 class pyphone_sms(edje_group):
