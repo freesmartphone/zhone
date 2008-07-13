@@ -60,6 +60,12 @@ class edje_group(edje.Edje):
             raise SystemExit("error loading %s: %s" % (f, e))
         self.size = self.main.evas_canvas.evas_obj.evas.size
 
+    def onShow( self ):
+        pass
+
+    def onHide( self ):
+        pass
+
     @edje.decorators.signal_callback("mouse,clicked,1", "button_bottom_right")
     def on_edje_signal_button_bottom_right_pressed(self, emission, source):
         self.main.transition_to(self.parent_name)
@@ -122,7 +128,7 @@ class pyphone_phone(edje_group):
                 self.part_text_set("label", "".join(self.text)+" ")
             elif key in "dial":
                 if dbus_object.gsm_device_obj:
-                    dbus_object.gsm_call_iface.Initiate("".join(self.text), "voice")
+                    dbus_object.gsm_call_iface.Initiate( "".join(self.text), "voice" )
                 else:
                     # Fake onCallStatus...
                     self.main.groups["call"].onCallStatus( None, "outgoing", {"number": "".join(self.text)} )
@@ -197,20 +203,91 @@ class pyphone_contacts(edje_group):
 #----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "contacts")
+        self.ready = False
+        self.busy = False
+        self.phonebook = []
+        self.current = []
+        self.page = 0
+        self.selected = None
 
     def cbMenu( self, result ):
         print result
 
+    def cbPhonebookReply( self, result ):
+        print "retrieved phonebook: ", result
+        self.busy = False
+        self.phonebook = result
+        self.phonebook.sort( key = lambda x: x[1].lower() )
+        self.ready = True
+        self.updateList()
+
+    def cbPhonebookError( self, e ):
+        print "error while retrieving phonebook"
+        self.busy = False
+
+    def onShow( self ):
+        if not self.ready and not self.busy:
+            if dbus_object.gsm_device_obj:
+                print "retrieving phonebook"
+                dbus_object.gsm_sim_iface.RetrievePhonebook(
+                    reply_handler=self.cbPhonebookReply,
+                    error_handler=self.cbPhonebookError
+                )
+                self.busy = True
+            else:
+                # Fake phonebook...
+                self.cbPhonebookReply( [
+                    ('1', 'Kirk', '+023224433'),
+                    ('2', 'Spock', '+034433463'),
+                    ('3', 'McCoy', '+013244344'),
+                    ('4', 'Scott', '+013244344'),
+                    ('5', 'Uhura', '+013244344'),
+                    ('6', 'Sulu', '+013244344'),
+                    ('7', 'Chekov', '+013244344'),
+                ] )
+
+    def updateList( self):
+        if self.page < 0:
+            self.page = 0
+        while len( self.phonebook ) <= ( self.page )*6:
+            self.page -= 1
+        self.current = self.phonebook[self.page*6:(self.page+1)*6]
+        for i in range( 0, len( self.current ) ):
+            self.part_text_set( "label_list_%i" % i, self.current[i][1] )
+        for i in range( len( self.current ), 6):
+            self.part_text_set( "label_list_%i" % i, "" )
+        self.selected = None
+        for i in range( 6 ):
+            self.signal_emit( "deactivate_button_list_%i" % i, "" )
+
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_list_*" )
     def on_edje_signal_button_list_pressed( self, emission, source ):
         id = int( source.split( "_" )[-1] )
-        self.signal_emit( "deactivate_button_list_0", "" )
-        self.signal_emit( "deactivate_button_list_1", "" )
-        self.signal_emit( "deactivate_button_list_2", "" )
-        self.signal_emit( "deactivate_button_list_3", "" )
-        self.signal_emit( "deactivate_button_list_4", "" )
-        self.signal_emit( "deactivate_button_list_5", "" )
+        if self.selected == id:
+            return
+        if self.selected is not None:
+            self.signal_emit( "deactivate_button_list_%i" % self.selected, "" )
         self.signal_emit( "activate_button_list_%i" % id, "" )
+        self.selected = id
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_left" )
+    def on_edje_signal_button_action_left_pressed( self, emission, source ):
+        self.page -= 1
+        self.updateList()
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_right" )
+    def on_edje_signal_button_action_right_pressed( self, emission, source ):
+        self.page += 1
+        self.updateList()
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_dial" )
+    def on_edje_signal_button_action_dial_pressed( self, emission, source ):
+        if self.selected is not None:
+            if dbus_object.gsm_device_obj:
+                dbus_object.gsm_call_iface.Initiate( self.current[self.selected][2], "voice" )
+            else:
+                # Fake onCallStatus...
+                self.main.groups["call"].onCallStatus( None, "outgoing", {"number": self.current[self.selected][1]} )
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
@@ -753,12 +830,14 @@ class GUI(object):
         self.previous_group = self.current_group
 
         self.current_group = self.groups[target]
+        self.current_group.onShow()
         self.current_group.signal_emit("visible", "")
         self.groups["swallow"].part_swallow("swallow1", self.current_group)
         self.previous_group.signal_emit("fadeout", "")
 
     def transition_finished(self):
         print "finished"
+        self.previous_group.onHide()
         self.previous_group.hide()
         self.groups["swallow"].part_swallow("swallow2", self.current_group)
         self.in_transition = False
