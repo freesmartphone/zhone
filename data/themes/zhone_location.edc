@@ -7,8 +7,6 @@ parts {
     BUTTON_CLOSE();
 }
 programs {
-    EMIT_TRANSITION("button_bottom_right", "main");
-    
     ACTIVATE("button_bottom_right");
     
     TRANSITION();

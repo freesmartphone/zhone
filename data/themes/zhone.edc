@@ -6,8 +6,8 @@ images {
    image: "background.png" COMP;
    image: "button_contacts.png" COMP;
    image: "button_phone.png" COMP;
-   image: "button_power.png" COMP;
    image: "button_sms.png" COMP;
+   image: "button_location.png" COMP;
    image: "button_main_background.png" COMP;
    image: "button_main_background_active.png" COMP;
    image: "button_background.png" COMP;
@@ -97,14 +97,6 @@ styles {
         signal: "deactivate_"part_name;                                 \
         action: STATE_SET "default" 0.0;                                \
         target: part_name;                                              \
-    }
-
-#define EMIT_TRANSITION(part_name, target)                              \
-    program {                                                           \
-        name: "emit_clicked_"part_name;                                 \
-        signal: "mouse,clicked,1";                                      \
-        source: part_name;                                              \
-        action: SIGNAL_EMIT "transition:"target part_name;              \
     }
 
 #define SWALLOWCLIP()                                                   \
@@ -706,7 +698,7 @@ collections {
 
             #define ICON(part_name, xpos, ypos)                          \
             part {                                                       \
-                name: "button_"part_name;                                \
+                name: "target_"part_name;                                \
                 mouse_events: 1;                                         \
                 type: IMAGE;                                             \
                 clip_to: "swallow_clip";                                 \
@@ -737,44 +729,39 @@ collections {
                 }                                                        \
             }                                                            \
             part {                                                       \
-                name: "button_icon_"part_name;                           \
+                name: "target_icon_"part_name;                           \
                 mouse_events: 0;                                         \
                 type: IMAGE;                                             \
                 clip_to: "swallow_clip";                                 \
                 description {                                            \
                     state: "default" 0.0;                                \
-                     aspect: 1.0 1.0;                                    \
-                     aspect_preference: BOTH;                            \
+                    aspect: 1.0 1.0;                                     \
+                    aspect_preference: BOTH;                             \
                     rel1 {                                               \
                         relative: 0.0 0.0;                               \
                         offset: 0 0;                                     \
-                        to: "button_"part_name;                          \
+                        to: "target_"part_name;                          \
                     }                                                    \
                     rel2 {                                               \
                         relative: 1.0 1.0;                               \
                         offset: -1 -1;                                   \
-                        to: "button_"part_name;                          \
+                        to: "target_"part_name;                          \
                     }                                                    \
-                     image {                                             \
-                         normal: "button_"part_name".png";               \
-                     }                                                   \
+                    image {                                              \
+                        normal: "button_"part_name".png";                \
+                    }                                                    \
                 }                                                        \
             }
             ICON("phone", 0, 0);
             ICON("contacts", 0, 1);
-            ICON("power", 1, 1);
             ICON("sms", 1, 0);
+            ICON("location", 1, 1);
         }
         programs {
-            EMIT_TRANSITION("button_phone", "phone");
-            EMIT_TRANSITION("button_contacts", "contacts");
-            EMIT_TRANSITION("button_sms", "sms");
-            EMIT_TRANSITION("button_power", "power");
-
-            ACTIVATE("button_phone");
-            ACTIVATE("button_contacts");
-            ACTIVATE("button_sms");
-            ACTIVATE("button_power");
+            ACTIVATE("target_phone");
+            ACTIVATE("target_contacts");
+            ACTIVATE("target_sms");
+            ACTIVATE("target_location");
 
             TRANSITION();
         }
@@ -806,7 +793,7 @@ collections {
         #include "zhone_message.edc"
     }
     group {
-        name: "power";
+        name: "location";
         #include "zhone_location.edc"
     }
     group {
