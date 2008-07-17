@@ -216,29 +216,33 @@ class pyphone_contacts(edje_group):
         self.page = 0
         self.selected = None
 
-    def cbTextEdit( self, text, reference ):
-        print ( text, reference)
-        if dbus_object.gsm_device_obj:
-            pass
-        else:
-            # Fake phonebook...
-            for i in range( len( self.phonebook ) ):
-                if self.phonebook[i][0] == reference:
-                    self.phonebook[i] = ( reference, text, self.phonebook[i][2] )
-                    break
-            self.phonebook.sort( key = lambda x: x[1].lower() )
+    def cbNameEdit( self, name, reference ):
+        print ( name, reference)
+        for i in range( len( self.phonebook ) ):
+            if self.phonebook[i][0] == reference:
+                self.phonebook[i] = ( reference, name, self.phonebook[i][2] )
+                if dbus_object.gsm_device_obj:
+                    dbus_object.gsm_sim_iface.StoreEntry(
+                        reference,
+                        name,
+                        self.phonebook[i][2]
+                    )
+                break
+        self.phonebook.sort( key = lambda x: x[1].lower() )
         self.updateList()
 
     def cbNumberEdit( self, number, reference ):
         print ( number, reference)
-        if dbus_object.gsm_device_obj:
-            pass
-        else:
-            # Fake phonebook...
-            for i in range( len( self.phonebook ) ):
-                if self.phonebook[i][0] == reference:
-                    self.phonebook[i] = ( reference, self.phonebook[i][1], number )
-                    break
+        for i in range( len( self.phonebook ) ):
+            if self.phonebook[i][0] == reference:
+                self.phonebook[i] = ( reference, self.phonebook[i][1], number )
+                if dbus_object.gsm_device_obj:
+                    dbus_object.gsm_sim_iface.StoreEntry(
+                        reference,
+                        self.phonebook[i][1],
+                        number
+                    )
+                break
         self.updateList()
 
     def cbNew1( self, name, none ):
@@ -251,29 +255,35 @@ class pyphone_contacts(edje_group):
         )
 
     def cbNew2( self, number, name ):
+        ids = [ x[0] for x in self.phonebook ]
+        ids.sort()
+        reference = None
+        for i in range(1, 250):
+            if not i in ids:
+                reference = i
+        if reference is None:
+            return # no space?
         if dbus_object.gsm_device_obj:
-            pass
-        else:
-            # Fake phonebook...
-            reference = 0
-            for i in range( len( self.phonebook ) ):
-                if int( self.phonebook[i][0] ) > reference:
-                    reference = int( self.phonebook[i][0] )+1
-            self.phonebook.append( ( str(reference), name, number ) )
-            self.phonebook.sort( key = lambda x: x[1].lower() )
+            dbus_object.gsm_sim_iface.StoreEntry(
+                reference,
+                name,
+                number
+            )
+        self.phonebook.append( ( str(reference), name, number ) )
+        self.phonebook.sort( key = lambda x: x[1].lower() )
         self.updateList()
 
     def cbDelete( self, result, reference ):
         if result == "abort":
             return
         if dbus_object.gsm_device_obj:
-            pass
-        else:
-            # Fake phonebook...
-            for i in range( len( self.phonebook ) ):
-                if self.phonebook[i][0] == reference:
-                    del self.phonebook[i]
-                    break
+            dbus_object.gsm_sim_iface.DeleteEntry(
+                reference
+            )
+        for i in range( len( self.phonebook ) ):
+            if self.phonebook[i][0] == reference:
+                del self.phonebook[i]
+                break
         self.updateList()
 
     def cbMenu( self, result ):
@@ -284,7 +294,7 @@ class pyphone_contacts(edje_group):
                 self.current[self.selected][1], # name
                 self.current[self.selected][2], # title = number
                 self.current[self.selected][0], # reference
-                self.cbTextEdit
+                self.cbNameEdit
             )
         elif result == "edit number":
     	    self.main.groups["number_edit"].setup(
