@@ -217,7 +217,17 @@ class pyphone_contacts(edje_group):
         self.selected = None
 
     def cbTextEdit( self, text, reference ):
-        print ( number, reference)
+        print ( text, reference)
+        if dbus_object.gsm_device_obj:
+            pass
+        else:
+            # Fake phonebook...
+            for i in range( len( self.phonebook ) ):
+                if self.phonebook[i][0] == reference:
+                    self.phonebook[i] = ( reference, text, self.phonebook[i][2] )
+                    break
+            self.phonebook.sort( key = lambda x: x[1].lower() )
+        self.updateList()
 
     def cbNumberEdit( self, number, reference ):
         print ( number, reference)
@@ -228,6 +238,42 @@ class pyphone_contacts(edje_group):
             for i in range( len( self.phonebook ) ):
                 if self.phonebook[i][0] == reference:
                     self.phonebook[i] = ( reference, self.phonebook[i][1], number )
+                    break
+        self.updateList()
+
+    def cbNew1( self, name, none ):
+        self.main.groups["number_edit"].setup(
+            "contacts",
+            "", # number
+            name, # title = new name
+            name, # reference
+            self.cbNew2
+        )
+
+    def cbNew2( self, number, name ):
+        if dbus_object.gsm_device_obj:
+            pass
+        else:
+            # Fake phonebook...
+            reference = 0
+            for i in range( len( self.phonebook ) ):
+                if int( self.phonebook[i][0] ) > reference:
+                    reference = int( self.phonebook[i][0] )+1
+            self.phonebook.append( ( str(reference), name, number ) )
+            self.phonebook.sort( key = lambda x: x[1].lower() )
+        self.updateList()
+
+    def cbDelete( self, result, reference ):
+        if result == "abort":
+            return
+        if dbus_object.gsm_device_obj:
+            pass
+        else:
+            # Fake phonebook...
+            for i in range( len( self.phonebook ) ):
+                if self.phonebook[i][0] == reference:
+                    del self.phonebook[i]
+                    break
         self.updateList()
 
     def cbMenu( self, result ):
@@ -247,6 +293,21 @@ class pyphone_contacts(edje_group):
                 self.current[self.selected][1], # title = name
                 self.current[self.selected][0], # reference
                 self.cbNumberEdit
+            )
+        elif result == "new":
+    	    self.main.groups["text_edit"].setup(
+                "contacts",
+                "", # name
+                "new contact", # title
+                None, # reference
+                self.cbNew1
+            )
+        elif result == "delete":
+    	    self.main.groups["error"].activate(
+                "delete '%s'?" % self.current[self.selected][1],
+                ("abort", "delete"),
+                self.current[self.selected][0], # reference
+                self.cbDelete
             )
 
     def cbPhonebookReply( self, result ):
@@ -621,8 +682,8 @@ class pyphone_number_edit( edje_group ):
             self.text = self.text[:-1]
             self.part_text_set( "label", " %s " % self.text )
         elif key in "done":
-            self.cb( self.text, self.cb_data )
             self.main.transition_to(self.parent_name)
+            self.cb( self.text, self.cb_data )
     
     def setup( self, parent_name, text, title, cb_data, cb ):
         self.parent_name = parent_name
@@ -642,6 +703,7 @@ class pyphone_text_edit( edje_group ):
         self.text = ""
         self.cb_data = None
         self.cb = None
+        self.shift_down = False
 
     def onShow( self ):
         self.focus = True
@@ -654,15 +716,21 @@ class pyphone_text_edit( edje_group ):
             illume.kbd_hide()
 
     @evas.decorators.key_down_callback
-    def on_key_down(self, event):
-        self.text += event.keyname
+    def on_key_down( self, event ):
+        key = event.string
+        if key == "\x08":
+            self.text = self.text[:-1]
+        elif key is not None:
+            self.text += key
         self.part_text_set( "label", self.text )
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_*" )
     def on_edje_signal_button_pressed( self, emission, source ):
         key = source.split( "_", 1 )[1]
         if key == "done":
+            self.main.transition_to(self.parent_name)
             self.cb( self.text, self.cb_data )
+        elif key == "cancel":
             self.main.transition_to(self.parent_name)
     
     def setup( self, parent_name, text, title, cb_data, cb ):
@@ -744,6 +812,7 @@ class pyphone_error( edje_group ):
     def __init__( self, main ):
         edje_group.__init__( self, main, "error" )
         self.buttons = None
+        self.cb_data = None
         self.cb = None
         self.deactivate()
 
@@ -751,10 +820,11 @@ class pyphone_error( edje_group ):
     def on_edje_signal_button_pressed( self, emission, source ):
         id = int( source.split( "_", 1 )[1] )
         self.deactivate()
-        self.cb( self.part_text_get( "label_%i" % id ) )
+        self.cb( self.part_text_get( "label_%i" % id ), self.cb_data )
 
-    def activate( self, description, buttons, cb ):
+    def activate( self, description, buttons, cb_data, cb ):
         self.buttons = buttons
+        self.cb_data = cb_data
         self.cb = cb
         count = len( buttons )
         assert 1 <= count <= 3
