@@ -34,6 +34,12 @@ from dbus.exceptions import DBusException
 from optparse import OptionParser
 import time
 
+illume = None
+try:
+    import illume
+except:
+    print "could not load illume interface"
+
 #----------------------------------------------------------------------------#
 
 edjepaths = "../data/themes/zhone.edj ../share/zhone.edj /usr/local/share/zhone/zhone.edj /usr/share/zhone/zhone.edj".split()
@@ -210,8 +216,38 @@ class pyphone_contacts(edje_group):
         self.page = 0
         self.selected = None
 
+    def cbTextEdit( self, text, reference ):
+        print ( number, reference)
+
+    def cbNumberEdit( self, number, reference ):
+        print ( number, reference)
+        if dbus_object.gsm_device_obj:
+            pass
+        else:
+            # Fake phonebook...
+            for i in range( len( self.phonebook ) ):
+                if self.phonebook[i][0] == reference:
+                    self.phonebook[i] = ( reference, self.phonebook[i][1], number )
+        self.updateList()
+
     def cbMenu( self, result ):
         print result
+        if result == "edit name":
+    	    self.main.groups["text_edit"].setup(
+                "contacts",
+                self.current[self.selected][1], # name
+                self.current[self.selected][2], # title = number
+                self.current[self.selected][0], # reference
+                self.cbTextEdit
+            )
+        elif result == "edit number":
+    	    self.main.groups["number_edit"].setup(
+                "contacts",
+                self.current[self.selected][2], # number
+                self.current[self.selected][1], # title = name
+                self.current[self.selected][0], # reference
+                self.cbNumberEdit
+            )
 
     def cbPhonebookReply( self, result ):
         print "retrieved phonebook: ", result
@@ -559,6 +595,87 @@ class pyphone_puk(edje_group):
                     self.main.transition_to("main")
 
 #----------------------------------------------------------------------------#
+class pyphone_number_edit( edje_group ):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        edje_group.__init__( self, main, "number_edit" )
+        self.text = ""
+        self.cb_data = None
+        self.cb = None
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_*" )
+    def on_edje_signal_button_pressed( self, emission, source ):
+        key = source.split( "_", 1 )[1]
+        if key in ( "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "#" ):
+            self.text += key
+            # The trailing whitespace is a workaround for the one char invisible
+            # bug due to some problems with scaling of text parts.
+            self.part_text_set( "label", " %s " % self.text )
+        elif key in "star":
+            self.text += "*"
+            self.part_text_set( "label", " %s " % self.text )
+        elif key in "hash":
+            self.text += "#"
+            self.part_text_set( "label", " %s " % self.text )
+        elif key in "delete":
+            self.text = self.text[:-1]
+            self.part_text_set( "label", " %s " % self.text )
+        elif key in "done":
+            self.cb( self.text, self.cb_data )
+            self.main.transition_to(self.parent_name)
+    
+    def setup( self, parent_name, text, title, cb_data, cb ):
+        self.parent_name = parent_name
+        self.text = text
+        self.title = title
+        self.cb_data = cb_data
+        self.cb = cb
+        self.part_text_set( "label_description", " %s " % self.title )
+        self.part_text_set( "label", " %s " % self.text )
+        self.main.transition_to("number_edit")
+
+#----------------------------------------------------------------------------#
+class pyphone_text_edit( edje_group ):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        edje_group.__init__( self, main, "text_edit" )
+        self.text = ""
+        self.cb_data = None
+        self.cb = None
+
+    def onShow( self ):
+        self.focus = True
+        if illume:
+            illume.kbd_show()
+
+    def onHide( self ):
+        self.focus = False
+        if illume:
+            illume.kbd_hide()
+
+    @evas.decorators.key_down_callback
+    def on_key_down(self, event):
+        self.text += event.keyname
+        self.part_text_set( "label", self.text )
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_*" )
+    def on_edje_signal_button_pressed( self, emission, source ):
+        key = source.split( "_", 1 )[1]
+        if key == "done":
+            self.cb( self.text, self.cb_data )
+            self.main.transition_to(self.parent_name)
+    
+    def setup( self, parent_name, text, title, cb_data, cb ):
+        self.parent_name = parent_name
+        self.text = text
+        self.title = title
+        self.cb_data = cb_data
+        self.cb = cb
+        self.part_text_set( "label_description", " %s " % self.title )
+        self.part_text_set( "label", self.text )
+        self.main.transition_to("text_edit")
+
+#----------------------------------------------------------------------------#
 class pyphone_menu( edje_group ):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
@@ -686,7 +803,7 @@ class GUI(object):
         self.groups["swallow"] = edje_group(self, "swallow")
         self.evas_canvas.evas_obj.data["swallow"] = self.groups["swallow"]
 
-        for page in ( "main", "phone", "call", "sms", "contacts", "location", "pin", "puk" ):
+        for page in ( "main", "phone", "call", "sms", "contacts", "location", "pin", "puk", "number_edit", "text_edit" ):
             ctor = globals().get( "pyphone_%s" % page, None )
             if ctor:
                 self.groups[page] = ctor( self )
@@ -700,7 +817,6 @@ class GUI(object):
                 self.groups["swallow"].part_swallow( overlay, self.groups[overlay] )
 
         self.groups["swallow"].show()
-        self.groups["swallow"].on_key_down_add(self.on_key_down)
 
         self.groups["swallow"].part_text_set("label_top_left", "zhone!")
 
@@ -841,13 +957,6 @@ class GUI(object):
         self.previous_group.hide()
         self.groups["swallow"].part_swallow("swallow2", self.current_group)
         self.in_transition = False
-
-    def on_key_down(self, obj, event):
-        if event.keyname in ("F6", "f"):
-            self.evas_canvas.evas_obj.fullscreen = not self.evas_canvas.evas_obj.fullscreen
-        elif event.keyname == "Escape":
-            ecore.main_loop_quit()
-
 
 #----------------------------------------------------------------------------#
 class EvasCanvas(object):

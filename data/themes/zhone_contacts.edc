@@ -9,11 +9,11 @@ parts {
         description {
             state: "default" 0.0;
             rel1 {
-                relative: 0.05 0.05;
+                relative: 0.02 0.02;
                 offset: 0 0;
             }
             rel2 {
-                relative: 0.95 0.70;
+                relative: 0.98 0.73;
                 offset: -1 -1;
             }
             color: 0 0 0 0;
