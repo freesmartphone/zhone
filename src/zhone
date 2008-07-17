@@ -57,7 +57,7 @@ class edje_group(edje.Edje):
 #----------------------------------------------------------------------------#
     def __init__(self, main, group, parent_name="main"):
         self.main = main
-	self.parent_name = parent_name
+        self.parent_name = parent_name
         global edjepath
         f = edjepath
         try:
@@ -986,8 +986,7 @@ class EvasCanvas(object):
     def on_resize(self, evas_obj):
         x, y, w, h = evas_obj.evas.viewport
         size = (w, h)
-        for key in evas_obj.data.keys():
-            evas_obj.data[key].size = size
+        evas_obj.data["swallow"].size = size
 
     def on_delete_request(self, evas_obj):
         ecore.main_loop_quit()
