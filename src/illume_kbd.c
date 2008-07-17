@@ -21,7 +21,6 @@ void illume_kbd_protocol_send_event(MTPRemoteOperation op)
   xev.xclient.type = ClientMessage;
   xev.xclient.display = disp;
   xev.xclient.window = ecore_x_window_root_first_get();
-  printf("%x\n", xev.xclient.window);
   xev.xclient.message_type = ecore_x_atom_get("_MTP_IM_INVOKER_COMMAND");
   xev.xclient.format = 32;
   xev.xclient.data.l[0] = op;
