@@ -405,7 +405,38 @@ class pyphone_location(edje_group):
 #----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "location")
-        self.part_text_set("status", "Lat: 52.3234243\nLon: 16.34322\nSVs: 5")
+        self.accuracy = None
+        self.position = None
+        self.update()
+
+    def update( self ):
+        text = []
+        if self.position:
+            text.append( "Lat:<tab>%s<br>Lon:<tab>%s<br>Alt:<tab>%s" % self.position )
+        else:
+            text.append( "Lat:<tab>N/A<br>Lon:<tab>N/A<br>Alt:<tab>N/A" )
+        if self.accuracy:
+            text.append( "P/H/V-DOP:<tab>%s/%s/%s" % self.accuracy )
+        else:
+            text.append( "P/H/V-DOP:<tab>N/A")
+        self.part_text_set( "status", "<br>".join( text ) )
+
+    def onAccuracyChanged( self, fields, pdop, hdop, vdop ):
+        self.accuracy = ( pdop, hdop, vdop )
+        self.update()
+
+    def onPositionChanged( self, fields, timestamp, lat, lon, alt ):
+        self.position = ( lat, lon, alt )
+        self.update()
+
+    def onShow( self ):
+        if dbus_object.usage_obj:
+            dbus_object.usage_iface.RequestResource("GPS")
+        self.update()
+
+    def onHide( self ):
+        if dbus_object.usage_obj:
+            dbus_object.usage_iface.ReleaseResource("GPS")
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_select_*" )
     def on_edje_signal_button_list_pressed( self, emission, source ):
@@ -938,6 +969,10 @@ class GUI(object):
             dbus_object.onResourceChanged.append(self.display_resources)
             self.display_resources()
 
+        if dbus_object.gps_obj:
+            dbus_object.onAccuracyChanged.append( self.groups["location"].onAccuracyChanged )
+            dbus_object.onPositionChanged.append( self.groups["location"].onPositionChanged )
+
         if dbus_object.gsm_device_obj is not None:
             dbus_object.onCallStatus.append( self.groups["call"].onCallStatus )
             dbus_object.onNetworkStatus.append(self.update_network)
@@ -1126,15 +1161,23 @@ class DBusObject( object ):
     def __init__( self ):
         self.objects = {}
         self.onResourceChanged = []
+        self.onAccuracyChanged = []
+        self.onPositionChanged = []
         self.onCallStatus = []
         self.onNetworkStatus = []
         self.onIdleStateChanged = []
         self.ignoreSuspend = False
 
         self.framework_obj = None
+
+        self.usage_iface = None
+
+        self.gps_obj = None
+        self.gps_accuracy_iface = None
+        self.gps_position_iface = None
+
         self.gsm_device_obj = None
         self.gsm_device_iface = None
-        self.usage_iface = None
         self.device_iface = None
         self.device_power_iface = None
         self.idlenotifier_obj = None
@@ -1188,6 +1231,19 @@ class DBusObject( object ):
         else:
             print "usage ok", self.usage_iface
 
+        # GPS
+        self.gps_obj = self.tryGetProxy( 'org.freesmartphone.ogpsd', '/org/freedesktop/Gypsy' )
+        if self.gps_obj and not self.gps_accuracy_iface:
+            self.gps_accuracy_iface = Interface(self.gps_obj, 'org.freedesktop.Gypsy.Accuracy')
+            self.gps_accuracy_iface.connect_to_signal( "AccuracyChanged", self.cbAccuracyChanged )
+        if self.gps_obj and not self.gps_position_iface:
+            self.gps_position_iface = Interface(self.gps_obj, 'org.freedesktop.Gypsy.Position')
+            self.gps_position_iface.connect_to_signal( "PositionChanged", self.cbPositionChanged )
+        if not self.gps_obj or not self.gps_accuracy_iface or not self.gps_position_iface:
+            failcount += 1
+        else:
+            print "gps ok", self.gps_accuracy_iface, self.gps_position_iface
+
         # Phone
         self.gsm_device_obj = self.tryGetProxy( 'org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device' )
         print self.gsm_device_obj
@@ -1240,6 +1296,14 @@ class DBusObject( object ):
     def cbResourceChanged( self, resourcename ):
         for cb in self.onResourceChanged:
             cb( resourcename=resourcename )
+
+    def cbAccuracyChanged( self, fields, pdop, hdop, vdop ):
+        for cb in self.onAccuracyChanged:
+            cb( fields=fields, pdop=pdop, hdop=hdop, vdop=vdop )
+
+    def cbPositionChanged( self, fields, timestamp, lat, lon, alt ):
+        for cb in self.onPositionChanged:
+            cb( fields=fields, timestamp=timestamp, lat=lat, lon=lon, alt=alt )
 
     def cbCallStatus( self, id, status, properties ):
         print "CALL STATUS=", id, status, properties
