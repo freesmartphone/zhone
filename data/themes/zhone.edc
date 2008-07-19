@@ -1,3 +1,17 @@
+#ifndef HEIGHT
+#define HEIGHT 640
+#endif
+
+#define BIG_FONT_SIZE 140
+#define ENTRYFIELD_FONT_SIZE 40
+#define BUTTON_FONT_SIZE 26
+#define BUTTON_MAIN_FONT_SIZE 32
+#define BUTTON_SUB_FONT_SIZE 18
+
+#if HEIGHT == 320
+#error incomplete config for HEIGHT = 320
+#endif
+
 fonts {
    font: "VeraBd.ttf" "Sans";
 }
@@ -28,12 +42,22 @@ images {
 
 styles {
    style {
+      name: "char_style";
+      base: "font=Sans font_size=36 color=#fff wrap=char outline_color=#000 style=soft_outline tabstops=60";
+      tag:  "br" "  \n";
+      tag:  "tab" "  \t";
+   }
+   style {
       name: "simple_style";
-      base: "font=Sans font_size=36 color=#fff wrap=char outline_color=#000 style=soft_outline";
+      base: "font=Sans font_size=36 color=#fff wrap=char outline_color=#000 style=soft_outline tabstops=60";
+      tag:  "br" "  \n";
+      tag:  "tab" "  \t";
    }
    style {
       name: "error_style";
       base: "font=Sans font_size=36 align=center valign=center color=#fff wrap=word outline_color=#000 style=soft_outline";
+      tag:  "br" "  \n";
+      tag:  "tab" "  \t";
    }
 }
 
