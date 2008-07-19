@@ -473,7 +473,7 @@ class pyphone_location( edje_group ):
         edje_group.__init__( self, main, "location" )
         self.signalgraph = self.SignalGraph( self.evas )
 
-        self.page = "right"
+        self.page = "left"
         self.signal_emit( "activate_button_select_%s" % self.page, "" )
 
         self.accuracy = None
