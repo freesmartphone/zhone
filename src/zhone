@@ -401,10 +401,81 @@ class pyphone_contacts(edje_group):
     	self.main.groups["menu"].activate(("edit name", "edit number", "new", "delete"), self.cbMenu)
 
 #----------------------------------------------------------------------------#
-class pyphone_location(edje_group):
+class pyphone_location( edje_group ):
 #----------------------------------------------------------------------------#
+    class SignalGraph( evas.ClippedSmartObject ):
+        def __init__( self, *args, **kargs ):
+            evas.ClippedSmartObject.__init__( self, *args, **kargs )
+            self.textheight = 45
+            self.font = ( "Sans", 35 )
+            self.children = []
+            self.values = []
+            self.maxvalue = None
+            self.update( [(1, 20.5), (2, 34.3), (5, 25.9), (10, 0.5)] )
+
+        def resize( self, w, h ):
+            x, y = self.pos
+            barwidth = w / len( self.children )
+            barheight = h - self.textheight
+            for (rect, key_text, value_text), (key, value) in zip( self.children, self.values ):
+                key_text.text = str( key )
+                value_text.text = str( value )
+                barlength = int( barheight*( value/self.maxvalue ) )
+                valueoffset = max( self.textheight-barlength, 0 )
+                rect.geometry = (
+                    x+5, y+barheight-barlength,
+                    barwidth-5, barlength
+                )
+                key_text.geometry = (
+                    x+(barwidth-key_text.horiz_advance)/2, y+barheight,
+                    barwidth, self.textheight
+                )
+                value_text.geometry = (
+                    x+(barwidth-value_text.horiz_advance)/2, y+5+barheight-barlength-valueoffset,
+                    barwidth, self.textheight
+                )
+                x += barwidth
+
+        def addChild( self ):
+            rect = self.Rectangle( color=( 0, 255, 0, 255 ) )
+            rect.show()
+            key_text = self.Text(
+                style = evas.EVAS_TEXT_STYLE_SOFT_OUTLINE,
+                outline_color = ( 0, 0, 0, 255 ),
+                font = self.font
+            )
+            key_text.show()
+            value_text = self.Text(
+                style = evas.EVAS_TEXT_STYLE_SOFT_OUTLINE,
+                outline_color = ( 0, 0, 0, 255 ),
+                font = self.font
+            )
+            value_text.show()
+            self.children.append( ( rect, key_text, value_text ) )
+
+        def delChild( self ):
+            child = self.children[-1]
+            del self.children[-1]
+            for x in child:
+                self.member_del( x )
+
+        def update( self, values = None ):
+            if values is not None:
+                self.values = values
+                self.maxvalue = max( [ x[1] for x in values] )
+            while len( self.children ) > len( self.values ):
+                self.delChild()
+            while len( self.children ) < len( self.values ):
+                self.addChild()
+            self.resize( *self.size )
+
     def __init__(self, main):
-        edje_group.__init__(self, main, "location")
+        edje_group.__init__( self, main, "location" )
+        self.signalgraph = self.SignalGraph( self.evas )
+
+        self.page = "right"
+        self.signal_emit( "activate_button_select_%s" % self.page, "" )
+
         self.accuracy = None
         self.position = None
         self.update()
@@ -419,7 +490,23 @@ class pyphone_location(edje_group):
             text.append( "P/H/V-DOP:<tab>%s/%s/%s" % self.accuracy )
         else:
             text.append( "P/H/V-DOP:<tab>N/A")
-        self.part_text_set( "status", "<br>".join( text ) )
+        if self.page == "left":
+            self.part_text_set( "status", "<br>".join( text ) )
+            if self.part_swallow_get( "swallow" ):
+                self.part_swallow_get( "swallow" ).hide()
+                self.part_unswallow( self.part_swallow_get( "swallow" ) )
+        elif self.page == "middle":
+            self.part_text_set( "status", "" )
+            if self.part_swallow_get( "swallow" ):
+                self.part_swallow_get( "swallow" ).hide()
+                self.part_unswallow( self.part_swallow_get( "swallow" ) )
+            self.part_swallow( "swallow", self.signalgraph )
+            self.signalgraph.show()
+        elif self.page == "right":
+            self.part_text_set( "status", "" )
+            if self.part_swallow_get( "swallow" ):
+                self.part_swallow_get( "swallow" ).hide()
+                self.part_unswallow( self.part_swallow_get( "swallow" ) )
 
     def onAccuracyChanged( self, fields, pdop, hdop, vdop ):
         self.accuracy = ( pdop, hdop, vdop )
@@ -440,11 +527,12 @@ class pyphone_location(edje_group):
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_select_*" )
     def on_edje_signal_button_list_pressed( self, emission, source ):
-        selected = source.split( "_" )[-1]
+        self.page = source.split( "_" )[-1]
         self.signal_emit( "deactivate_button_select_left", "" )
         self.signal_emit( "deactivate_button_select_middle", "" )
         self.signal_emit( "deactivate_button_select_right", "" )
-        self.signal_emit( "activate_button_select_%s" % selected, "" )
+        self.signal_emit( "activate_button_select_%s" % self.page, "" )
+        self.update()
 
 #----------------------------------------------------------------------------#
 class pyphone_sms(edje_group):
@@ -1170,6 +1258,7 @@ class DBusObject( object ):
 
         self.framework_obj = None
 
+        self.usage_obj = None
         self.usage_iface = None
 
         self.gps_obj = None
