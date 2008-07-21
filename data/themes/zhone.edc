@@ -66,14 +66,6 @@ styles {
 
 #define TRANSITION()                                                    \
     program {                                                           \
-        name: "fadeout";                                                \
-        signal: "fadeout";                                              \
-        action: STATE_SET "invisible" 0.0;                              \
-        transition: LINEAR 0.0;                                         \
-        target: "swallow_clip";                                         \
-        after: "finish_fade";                                           \
-    }                                                                   \
-    program {                                                           \
         name: "set_visible";                                            \
         signal: "visible";                                              \
         action: STATE_SET "default" 0.0;                                \
@@ -84,10 +76,6 @@ styles {
         signal: "invisible";                                            \
         action: STATE_SET "invisible" 0.0;                              \
         target: "swallow_clip";                                         \
-    }                                                                   \
-    program {                                                           \
-        name: "finish_fade";                                            \
-        action: SIGNAL_EMIT "finished_transition" "main";               \
     }
 
 #define ACTIVATE(part_name)                                             \
@@ -682,23 +670,8 @@ collections {
                 }
             }
             part {
-                name: "swallow1";
+                name: "swallow";
                 mouse_events: 1;
-                type: SWALLOW;
-                description {
-                    state: "default" 0.0;
-                    rel1 {
-                        relative: 0.0 HEADER_HEIGHT;
-                        offset: 0 0;
-                    }
-                    rel2 {
-                        relative: 1.0 1.0;
-                        offset: -1 -1;
-                    }
-                }
-            }
-            part {
-                name: "swallow2";
                 type: SWALLOW;
                 description {
                     state: "default" 0.0;

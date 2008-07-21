@@ -78,10 +78,6 @@ class edje_group(edje.Edje):
     def on_edje_signal_button_bottom_right_pressed(self, emission, source):
         self.main.transition_to(self.parent_name)
 
-    @edje.decorators.signal_callback("finished_transition", "*")
-    def on_edje_signal_finished_transition(self, emission, source):
-        self.main.transition_finished()
-
 #----------------------------------------------------------------------------#
 class pyphone_main(edje_group):
 #----------------------------------------------------------------------------#
@@ -202,8 +198,7 @@ class pyphone_call(edje_group):
             self.part_text_set( "label_right", "" )
         if status in ["incoming", "outgoing"] and not self.status == status:
             # TODO make sure we get displayed
-            if not self.main.in_transition:
-                self.main.transition_to("call")
+            self.main.transition_to("call")
         self.status = status
 
 #----------------------------------------------------------------------------#
@@ -1104,10 +1099,9 @@ class GUI(object):
         self.groups["swallow"].message_send(1, 0.0) # GSM signal strength
         self.groups["swallow"].message_send(2, 0.0) # battery charge
 
-        self.groups["swallow"].part_swallow("swallow2", self.groups["main"])
+        self.groups["swallow"].part_swallow("swallow", self.groups["main"])
         self.current_group = self.groups["main"]
         self.previous_group = self.groups["phone"]
-        self.in_transition = False
         ecore.timer_add(60.0, self.display_time)
         self.display_time()
 
@@ -1226,22 +1220,16 @@ class GUI(object):
         if self.current_group == self.groups[target]:
             return
         print "transition to", target
-        self.in_transition = True
 
         self.previous_group = self.current_group
+        self.previous_group.onHide()
+        self.previous_group.hide()
 
         self.current_group = self.groups[target]
         self.current_group.onShow()
         self.current_group.signal_emit("visible", "")
-        self.groups["swallow"].part_swallow("swallow1", self.current_group)
-        self.previous_group.signal_emit("fadeout", "")
-
-    def transition_finished(self):
-        print "finished"
-        self.previous_group.onHide()
-        self.previous_group.hide()
-        self.groups["swallow"].part_swallow("swallow2", self.current_group)
-        self.in_transition = False
+        self.groups["swallow"].part_swallow("swallow", self.current_group)
+        self.previous_group.signal_emit("invisible", "")
 
 #----------------------------------------------------------------------------#
 class EvasCanvas(object):
