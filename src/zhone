@@ -29,10 +29,12 @@ import edje
 import edje.decorators
 import ecore
 import ecore.evas
+import cairo
 from dbus import SystemBus, Interface
 from dbus.exceptions import DBusException
 from optparse import OptionParser
 import time
+import math
 
 illume = None
 try:
@@ -411,7 +413,6 @@ class pyphone_location( edje_group ):
             self.children = []
             self.values = []
             self.maxvalue = None
-            self.update( [(1, 20.5), (2, 34.3), (5, 25.9), (10, 0.5)] )
 
         def resize( self, w, h ):
             x, y = self.pos
@@ -469,9 +470,82 @@ class pyphone_location( edje_group ):
                 self.addChild()
             self.resize( *self.size )
 
+    class PositionGraph( evas.ClippedSmartObject ):
+        def __init__( self, *args, **kargs ):
+            evas.ClippedSmartObject.__init__( self, *args, **kargs )
+            self.img = self.Image()
+            self.img.alpha = True
+            self.img.colorspace = evas.EVAS_COLORSPACE_ARGB8888
+            self.img.pos = self.pos
+            self.img.show()
+            self.surface = None
+            self.ctx = None
+            self.values = []
+
+        def proj( self, azim, elev ):
+            x = math.sin( math.radians( azim ) )*( elev/90.0 )
+            y = math.cos( math.radians( azim ) )*( elev/90.0 )
+            return ( x, y )
+
+        def resize( self, w, h ):
+            self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
+            self.ctx = cairo.Context(self.surface)
+            self.img.image_size = ( w, h )
+            self.update()
+            self.img.resize( *self.img.image_size )
+            self.img.fill_set(0, 0, *self.img.image_size )
+        
+        def update( self, values = None ):
+            if values is not None:
+                self.values = values
+            if self.ctx:
+                self.ctx.set_operator( cairo.OPERATOR_CLEAR )
+                self.ctx.paint()
+                self.ctx.set_operator( cairo.OPERATOR_OVER )
+                self.ctx.scale( *self.img.image_size )
+                self.ctx.set_line_width( max( self.ctx.device_to_user_distance( 2, 2 ) ) )
+                #self.ctx.move_to(0.20, 0.10)
+                #self.ctx.line_to(0.40, 0.30)
+                #self.ctx.rel_line_to(-0.20, 0.0)
+                #self.ctx.close_path()
+                #self.ctx.stroke()
+                # background
+                self.ctx.set_source_rgba(1, 1, 1, 0.5)
+                self.ctx.arc( 0.50, 0.50, 0.45, 0.0, math.pi*2 )
+                self.ctx.fill()
+                self.ctx.set_source_rgba(0, 0, 0, 1)
+                self.ctx.arc( 0.50, 0.50, 0.45, 0.0, math.pi*2 )
+                self.ctx.new_sub_path()
+                self.ctx.arc( 0.50, 0.50, 0.30, 0.0, math.pi*2 )
+                self.ctx.new_sub_path()
+                self.ctx.arc( 0.50, 0.50, 0.15, 0.0, math.pi*2 )
+                self.ctx.stroke()
+                # locations
+                for sv, azim, elev in self.values:
+                    sv = str( sv )
+                    x, y = self.proj( azim, elev )
+                    self.ctx.set_source_rgba(0, 1, 0, 1)
+                    self.ctx.arc(
+                        0.50+x*0.45,
+                        0.50+y*0.45,
+                        max( self.ctx.device_to_user_distance( 15, 15 ) ),
+                        0.0, math.pi*2
+                    )
+                    self.ctx.fill()
+                    self.ctx.set_source_rgba(0, 0, 0, 1)
+                    self.ctx.set_font_size( max( self.ctx.device_to_user_distance( 20, 20 ) ))
+                    x_bearing, y_bearing, width, height = self.ctx.text_extents(sv)[:4]
+                    self.ctx.move_to(
+                        0.50+x*0.45 - width / 2 - x_bearing,
+                        0.50+y*0.45 - height / 2 - y_bearing
+                    )
+                    self.ctx.show_text( sv )
+                self.img.image_data_set( self.surface.get_data() )
+
     def __init__(self, main):
         edje_group.__init__( self, main, "location" )
         self.signalgraph = self.SignalGraph( self.evas )
+        self.positiongraph = self.PositionGraph( self.evas )
 
         self.page = "left"
         self.signal_emit( "activate_button_select_%s" % self.page, "" )
@@ -479,6 +553,9 @@ class pyphone_location( edje_group ):
         self.accuracy = None
         self.position = None
         self.update()
+
+        self.signalgraph.update( [(1, 20.5), (2, 34.3), (5, 25.9), (10, 0.5)] )
+        self.positiongraph.update( [(1, 20.0, 90.0), (2, 34.3, 45.0), (5, 225.9, 0.0), (10, 0.5, 30.0)] )
 
     def update( self ):
         text = []
@@ -507,6 +584,8 @@ class pyphone_location( edje_group ):
             if self.part_swallow_get( "swallow" ):
                 self.part_swallow_get( "swallow" ).hide()
                 self.part_unswallow( self.part_swallow_get( "swallow" ) )
+            self.part_swallow( "swallow", self.positiongraph )
+            self.positiongraph.show()
 
     def onAccuracyChanged( self, fields, pdop, hdop, vdop ):
         self.accuracy = ( pdop, hdop, vdop )
