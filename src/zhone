@@ -490,6 +490,8 @@ class pyphone_location( edje_group ):
         def resize( self, w, h ):
             self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
             self.ctx = cairo.Context(self.surface)
+            self.ctx.scale( w, h )
+            #self.ctx.set_antialias( cairo.ANTIALIAS_NONE )
             self.img.image_size = ( w, h )
             self.update()
             self.img.resize( *self.img.image_size )
@@ -502,7 +504,6 @@ class pyphone_location( edje_group ):
                 self.ctx.set_operator( cairo.OPERATOR_CLEAR )
                 self.ctx.paint()
                 self.ctx.set_operator( cairo.OPERATOR_OVER )
-                self.ctx.scale( *self.img.image_size )
                 self.ctx.set_line_width( max( self.ctx.device_to_user_distance( 2, 2 ) ) )
                 #self.ctx.move_to(0.20, 0.10)
                 #self.ctx.line_to(0.40, 0.30)
@@ -540,7 +541,9 @@ class pyphone_location( edje_group ):
                         0.50+y*0.45 - height / 2 - y_bearing
                     )
                     self.ctx.show_text( sv )
-                self.img.image_data_set( self.surface.get_data() )
+                self.surface.write_to_png( "/tmp/zhone-location.png" )
+                self.img.file_set( "/tmp/zhone-location.png" )
+                #self.img.image_data_set( self.surface.get_data() )
 
     def __init__(self, main):
         edje_group.__init__( self, main, "location" )
