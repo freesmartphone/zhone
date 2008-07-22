@@ -202,6 +202,97 @@ class pyphone_call(edje_group):
         self.status = status
 
 #----------------------------------------------------------------------------#
+class pyphone_sms(edje_group):
+#----------------------------------------------------------------------------#
+    def __init__(self, main):
+        edje_group.__init__(self, main, "sms")
+        self.ready = False
+        self.busy = False
+        self.messagebook = []
+        self.current = []
+        self.page = 0
+        self.selected = None
+
+    def cbMenu( self, result ):
+        if result == "delete":
+    	    self.main.groups["error"].activate(
+                "delete '%s'?" % self.current[self.selected][1],
+                ("abort", "delete"),
+                self.current[self.selected][0], # reference
+                self.cbDelete
+            )
+
+    def cbMessagebookReply( self, result ):
+        print "retrieved messagebook: ", result
+        self.busy = False
+        self.messagebook = result
+        self.ready = True
+        self.updateList()
+
+    def cbMessagebookError( self, e ):
+        print "error while retrieving messagebook"
+        self.busy = False
+
+    def onShow( self ):
+        if not self.ready and not self.busy:
+            if dbus_object.gsm_device_obj:
+                print "retrieving phonebook"
+                dbus_object.gsm_sim_iface.RetrieveMessagebook(
+                    "all",
+                    reply_handler=self.cbMessagebookReply,
+                    error_handler=self.cbMessagebookError
+                )
+                self.busy = True
+            else:
+                # Fake messagebook...
+                self.cbMessagebookReply( [
+                ] )
+
+    def updateList( self):
+        if self.page < 0:
+            self.page = 0
+        while len( self.messagebook ) <= ( self.page )*6:
+            self.page -= 1
+        self.current = self.messagebook[self.page*6:(self.page+1)*6]
+        for i in range( 0, len( self.current ) ):
+            self.part_text_set( "label_main_list_%i" % i, self.current[i][2] )
+            self.part_text_set( "label_sub_list_%i" % i, self.current[i][3] )
+        for i in range( len( self.current ), 6):
+            self.part_text_set( "label_main_list_%i" % i, "" )
+            self.part_text_set( "label_sub_list_%i" % i, "" )
+        self.selected = None
+        for i in range( 6 ):
+            self.signal_emit( "deactivate_button_list_%i" % i, "" )
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_list_*" )
+    def on_edje_signal_button_list_pressed( self, emission, source ):
+        id = int( source.split( "_" )[-1] )
+        if self.selected == id:
+            return
+        if self.selected is not None:
+            self.signal_emit( "deactivate_button_list_%i" % self.selected, "" )
+        self.signal_emit( "activate_button_list_%i" % id, "" )
+        self.selected = id
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_left" )
+    def on_edje_signal_button_action_left_pressed( self, emission, source ):
+        self.page -= 1
+        self.updateList()
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_right" )
+    def on_edje_signal_button_action_right_pressed( self, emission, source ):
+        self.page += 1
+        self.updateList()
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_open" )
+    def on_edje_signal_button_action_open_pressed( self, emission, source ):
+        if self.selected is not None:
+            pass
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
+    def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
+    	self.main.groups["menu"].activate(("send", "delete", "forward", "reply"), self.cbMenu)
+#----------------------------------------------------------------------------#
 class pyphone_contacts(edje_group):
 #----------------------------------------------------------------------------#
     def __init__(self, main):
@@ -214,7 +305,6 @@ class pyphone_contacts(edje_group):
         self.selected = None
 
     def cbNameEdit( self, name, reference ):
-        print ( name, reference)
         for i in range( len( self.phonebook ) ):
             if self.phonebook[i][0] == reference:
                 self.phonebook[i] = ( reference, name, self.phonebook[i][2] )
@@ -229,7 +319,6 @@ class pyphone_contacts(edje_group):
         self.updateList()
 
     def cbNumberEdit( self, number, reference ):
-        print ( number, reference)
         for i in range( len( self.phonebook ) ):
             if self.phonebook[i][0] == reference:
                 self.phonebook[i] = ( reference, self.phonebook[i][1], number )
@@ -284,7 +373,6 @@ class pyphone_contacts(edje_group):
         self.updateList()
 
     def cbMenu( self, result ):
-        print result
         if result == "edit name":
     	    self.main.groups["text_edit"].setup(
                 "contacts",
@@ -612,10 +700,10 @@ class pyphone_location( edje_group ):
         self.update()
 
 #----------------------------------------------------------------------------#
-class pyphone_sms(edje_group):
+class pyphone_message(edje_group):
 #----------------------------------------------------------------------------#
     def __init__(self, main):
-        edje_group.__init__(self, main, "sms")
+        edje_group.__init__(self, main, "message")
         self.text = []
         self.button_labels2 = [
             [
@@ -1079,7 +1167,14 @@ class GUI(object):
         self.groups["swallow"] = edje_group(self, "swallow")
         self.evas_canvas.evas_obj.data["swallow"] = self.groups["swallow"]
 
-        for page in ( "main", "phone", "call", "sms", "contacts", "location", "pin", "puk", "number_edit", "text_edit" ):
+        for page in (
+                "main",
+                "phone", "call",
+                "sms",
+                "contacts",
+                "location",
+                "pin", "puk", "number_edit", "text_edit", "text_show", "message"
+            ):
             ctor = globals().get( "pyphone_%s" % page, None )
             if ctor:
                 self.groups[page] = ctor( self )
