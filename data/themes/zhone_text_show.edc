@@ -17,7 +17,7 @@ parts {
                 offset: -1 -1;
             }
             text {
-                style: "simple_style";
+                style: "sms_style";
             }
         }
     }

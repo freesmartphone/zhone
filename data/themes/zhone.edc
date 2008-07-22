@@ -54,6 +54,13 @@ styles {
       tag:  "tab" "  \t";
    }
    style {
+      name: "sms_style";
+      base: "font=Sans font_size=20 color=#fff wrap=word outline_color=#000 style=soft_outline tabstops=60";
+      tag:  "br" "  \n";
+      tag:  "p" "  \n\n";
+      tag:  "tab" "  \t";
+   }
+   style {
       name: "error_style";
       base: "font=Sans font_size=36 align=center valign=center color=#fff wrap=word outline_color=#000 style=soft_outline";
       tag:  "br" "  \n";

@@ -287,7 +287,13 @@ class pyphone_sms(edje_group):
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_open" )
     def on_edje_signal_button_action_open_pressed( self, emission, source ):
         if self.selected is not None:
-            pass
+            self.main.groups["text_show"].setup(
+                "sms",
+                "From: %s<p>%s" % (
+                    self.current[self.selected][2],
+                    self.current[self.selected][3]
+                )
+            )
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
@@ -990,6 +996,17 @@ class pyphone_number_edit( edje_group ):
         self.part_text_set( "label_description", " %s " % self.title )
         self.part_text_set( "label", " %s " % self.text )
         self.main.transition_to("number_edit")
+
+#----------------------------------------------------------------------------#
+class pyphone_text_show( edje_group ):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        edje_group.__init__( self, main, "text_show" )
+
+    def setup( self, parent_name, text ):
+        self.parent_name = parent_name
+        self.part_text_set( "text", text )
+        self.main.transition_to("text_show")
 
 #----------------------------------------------------------------------------#
 class pyphone_text_edit( edje_group ):
