@@ -445,9 +445,11 @@ class pyphone_contacts(edje_group):
             self.page -= 1
         self.current = self.phonebook[self.page*6:(self.page+1)*6]
         for i in range( 0, len( self.current ) ):
-            self.part_text_set( "label_list_%i" % i, self.current[i][1] )
+            self.part_text_set( "label_main_list_%i" % i, self.current[i][1] )
+            self.part_text_set( "label_sub_list_%i" % i, self.current[i][2] )
         for i in range( len( self.current ), 6):
-            self.part_text_set( "label_list_%i" % i, "" )
+            self.part_text_set( "label_main_list_%i" % i, "" )
+            self.part_text_set( "label_sub_list_%i" % i, "" )
         self.selected = None
         for i in range( 6 ):
             self.signal_emit( "deactivate_button_list_%i" % i, "" )
