@@ -213,13 +213,102 @@ class pyphone_sms(edje_group):
         self.page = 0
         self.selected = None
 
+    def cbSendReply( self ):
+        print "sent message"
+
+    def cbSendError( self, e ):
+        print "error while sending message"
+
+    def cbStoreReply( self, result ):
+        print "stored message: ", result
+        if dbus_object.gsm_device_obj:
+            print "retrieving phonebook"
+            dbus_object.gsm_sim_iface.SendStoredMessage(
+                result,
+                reply_handler=self.cbSendReply,
+                error_handler=self.cbSendError
+            )
+
+    def cbStoreError( self, e ):
+        print "error while storing message"
+
+    def cbSend1( self, number, reference ):
+        self.main.groups["text_edit"].setup(
+            "sms",
+            "", # text
+            number, # title
+            number, # reference
+            self.cbSend2
+        )
+
+    def cbSend2( self, text, number ):
+        if dbus_object.gsm_device_obj:
+            dbus_object.gsm_sim_iface.StoreMessage(
+                number, text,
+                reply_handler=self.cbStoreReply,
+                error_handler=self.cbStoreError
+            )
+
+    def cbDelete( self, result, reference ):
+        if result == "abort":
+            return
+        if dbus_object.gsm_device_obj:
+            dbus_object.gsm_sim_iface.DeleteMessage(
+                reference
+            )
+        for i in range( len( self.messagebook ) ):
+            if self.messagebook[i][0] == reference:
+                del self.messagebook[i]
+                break
+        self.updateList()
+
+    def cbForward( self, number, text ):
+        if dbus_object.gsm_device_obj:
+            dbus_object.gsm_sim_iface.StoreMessage(
+                number, text,
+                reply_handler=self.cbStoreReply,
+                error_handler=self.cbStoreError
+            )
+
+    def cbReply( self, text, number):
+        if dbus_object.gsm_device_obj:
+            dbus_object.gsm_sim_iface.StoreMessage(
+                number, text,
+                reply_handler=self.cbStoreReply,
+                error_handler=self.cbStoreError
+            )
+
     def cbMenu( self, result ):
-        if result == "delete":
+        if result == "send":
+            self.main.groups["number_edit"].setup(
+                "sms",
+                "", # number
+                "recipient?", # title = new name
+                None, # reference
+                self.cbSend1
+            )
+        elif result == "delete":
     	    self.main.groups["error"].activate(
                 "delete '%s'?" % self.current[self.selected][1],
                 ("abort", "delete"),
                 self.current[self.selected][0], # reference
                 self.cbDelete
+            )
+        elif result == "forward":
+    	    self.main.groups["number_edit"].setup(
+                "sms",
+                "", # number
+                self.current[self.selected][3][:20], # title = name
+                self.current[self.selected][3], # reference = text
+                self.cbForward
+            )
+        elif result == "reply":
+    	    self.main.groups["text_edit"].setup(
+                "sms",
+                "", # text
+                self.current[self.selected][2], # title = number
+                self.current[self.selected][2], # reference = number
+                self.cbReply
             )
 
     def cbMessagebookReply( self, result ):
@@ -246,6 +335,8 @@ class pyphone_sms(edje_group):
             else:
                 # Fake messagebook...
                 self.cbMessagebookReply( [
+                    (0, "read", "+4544555", "Hello World!"),
+                    (1, "read", "+456663443", "Zhone!"),
                 ] )
 
     def updateList( self):
@@ -291,13 +382,13 @@ class pyphone_sms(edje_group):
                 "sms",
                 "From: %s<p>%s" % (
                     self.current[self.selected][2],
-                    self.current[self.selected][3]
+                    self.current[self.selected][3].replace( '\n', '<br>' )
                 )
             )
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
-    	self.main.groups["menu"].activate(("send", "delete", "forward", "reply"), self.cbMenu)
+    	self.main.groups["menu"].activate( ( "send", "delete", "forward", "reply" ), self.cbMenu )
 #----------------------------------------------------------------------------#
 class pyphone_contacts(edje_group):
 #----------------------------------------------------------------------------#
@@ -399,7 +490,7 @@ class pyphone_contacts(edje_group):
     	    self.main.groups["text_edit"].setup(
                 "contacts",
                 "", # name
-                "new contact", # title
+                "name?", # title
                 None, # reference
                 self.cbNew1
             )
