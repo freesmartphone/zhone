@@ -1021,6 +1021,10 @@ collections {
         #include "zhone_pin.edc"
     }
     group {
+        name: "list_choose";
+        #include "zhone_list_choose.edc"
+    }
+    group {
         name: "number_edit";
         #include "zhone_number_edit.edc"
     }

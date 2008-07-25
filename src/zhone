@@ -232,12 +232,12 @@ class pyphone_sms(edje_group):
     def cbStoreError( self, e ):
         print "error while storing message"
 
-    def cbSend1( self, number, reference ):
+    def cbSend1( self, selected, cb_data ):
         self.main.groups["text_edit"].setup(
             "sms",
             "", # text
-            number, # title
-            number, # reference
+            selected[0], # title
+            selected[1], # reference
             self.cbSend2
         )
 
@@ -257,15 +257,15 @@ class pyphone_sms(edje_group):
                 reference
             )
         for i in range( len( self.messagebook ) ):
-            if self.messagebook[i][0] == reference:
+            if self.messageook[i][0] == reference:
                 del self.messagebook[i]
                 break
         self.updateList()
 
-    def cbForward( self, number, text ):
+    def cbForward( self, selected, text ):
         if dbus_object.gsm_device_obj:
             dbus_object.gsm_sim_iface.StoreMessage(
-                number, text,
+                selected[1], text,
                 reply_handler=self.cbStoreReply,
                 error_handler=self.cbStoreError
             )
@@ -280,13 +280,14 @@ class pyphone_sms(edje_group):
 
     def cbMenu( self, result ):
         if result == "send":
-            self.main.groups["number_edit"].setup(
-                "sms",
-                "", # number
-                "recipient?", # title = new name
-                None, # reference
-                self.cbSend1
-            )
+            self.main.groups["contacts"].prepare()
+            if self.main.groups["contacts"].ready:
+                self.main.groups["list_choose"].setup(
+                    "sms",
+                    [ (x[1], x[2]) for x in  self.main.groups["contacts"].phonebook],
+                    None,
+                    self.cbSend1
+                )
         elif result == "delete":
     	    self.main.groups["error"].activate(
                 "delete '%s'?" % self.current[self.selected][1],
@@ -295,12 +296,13 @@ class pyphone_sms(edje_group):
                 self.cbDelete
             )
         elif result == "forward":
-    	    self.main.groups["number_edit"].setup(
-                "sms",
-                "", # number
-                self.current[self.selected][3][:20], # title = name
-                self.current[self.selected][3], # reference = text
-                self.cbForward
+            self.main.groups["contacts"].prepare()
+            if self.main.groups["contacts"].ready:
+                self.main.groups["list_choose"].setup(
+                    "sms",
+                    [ (x[1], x[2] ) for x in  self.main.groups["contacts"].phonebook],
+                    self.current[self.selected][3],
+                    self.cbForward
             )
         elif result == "reply":
     	    self.main.groups["text_edit"].setup(
@@ -322,7 +324,7 @@ class pyphone_sms(edje_group):
         print "error while retrieving messagebook"
         self.busy = False
 
-    def onShow( self ):
+    def prepare( self ):
         if not self.ready and not self.busy:
             if dbus_object.gsm_device_obj:
                 print "retrieving phonebook"
@@ -338,6 +340,9 @@ class pyphone_sms(edje_group):
                     (0, "read", "+4544555", "Hello World!"),
                     (1, "read", "+456663443", "Zhone!"),
                 ] )
+
+    def onShow( self ):
+        self.prepare()
 
     def updateList( self):
         if self.page < 0:
@@ -389,6 +394,7 @@ class pyphone_sms(edje_group):
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
     	self.main.groups["menu"].activate( ( "send", "delete", "forward", "reply" ), self.cbMenu )
+
 #----------------------------------------------------------------------------#
 class pyphone_contacts(edje_group):
 #----------------------------------------------------------------------------#
@@ -514,7 +520,7 @@ class pyphone_contacts(edje_group):
         print "error while retrieving phonebook"
         self.busy = False
 
-    def onShow( self ):
+    def prepare( self ):
         if not self.ready and not self.busy:
             if dbus_object.gsm_device_obj:
                 print "retrieving phonebook"
@@ -534,6 +540,9 @@ class pyphone_contacts(edje_group):
                     ('6', 'Sulu', '+013244344'),
                     ('7', 'Chekov', '+013244344'),
                 ] )
+
+    def onShow( self ):
+        self.prepare()
 
     def updateList( self):
         if self.page < 0:
@@ -1049,6 +1058,57 @@ class pyphone_puk(edje_group):
                     self.main.transition_to("main")
 
 #----------------------------------------------------------------------------#
+class pyphone_list_choose(edje_group):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        edje_group.__init__( self, main, "list_choose" )
+        self.text = ""
+        self.list_data = None
+        self.cb_data = None
+        self.cb = None
+
+    def updateList( self):
+        if self.page < 0:
+            self.page = 0
+        while len( self.list_data ) <= ( self.page )*6:
+            self.page -= 1
+        self.current = self.list_data[self.page*6:(self.page+1)*6]
+        for i in range( 0, len( self.current ) ):
+            self.part_text_set( "label_main_list_%i" % i, self.current[i][0] )
+            self.part_text_set( "label_sub_list_%i" % i, self.current[i][1] )
+        for i in range( len( self.current ), 6):
+            self.part_text_set( "label_main_list_%i" % i, "" )
+            self.part_text_set( "label_sub_list_%i" % i, "" )
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_list_*" )
+    def on_edje_signal_button_list_pressed( self, emission, source ):
+        id = int( source.split( "_" )[-1] )
+        self.main.transition_to(self.parent_name)
+        self.cb( self.current[id], self.cb_data )
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_left" )
+    def on_edje_signal_button_action_left_pressed( self, emission, source ):
+        self.page -= 1
+        self.updateList()
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_right" )
+    def on_edje_signal_button_action_right_pressed( self, emission, source ):
+        self.page += 1
+        self.updateList()
+
+    def setup( self, parent_name, list_data, cb_data, cb ):
+        self.parent_name = parent_name
+        self.list_data = list_data
+        self.cb_data = cb_data
+        self.cb = cb
+
+        self.current = []
+        self.page = 0
+        self.main.transition_to("list_choose")
+
+        self.updateList()
+
+#----------------------------------------------------------------------------#
 class pyphone_number_edit( edje_group ):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
@@ -1283,7 +1343,8 @@ class GUI(object):
                 "sms",
                 "contacts",
                 "location",
-                "pin", "puk", "number_edit", "text_edit", "text_show", "message"
+                "pin", "puk",
+                "list_choose", "number_edit", "text_edit", "text_show", "message"
             ):
             ctor = globals().get( "pyphone_%s" % page, None )
             if ctor:
@@ -1345,6 +1406,9 @@ class GUI(object):
         if dbus_object.gsm_device_obj is not None:
             dbus_object.onCallStatus.append( self.groups["call"].onCallStatus )
             dbus_object.onNetworkStatus.append(self.update_network)
+            # FIXME wait for the ready signal
+            self.groups["contacts"].prepare()
+            self.groups["sms"].prepare()
             try:
                 dbus_object.gsm_device_iface.SetAntennaPower(True)
                 dbus_object.gsm_network_iface.Register()
