@@ -257,7 +257,7 @@ class pyphone_sms(edje_group):
                 reference
             )
         for i in range( len( self.messagebook ) ):
-            if self.messageook[i][0] == reference:
+            if self.messagebook[i][0] == reference:
                 del self.messagebook[i]
                 break
         self.updateList()
@@ -324,10 +324,20 @@ class pyphone_sms(edje_group):
         print "error while retrieving messagebook"
         self.busy = False
 
+    def onNewMessage( self, index ):
+        print "new message, retrieving messagebook"
+        if not self.busy:
+            dbus_object.gsm_sim_iface.RetrieveMessagebook(
+                "all",
+                reply_handler=self.cbMessagebookReply,
+                error_handler=self.cbMessagebookError
+            )
+            self.busy = True
+
     def prepare( self ):
         if not self.ready and not self.busy:
             if dbus_object.gsm_device_obj:
-                print "retrieving phonebook"
+                print "retrieving messagebook"
                 dbus_object.gsm_sim_iface.RetrieveMessagebook(
                     "all",
                     reply_handler=self.cbMessagebookReply,
@@ -355,7 +365,7 @@ class pyphone_sms(edje_group):
         for i in range( 0, len( self.current ) ):
             main_text = self.main.groups["contacts"].tryNumberToName( self.current[i][2] )
             self.part_text_set( "label_main_list_%i" % i, main_text )
-            self.part_text_set( "label_sub_list_%i" % i, self.current[i][3])
+            self.part_text_set( "label_sub_list_%i" % i, "(%s) %s" % ( self.current[i][1], self.current[i][3] ) )
         for i in range( len( self.current ), 6):
             self.part_text_set( "label_main_list_%i" % i, "" )
             self.part_text_set( "label_sub_list_%i" % i, "" )
@@ -1385,6 +1395,14 @@ class GUI(object):
         self.groups["swallow"].part_text_set( "label_top_right", "no dbus" )
         ecore.idle_enterer_add( self.dbus_objectInit )
 
+        dbus_object.onResourceChanged.append( self.display_resources )
+        dbus_object.onNetworkStatus.append( self.update_network )
+        dbus_object.onAccuracyChanged.append( self.groups["location"].onAccuracyChanged )
+        dbus_object.onPositionChanged.append( self.groups["location"].onPositionChanged )
+        dbus_object.onCallStatus.append( self.groups["call"].onCallStatus )
+        dbus_object.onNewMessage.append( self.groups["sms"].onNewMessage )
+        dbus_object.onIdleStateChanged.append( self.lock_on_idle )
+
     def run( self ):
         ecore.main_loop_begin()
 
@@ -1393,9 +1411,6 @@ class GUI(object):
 
     def dbus_objectInit( self ):
         print "dbus_objectInit..."
-        global dbus_object
-        if dbus_object is None:
-            dbus_object = DBusObject()
         if not dbus_object.initialize():
             # try again later
             ecore.timer_add( 10.0, self.dbus_objectInit )
@@ -1406,17 +1421,8 @@ class GUI(object):
 
     def dbus_objectInitOK( self ):
         print "dbus_objectInitOK!"
-        if dbus_object.usage_obj is not None:
-            dbus_object.onResourceChanged.append(self.display_resources)
-            self.display_resources()
-
-        if dbus_object.gps_obj:
-            dbus_object.onAccuracyChanged.append( self.groups["location"].onAccuracyChanged )
-            dbus_object.onPositionChanged.append( self.groups["location"].onPositionChanged )
 
         if dbus_object.gsm_device_obj is not None:
-            dbus_object.onCallStatus.append( self.groups["call"].onCallStatus )
-            dbus_object.onNetworkStatus.append(self.update_network)
             # FIXME wait for the ready signal
             self.groups["contacts"].prepare()
             self.groups["sms"].prepare()
@@ -1434,9 +1440,6 @@ class GUI(object):
                         self.transition_to("pin")
                 except DBusException, e:
                     print e
-
-        if dbus_object.idlenotifier_iface is not None:
-            dbus_object.onIdleStateChanged.append(self.lock_on_idle)
 
         if dbus_object.device_power_iface is not None:
             # Update Battery charge as soon as we have DBus
@@ -1603,6 +1606,7 @@ class DBusObject( object ):
         self.onPositionChanged = []
         self.onCallStatus = []
         self.onNetworkStatus = []
+        self.onNewMessage = []
         self.onIdleStateChanged = []
         self.ignoreSuspend = False
 
@@ -1694,6 +1698,7 @@ class DBusObject( object ):
             self.gsm_network_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Network')
             self.gsm_call_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Call')
             self.gsm_test_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Test')
+            self.gsm_sim_iface.connect_to_signal( "NewMessage", self.cbNewMessage )
             self.gsm_call_iface.connect_to_signal( "CallStatus", self.cbCallStatus )
             self.gsm_network_iface.connect_to_signal( "Status", self.cbNetworkStatus )
         if self.gsm_device_obj is None:
@@ -1755,6 +1760,10 @@ class DBusObject( object ):
         for cb in self.onNetworkStatus:
             cb( status=status )
 
+    def cbNewMessage( self, index ):
+        for cb in self.onNewMessage:
+            cb( index=index )
+
     def cbIdleStateChanged( self, state ):
         print "IDLE STATE=", state
         for cb in self.onIdleStateChanged:
@@ -1790,7 +1799,7 @@ class DBusObject( object ):
 if __name__ == "__main__":
 
     options, args = MyOptionParser().parse_args()
-    dbus_object = None
+    dbus_object = DBusObject()
     gui = GUI( options, args )
     try:
         gui.run()
