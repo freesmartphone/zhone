@@ -343,16 +343,19 @@ class pyphone_sms(edje_group):
 
     def onShow( self ):
         self.prepare()
+        self.updateList()
 
     def updateList( self):
+        self.main.groups["contacts"].prepare()
         if self.page < 0:
             self.page = 0
         while len( self.messagebook ) <= ( self.page )*6:
             self.page -= 1
         self.current = self.messagebook[self.page*6:(self.page+1)*6]
         for i in range( 0, len( self.current ) ):
-            self.part_text_set( "label_main_list_%i" % i, self.current[i][2] )
-            self.part_text_set( "label_sub_list_%i" % i, self.current[i][3] )
+            main_text = self.main.groups["contacts"].tryNumberToName( self.current[i][2] )
+            self.part_text_set( "label_main_list_%i" % i, main_text )
+            self.part_text_set( "label_sub_list_%i" % i, self.current[i][3])
         for i in range( len( self.current ), 6):
             self.part_text_set( "label_main_list_%i" % i, "" )
             self.part_text_set( "label_sub_list_%i" % i, "" )
@@ -383,10 +386,11 @@ class pyphone_sms(edje_group):
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_open" )
     def on_edje_signal_button_action_open_pressed( self, emission, source ):
         if self.selected is not None:
+            from_text = self.main.groups["contacts"].tryNumberToName( self.current[self.selected][2] )
             self.main.groups["text_show"].setup(
                 "sms",
                 "From: %s<p>%s" % (
-                    self.current[self.selected][2],
+                    from_text,
                     self.current[self.selected][3].replace( '\n', '<br>' )
                 )
             )
@@ -543,8 +547,15 @@ class pyphone_contacts(edje_group):
 
     def onShow( self ):
         self.prepare()
+        self.updateList()
 
-    def updateList( self):
+    def tryNumberToName( self, number ):
+        for i in range( len( self.phonebook ) ):
+            if self.phonebook[i][2] == number:
+                return self.phonebook[i][1]
+        return number
+
+    def updateList( self ):
         if self.page < 0:
             self.page = 0
         while len( self.phonebook ) <= ( self.page )*6:
