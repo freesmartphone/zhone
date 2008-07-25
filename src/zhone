@@ -228,6 +228,13 @@ class pyphone_sms(edje_group):
                 reply_handler=self.cbSendReply,
                 error_handler=self.cbSendError
             )
+        if not self.busy:
+            dbus_object.gsm_sim_iface.RetrieveMessagebook(
+                "all",
+                reply_handler=self.cbMessagebookReply,
+                error_handler=self.cbMessagebookError
+            )
+            self.busy = True
 
     def cbStoreError( self, e ):
         print "error while storing message"
@@ -290,7 +297,7 @@ class pyphone_sms(edje_group):
                 )
         elif result == "delete":
     	    self.main.groups["error"].activate(
-                "delete '%s'?" % self.current[self.selected][1],
+                "delete?",
                 ("abort", "delete"),
                 self.current[self.selected][0], # reference
                 self.cbDelete
@@ -546,13 +553,13 @@ class pyphone_contacts(edje_group):
             else:
                 # Fake phonebook...
                 self.cbPhonebookReply( [
-                    ('1', 'Kirk', '+023224433'),
-                    ('2', 'Spock', '+034433463'),
-                    ('3', 'McCoy', '+013244344'),
-                    ('4', 'Scott', '+013244344'),
-                    ('5', 'Uhura', '+013244344'),
-                    ('6', 'Sulu', '+013244344'),
-                    ('7', 'Chekov', '+013244344'),
+                    (1, 'Kirk', '+023224433'),
+                    (2, 'Spock', '+034433463'),
+                    (3, 'McCoy', '+013244344'),
+                    (4, 'Scott', '+013244344'),
+                    (5, 'Uhura', '+013244344'),
+                    (6, 'Sulu', '+013244344'),
+                    (7, 'Chekov', '+013244344'),
                 ] )
 
     def onShow( self ):
