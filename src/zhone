@@ -111,35 +111,44 @@ class pyphone_main(edje_group):
 #----------------------------------------------------------------------------#
 class pyphone_phone(edje_group):
 #----------------------------------------------------------------------------#
+    TIMEOUT = 2.0
     def __init__(self, main):
         edje_group.__init__(self, main, "phone")
         self.text = []
+        self.last = 0.0
 
-    @edje.decorators.signal_callback("dialer_button_pressed", "*")
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_*" )
     def on_edje_signal_dialer_button_pressed(self, emission, source):
-        if "button_" in source:
-            key = source.split("_", 1)[1]
-            if key in ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "#"):
-                self.text.append(key)
-                # The trailing whitespace is a workaround for the one char invisible
-                # bug due to some problems with scaling of text parts.
-                self.part_text_set("label", "".join(self.text)+" ")
-            elif key in "star":
+        key = source.split("_", 1)[1]
+        if key in ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"):
+            self.text.append(key)
+            # The trailing whitespace is a workaround for the one char invisible
+            # bug due to some problems with scaling of text parts.
+            self.part_text_set("label", "".join(self.text)+" ")
+        elif key in "star":
+            if self.text and ( time.time()-self.last < self.TIMEOUT ):
+                if self.text[-1] == "*":
+                    del self.text[-1]
+                    self.text.append( "+" )
+                elif self.text[-1] == "+":
+                    del self.text[-1]
+                    self.text.append( "*" )
+            else:
                 self.text.append("*")
-                self.part_text_set("label", "".join(self.text)+" ")
-            elif key in "delete":
-                self.text = self.text[:-1]
-                self.part_text_set("label", "".join(self.text)+" ")
-            elif key in "dial":
-                if dbus_object.gsm_device_obj:
-                    dbus_object.gsm_call_iface.Initiate( "".join(self.text), "voice" )
-                else:
-                    # Fake onCallStatus...
-                    self.main.groups["call"].onCallStatus( None, "outgoing", {"peer": "".join(self.text)} )
-        else:
-            key = source
-        #self.text.append(source)
-        #self.part_text_set("label", "".join(self.text))
+            self.part_text_set( "label", "".join(self.text)+" " )
+        elif key in "hash":
+            self.text += "#"
+            self.part_text_set( "label", " %s " % self.text )
+        elif key in "delete":
+            self.text = self.text[:-1]
+            self.part_text_set("label", "".join(self.text)+" ")
+        elif key in "dial":
+            if dbus_object.gsm_device_obj:
+                dbus_object.gsm_call_iface.Initiate( "".join(self.text), "voice" )
+            else:
+                # Fake onCallStatus...
+                self.main.groups["call"].onCallStatus( None, "outgoing", {"peer": "".join(self.text)} )
+        self.last = time.time()
 
 #----------------------------------------------------------------------------#
 class pyphone_call(edje_group):
@@ -1140,11 +1149,13 @@ class pyphone_list_choose(edje_group):
 #----------------------------------------------------------------------------#
 class pyphone_number_edit( edje_group ):
 #----------------------------------------------------------------------------#
+    TIMEOUT = 2.0
     def __init__( self, main ):
         edje_group.__init__( self, main, "number_edit" )
         self.text = ""
         self.cb_data = None
         self.cb = None
+        self.last = 0.0
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_*" )
     def on_edje_signal_button_pressed( self, emission, source ):
@@ -1155,7 +1166,13 @@ class pyphone_number_edit( edje_group ):
             # bug due to some problems with scaling of text parts.
             self.part_text_set( "label", " %s " % self.text )
         elif key in "star":
-            self.text += "*"
+            if self.text and ( time.time()-self.last < self.TIMEOUT ):
+                if self.text[-1] == "*":
+                    self.text = self.text[:-1]+"+"
+                elif self.text[-1] == "+":
+                    self.text = self.text[:-1]+"*"
+            else:
+                self.text += "*"
             self.part_text_set( "label", " %s " % self.text )
         elif key in "hash":
             self.text += "#"
@@ -1166,6 +1183,7 @@ class pyphone_number_edit( edje_group ):
         elif key in "done":
             self.main.transition_to(self.parent_name)
             self.cb( self.text, self.cb_data )
+        self.last = time.time()
     
     def setup( self, parent_name, text, title, cb_data, cb ):
         self.parent_name = parent_name

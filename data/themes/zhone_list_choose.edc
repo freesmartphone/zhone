@@ -39,12 +39,12 @@ parts {
         }
     }
     
-    GRID_BUTTON_2LINE("list_button_box", "list_0", 0, 0, 1, 6, "");
-    GRID_BUTTON_2LINE("list_button_box", "list_1", 0, 1, 1, 6, "");
-    GRID_BUTTON_2LINE("list_button_box", "list_2", 0, 2, 1, 6, "");
-    GRID_BUTTON_2LINE("list_button_box", "list_3", 0, 3, 1, 6, "");
-    GRID_BUTTON_2LINE("list_button_box", "list_4", 0, 4, 1, 6, "");
-    GRID_BUTTON_2LINE("list_button_box", "list_5", 0, 5, 1, 6, "");
+    GRID_BUTTON_2LINE("list_button_box", "list_0", 0, 0, 1, 6, "", "");
+    GRID_BUTTON_2LINE("list_button_box", "list_1", 0, 1, 1, 6, "", "");
+    GRID_BUTTON_2LINE("list_button_box", "list_2", 0, 2, 1, 6, "", "");
+    GRID_BUTTON_2LINE("list_button_box", "list_3", 0, 3, 1, 6, "", "");
+    GRID_BUTTON_2LINE("list_button_box", "list_4", 0, 4, 1, 6, "", "");
+    GRID_BUTTON_2LINE("list_button_box", "list_5", 0, 5, 1, 6, "", "");
 
     GRID_BUTTON("action_button_box", "action_left", 0, 0, 2, 1, "left");
     GRID_BUTTON("action_button_box", "action_right", 1, 0, 2, 1, "right");
