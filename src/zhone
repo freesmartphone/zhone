@@ -133,6 +133,8 @@ class pyphone_phone(edje_group):
                 elif self.text[-1] == "+":
                     del self.text[-1]
                     self.text.append( "*" )
+                else:
+                    self.text.append( "*" )
             else:
                 self.text.append("*")
             self.part_text_set( "label", "".join(self.text)+" " )
@@ -1178,6 +1180,8 @@ class pyphone_number_edit( edje_group ):
                     self.text = self.text[:-1]+"+"
                 elif self.text[-1] == "+":
                     self.text = self.text[:-1]+"*"
+                else:
+                    self.text += "*"
             else:
                 self.text += "*"
             self.part_text_set( "label", " %s " % self.text )
