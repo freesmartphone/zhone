@@ -471,6 +471,7 @@ class pyphone_contacts(edje_group):
         for i in range(1, 250):
             if not i in ids:
                 reference = i
+                break
         if reference is None:
             return # no space?
         if dbus_object.gsm_device_obj:
