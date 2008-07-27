@@ -39,12 +39,12 @@ parts {
         }
     }
     
-    GRID_BUTTON_2LINE("list_button_box", "list_0", 0, 0, 1, 6, "", "");
-    GRID_BUTTON_2LINE("list_button_box", "list_1", 0, 1, 1, 6, "", "");
-    GRID_BUTTON_2LINE("list_button_box", "list_2", 0, 2, 1, 6, "", "");
-    GRID_BUTTON_2LINE("list_button_box", "list_3", 0, 3, 1, 6, "", "");
-    GRID_BUTTON_2LINE("list_button_box", "list_4", 0, 4, 1, 6, "", "");
-    GRID_BUTTON_2LINE("list_button_box", "list_5", 0, 5, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_0", 0, 0, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_1", 0, 1, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_2", 0, 2, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_3", 0, 3, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_4", 0, 4, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_5", 0, 5, 1, 6, "", "");
 
     GRID_BUTTON_SYMBOL("action_button_box", "action_left", 0, 0, 3, 1, SYMBOL_LEFT);
     GRID_BUTTON("action_button_box", "action_dial", 1, 0, 3, 1, "dial");
@@ -59,12 +59,12 @@ programs {
     ACTIVATE("button_bottom_middle");
     ACTIVATE("button_bottom_right");
 
-    SELECTABLE("button_list_0");
-    SELECTABLE("button_list_1");
-    SELECTABLE("button_list_2");
-    SELECTABLE("button_list_3");
-    SELECTABLE("button_list_4");
-    SELECTABLE("button_list_5");
+    SELECTABLE("target_list_0");
+    SELECTABLE("target_list_1");
+    SELECTABLE("target_list_2");
+    SELECTABLE("target_list_3");
+    SELECTABLE("target_list_4");
+    SELECTABLE("target_list_5");
 
     ACTIVATE("button_action_left");
     ACTIVATE("button_action_dial");

@@ -527,14 +527,14 @@ styles {
         description {                                                               \
             state: "default" 0.0;                                                   \
             rel1 {                                                                  \
-                relative: (0.15/xcount+(1/xcount*xpos))                             \
-                          (0.15/ycount+(1/ycount*ypos));                            \
+                relative: (0.05/xcount+(1/xcount*xpos))                             \
+                          (0.05/ycount+(1/ycount*ypos));                            \
                 offset: 0 0;                                                        \
                 to: container_name;                                                 \
             }                                                                       \
             rel2 {                                                                  \
-                relative: (0.85/xcount+(1/xcount*xpos))                             \
-                          (0.85/ycount+(1/ycount*ypos));                            \
+                relative: (0.95/xcount+(1/xcount*xpos))                             \
+                          (0.95/ycount+(1/ycount*ypos));                            \
                 offset: -1 -1;                                                      \
                 to: container_name;                                                 \
             }                                                                       \
