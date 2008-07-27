@@ -456,6 +456,155 @@ styles {
         }                                                               \
     }
 
+#define TARGET(container_name, part_name, xpos, ypos, xcount, ycount, label)        \
+    part {                                                                          \
+        name: "target_"part_name;                                                   \
+        mouse_events: 1;                                                            \
+        type: IMAGE;                                                                \
+        clip_to: "swallow_clip";                                                    \
+        description {                                                               \
+            state: "default" 0.0;                                                   \
+            rel1 {                                                                  \
+                relative: (0.15/xcount+(1/xcount*xpos))                             \
+                          (0.15/ycount+(1/ycount*ypos));                            \
+                offset: 0 0;                                                        \
+                to: container_name;                                                 \
+            }                                                                       \
+            rel2 {                                                                  \
+                relative: (0.85/xcount+(1/xcount*xpos))                             \
+                          (0.85/ycount+(1/ycount*ypos));                            \
+                offset: -1 -1;                                                      \
+                to: container_name;                                                 \
+            }                                                                       \
+            image {                                                                 \
+                normal: "button_main_background.png";                               \
+                border: 27 27 27 27;                                                \
+            }                                                                       \
+        }                                                                           \
+        description {                                                               \
+            state: "active" 0.0;                                                    \
+            inherit: "default" 0.0;                                                 \
+            image {                                                                 \
+                normal: "button_main_background_active.png";                        \
+                border: 27 27 27 27;                                                \
+            }                                                                       \
+        }                                                                           \
+    }                                                                               \
+    part {                                                                          \
+        name: "target_label_"part_name;                                             \
+        mouse_events: 0;                                                            \
+        type: TEXT;                                                                 \
+        effect: SOFT_OUTLINE;                                                       \
+        clip_to: "swallow_clip";                                                    \
+        description {                                                               \
+            state: "default" 0.0;                                                   \
+            align: 0.5 0.5;                                                         \
+            rel1 {                                                                  \
+                relative: 0.1 0.3;                                                  \
+                offset: 0 0;                                                        \
+                to: "target_"part_name;                                             \
+            }                                                                       \
+            rel2 {                                                                  \
+                relative: 0.9 0.7;                                                  \
+                offset: -1 -1;                                                      \
+                to: "target_"part_name;                                             \
+            }                                                                       \
+            text {                                                                  \
+                font: "Sans";                                                       \
+                text: label;                                                        \
+                size: 1;                                                            \
+                fit: 1 1;                                                           \
+            }                                                                       \
+        }                                                                           \
+    }
+
+#define GRID_TARGET_2LINE(container_name, part_name, xpos, ypos, xcount, ycount, label1, label2)  \
+    part {                                                                          \
+        name: "target_"part_name;                                                   \
+        mouse_events: 1;                                                            \
+        type: IMAGE;                                                                \
+        clip_to: "swallow_clip";                                                    \
+        description {                                                               \
+            state: "default" 0.0;                                                   \
+            rel1 {                                                                  \
+                relative: (0.15/xcount+(1/xcount*xpos))                             \
+                          (0.15/ycount+(1/ycount*ypos));                            \
+                offset: 0 0;                                                        \
+                to: container_name;                                                 \
+            }                                                                       \
+            rel2 {                                                                  \
+                relative: (0.85/xcount+(1/xcount*xpos))                             \
+                          (0.85/ycount+(1/ycount*ypos));                            \
+                offset: -1 -1;                                                      \
+                to: container_name;                                                 \
+            }                                                                       \
+            image {                                                                 \
+                normal: "button_main_background.png";                               \
+                border: 27 27 27 27;                                                \
+            }                                                                       \
+        }                                                                           \
+        description {                                                               \
+            state: "active" 0.0;                                                    \
+            inherit: "default" 0.0;                                                 \
+            image {                                                                 \
+                normal: "button_main_background_active.png";                        \
+                border: 27 27 27 27;                                                \
+            }                                                                       \
+        }                                                                           \
+    }                                                                               \
+    part {                                                                          \
+        name: "label_main_"part_name;                                               \
+        type: TEXT;                                                                 \
+        effect: SOFT_OUTLINE;                                                       \
+        mouse_events: 0;                                                            \
+        clip_to: "swallow_clip";                                                    \
+        description {                                                               \
+            state: "default" 0.0;                                                   \
+            rel1 {                                                                  \
+                relative: 0.0 0.0;                                                  \
+                offset: 0 0;                                                        \
+                to: "target_"part_name;                                             \
+            }                                                                       \
+            rel2 {                                                                  \
+                relative: 1.0 0.7;                                                  \
+                offset: -1 -1;                                                      \
+                to: "target_"part_name;                                             \
+            }                                                                       \
+            text {                                                                  \
+                font: "Sans";                                                       \
+                text: label_main;                                                   \
+                size: BUTTON_MAIN_FONT_SIZE;                                        \
+                align: 0.5 0.5;                                                     \
+            }                                                                       \
+        }                                                                           \
+    }                                                                               \
+    part {                                                                          \
+        name: "label_sub_"part_name;                                                \
+        type: TEXT;                                                                 \
+        effect: SOFT_OUTLINE;                                                       \
+        mouse_events: 0;                                                            \
+        clip_to: "swallow_clip";                                                    \
+        description {                                                               \
+            state: "default" 0.0;                                                   \
+            rel1 {                                                                  \
+                relative: 0.0 0.7;                                                  \
+                offset: 0 0;                                                        \
+                to: "target_"part_name;                                             \
+            }                                                                       \
+            rel2 {                                                                  \
+                relative: 1.0 0.9;                                                  \
+                offset: -1 -1;                                                      \
+                to: "target_"part_name;                                             \
+            }                                                                       \
+            text {                                                                  \
+                font: "Sans";                                                       \
+                text: label_sub;                                                    \
+                size: BUTTON_SUB_FONT_SIZE;                                         \
+                align: 0.5 0.5;                                                     \
+            }                                                                       \
+        }                                                                           \
+    }
+
 #define BUTTONS_BOTTOM()                                                \
     part {                                                              \
         name: "button_bottom_background";                               \
