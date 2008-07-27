@@ -8,6 +8,7 @@
 #define BUTTON_SYMBOL_FONT_SIZE 60
 #define BUTTON_MAIN_FONT_SIZE 32
 #define BUTTON_SUB_FONT_SIZE 18
+#define PAGER_FONT_SIZE 36
 
 #define SYMBOL_LEFT "←"
 #define SYMBOL_RIGHT "→"
@@ -319,7 +320,6 @@ styles {
     part {                                                              \
         name: "label_"part_name;                                        \
         type: TEXT;                                                     \
-        effect: SOFT_OUTLINE;                                           \
         mouse_events: 0;                                                \
         clip_to: "swallow_clip";                                        \
         description {                                                   \
@@ -600,6 +600,32 @@ styles {
                 font: "Sans";                                                       \
                 text: label_sub;                                                    \
                 size: BUTTON_SUB_FONT_SIZE;                                         \
+                align: 0.5 0.5;                                                     \
+            }                                                                       \
+        }                                                                           \
+    }
+
+#define PAGER(y1, y2)                                                               \
+    part {                                                                          \
+        name: "pager";                                                              \
+        type: TEXT;                                                                 \
+        effect: SOFT_OUTLINE;                                                       \
+        mouse_events: 0;                                                            \
+        clip_to: "swallow_clip";                                                    \
+        description {                                                               \
+            state: "default" 0.0;                                                   \
+            rel1 {                                                                  \
+                relative: 0.0 y1;                                                   \
+                offset: 0 0;                                                        \
+            }                                                                       \
+            rel2 {                                                                  \
+                relative: 1.0 y2;                                                   \
+                offset: -1 -1;                                                      \
+            }                                                                       \
+            align: 0.5 0.5;                                                         \
+            text {                                                                  \
+                font: "Sans";                                                       \
+                size: PAGER_FONT_SIZE;                                              \
                 align: 0.5 0.5;                                                     \
             }                                                                       \
         }                                                                           \

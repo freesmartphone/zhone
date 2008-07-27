@@ -373,11 +373,14 @@ class pyphone_sms(edje_group):
 
     def updateList( self):
         self.main.groups["contacts"].prepare()
+        self.pages = max( ( len( self.messagebook ) - 1 ) / 6 + 1, 1 )
+        if self.page >= self.pages:
+            self.page = self.pages - 1
         if self.page < 0:
             self.page = 0
-        while len( self.messagebook ) <= ( self.page )*6:
-            self.page -= 1
         self.current = self.messagebook[self.page*6:(self.page+1)*6]
+        self.part_text_set( "pager", "".join( ["□"]*self.page+["▣"]+["□"]*(self.pages-self.page-1) ) )
+        print " ".join( ["□"]*self.page+["▣"]+["□"]*(self.pages-self.page) )
         for i in range( 0, len( self.current ) ):
             main_text = self.main.groups["contacts"].tryNumberToName( self.current[i][2] )
             self.part_text_set( "label_main_list_%i" % i, main_text )
@@ -388,6 +391,7 @@ class pyphone_sms(edje_group):
         self.selected = None
         for i in range( 6 ):
             self.signal_emit( "deactivate_target_list_%i" % i, "" )
+
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "target_list_*" )
     def on_edje_signal_button_list_pressed( self, emission, source ):
@@ -583,11 +587,14 @@ class pyphone_contacts(edje_group):
         return number
 
     def updateList( self ):
+        self.pages = max( ( len( self.phonebook ) - 1 ) / 6 + 1, 1 )
+        if self.page >= self.pages:
+            self.page = self.pages - 1
         if self.page < 0:
             self.page = 0
-        while len( self.phonebook ) <= ( self.page )*6:
-            self.page -= 1
+        print self.pages, self.page
         self.current = self.phonebook[self.page*6:(self.page+1)*6]
+        self.part_text_set( "pager", "".join( ["□"]*self.page+["▣"]+["□"]*(self.pages-self.page-1) ) )
         for i in range( 0, len( self.current ) ):
             self.part_text_set( "label_main_list_%i" % i, self.current[i][1] )
             self.part_text_set( "label_sub_list_%i" % i, self.current[i][2] )
@@ -1106,11 +1113,13 @@ class pyphone_list_choose(edje_group):
         self.cb = None
 
     def updateList( self):
+        self.pages = max( ( len( self.list_data ) - 1 ) / 6 + 1, 1 )
+        if self.page >= self.pages:
+            self.page = self.pages - 1
         if self.page < 0:
             self.page = 0
-        while len( self.list_data ) <= ( self.page )*6:
-            self.page -= 1
         self.current = self.list_data[self.page*6:(self.page+1)*6]
+        self.part_text_set( "pager", "".join( ["□"]*self.page+["▣"]+["□"]*(self.pages-self.page-1) ) )
         for i in range( 0, len( self.current ) ):
             self.part_text_set( "label_main_list_%i" % i, self.current[i][0] )
             self.part_text_set( "label_sub_list_%i" % i, self.current[i][1] )

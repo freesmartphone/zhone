@@ -9,16 +9,18 @@ parts {
         description {
             state: "default" 0.0;
             rel1 {
-                relative: 0.02 0.02;
+                relative: 0.0 0.02;
                 offset: 0 0;
             }
             rel2 {
-                relative: 0.98 0.73;
+                relative: 1.0 0.67;
                 offset: -1 -1;
             }
             color: 0 0 0 0;
         }
     }
+    
+    PAGER(0.65, 0.75);
     
     part {
         name: "action_button_box";
@@ -38,7 +40,7 @@ parts {
             color: 0 0 0 0;
         }
     }
-    
+
     GRID_TARGET_2LINE("list_button_box", "list_0", 0, 0, 1, 6, "", "");
     GRID_TARGET_2LINE("list_button_box", "list_1", 0, 1, 1, 6, "", "");
     GRID_TARGET_2LINE("list_button_box", "list_2", 0, 2, 1, 6, "", "");
