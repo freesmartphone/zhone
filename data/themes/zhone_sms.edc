@@ -46,9 +46,9 @@ parts {
     GRID_BUTTON_2LINE("list_button_box", "list_4", 0, 4, 1, 6, "", "");
     GRID_BUTTON_2LINE("list_button_box", "list_5", 0, 5, 1, 6, "", "");
 
-    GRID_BUTTON("action_button_box", "action_left", 0, 0, 3, 1, "left");
+    GRID_BUTTON_SYMBOL("action_button_box", "action_left", 0, 0, 3, 1, SYMBOL_LEFT);
     GRID_BUTTON("action_button_box", "action_open", 1, 0, 3, 1, "open");
-    GRID_BUTTON("action_button_box", "action_right", 2, 0, 3, 1, "right");
+    GRID_BUTTON_SYMBOL("action_button_box", "action_right", 2, 0, 3, 1, SYMBOL_RIGHT);
 
     BUTTONS_BOTTOM();
     BUTTON_OPTIONS();
