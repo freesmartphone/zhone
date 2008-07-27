@@ -138,7 +138,7 @@ class pyphone_phone(edje_group):
             self.part_text_set( "label", "".join(self.text)+" " )
         elif key in "hash":
             self.text += "#"
-            self.part_text_set( "label", " %s " % self.text )
+            self.part_text_set( "label", "".join(self.text)+" " )
         elif key in "delete":
             self.text = self.text[:-1]
             self.part_text_set("label", "".join(self.text)+" ")
