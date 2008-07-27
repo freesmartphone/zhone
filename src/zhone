@@ -387,16 +387,16 @@ class pyphone_sms(edje_group):
             self.part_text_set( "label_sub_list_%i" % i, "" )
         self.selected = None
         for i in range( 6 ):
-            self.signal_emit( "deactivate_button_list_%i" % i, "" )
+            self.signal_emit( "deactivate_target_list_%i" % i, "" )
 
-    @edje.decorators.signal_callback( "mouse,clicked,1", "button_list_*" )
+    @edje.decorators.signal_callback( "mouse,clicked,1", "target_list_*" )
     def on_edje_signal_button_list_pressed( self, emission, source ):
         id = int( source.split( "_" )[-1] )
         if self.selected == id:
             return
         if self.selected is not None:
-            self.signal_emit( "deactivate_button_list_%i" % self.selected, "" )
-        self.signal_emit( "activate_button_list_%i" % id, "" )
+            self.signal_emit( "deactivate_target_list_%i" % self.selected, "" )
+        self.signal_emit( "activate_target_list_%i" % id, "" )
         self.selected = id
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_left" )
@@ -1118,7 +1118,7 @@ class pyphone_list_choose(edje_group):
             self.part_text_set( "label_main_list_%i" % i, "" )
             self.part_text_set( "label_sub_list_%i" % i, "" )
 
-    @edje.decorators.signal_callback( "mouse,clicked,1", "button_list_*" )
+    @edje.decorators.signal_callback( "mouse,clicked,1", "target_list_*" )
     def on_edje_signal_button_list_pressed( self, emission, source ):
         id = int( source.split( "_" )[-1] )
         self.main.transition_to(self.parent_name)
