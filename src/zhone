@@ -37,7 +37,7 @@ import edje
 import edje.decorators
 import ecore
 import ecore.evas
-#import cairo
+import cairo
 from dbus import SystemBus, Interface
 from dbus.exceptions import DBusException
 from optparse import OptionParser
@@ -790,14 +790,14 @@ class pyphone_location( edje_group ):
                         0.50+y*0.45 - height / 2 - y_bearing
                     )
                     self.ctx.show_text( sv )
-                self.surface.write_to_png( "/tmp/zhone-location.png" )
-                self.img.file_set( "/tmp/zhone-location.png" )
-                #self.img.image_data_set( self.surface.get_data() )
+                #self.surface.write_to_png( "/tmp/zhone-location.png" )
+                #self.img.file_set( "/tmp/zhone-location.png" )
+                self.img.image_data_set( self.surface.get_data() )
 
     def __init__(self, main):
         edje_group.__init__( self, main, "location" )
         #self.signalgraph = self.SignalGraph( self.evas )
-        #self.positiongraph = self.PositionGraph( self.evas )
+        self.positiongraph = self.PositionGraph( self.evas )
 
         self.page = "left"
         self.signal_emit( "activate_button_select_%s" % self.page, "" )
@@ -821,9 +821,9 @@ class pyphone_location( edje_group ):
             text.append( "P/H/V-DOP:<tab>N/A")
         if self.page == "left":
             self.part_text_set( "status", "<br>".join( text ) )
-        #    if self.part_swallow_get( "swallow" ):
-        #        self.part_swallow_get( "swallow" ).hide()
-        #        self.part_unswallow( self.part_swallow_get( "swallow" ) )
+            if self.part_swallow_get( "swallow" ):
+                self.part_swallow_get( "swallow" ).hide()
+                self.part_unswallow( self.part_swallow_get( "swallow" ) )
         #elif self.page == "middle":
         #    self.part_text_set( "status", "" )
         #    if self.part_swallow_get( "swallow" ):
@@ -831,13 +831,13 @@ class pyphone_location( edje_group ):
         #        self.part_unswallow( self.part_swallow_get( "swallow" ) )
         #    self.part_swallow( "swallow", self.signalgraph )
         #    self.signalgraph.show()
-        #elif self.page == "right":
-        #    self.part_text_set( "status", "" )
-        #    if self.part_swallow_get( "swallow" ):
-        #        self.part_swallow_get( "swallow" ).hide()
-        #        self.part_unswallow( self.part_swallow_get( "swallow" ) )
-        #    self.part_swallow( "swallow", self.positiongraph )
-        #    self.positiongraph.show()
+        elif self.page == "right":
+            self.part_text_set( "status", "" )
+            if self.part_swallow_get( "swallow" ):
+                self.part_swallow_get( "swallow" ).hide()
+                self.part_unswallow( self.part_swallow_get( "swallow" ) )
+            self.part_swallow( "swallow", self.positiongraph )
+            self.positiongraph.show()
 
     def onAccuracyChanged( self, fields, pdop, hdop, vdop ):
         self.accuracy = ( pdop, hdop, vdop )
@@ -850,9 +850,8 @@ class pyphone_location( edje_group ):
     def onSatellitesChanged( self, satellites ):
         #signallist = [ (int(sat[0]), float(sat[4])) for sat in satellites ]
         #self.signalgraph.update( signallist )
-        #positionlist = [ (int(sat[0]), int(sat[3]), int(sat[2])) for sat in satellites ]
-        #self.positiongraph.update( positionlist )
-        pass
+        positionlist = [ (int(sat[0]), int(sat[3]), int(sat[2])) for sat in satellites ]
+        self.positiongraph.update( positionlist )
 
     def onShow( self ):
         if dbus_object.usage_obj:
