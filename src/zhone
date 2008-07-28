@@ -699,7 +699,12 @@ class pyphone_location( edje_group ):
         def update( self, values = None ):
             if values is not None:
                 self.values = values
-                self.maxvalue = max( [ x[1] for x in values] )
+                if values == []:
+                    self.maxvalue = 1
+                    self.values = [(0, 0)]
+                else:
+                    self.maxvalue = max( [ x[1] for x in values] )
+
             while len( self.children ) > len( self.values ):
                 self.delChild()
             while len( self.children ) < len( self.values ):
@@ -793,8 +798,8 @@ class pyphone_location( edje_group ):
         self.position = None
         self.update()
 
-        self.signalgraph.update( [(1, 20.5), (2, 34.3), (5, 25.9), (10, 0.5)] )
-        self.positiongraph.update( [(1, 20.0, 90.0), (2, 34.3, 45.0), (5, 225.9, 0.0), (10, 0.5, 30.0)] )
+        #self.signalgraph.update( [(1, 20.5), (2, 34.3), (5, 25.9), (10, 0.5)] )
+        #self.positiongraph.update( [(1, 20.0, 90.0), (2, 34.3, 45.0), (5, 225.9, 0.0), (10, 0.5, 30.0)] )
 
     def update( self ):
         text = []
@@ -833,6 +838,12 @@ class pyphone_location( edje_group ):
     def onPositionChanged( self, fields, timestamp, lat, lon, alt ):
         self.position = ( lat, lon, alt )
         self.update()
+
+    def onSatellitesChanged( self, satellites ):
+        signallist = [ (int(sat[0]), float(sat[4])) for sat in satellites ]
+        self.signalgraph.update( signallist )
+        positionlist = [ (int(sat[0]), int(sat[3]), int(sat[2])) for sat in satellites ]
+        self.positiongraph.update( positionlist )
 
     def onShow( self ):
         if dbus_object.usage_obj:
@@ -1436,6 +1447,7 @@ class GUI(object):
         dbus_object.onNetworkStatus.append( self.update_network )
         dbus_object.onAccuracyChanged.append( self.groups["location"].onAccuracyChanged )
         dbus_object.onPositionChanged.append( self.groups["location"].onPositionChanged )
+        dbus_object.onSatellitesChanged.append( self.groups["location"].onSatellitesChanged )
         dbus_object.onCallStatus.append( self.groups["call"].onCallStatus )
         dbus_object.onNewMessage.append( self.groups["sms"].onNewMessage )
         dbus_object.onIdleStateChanged.append( self.lock_on_idle )
@@ -1641,6 +1653,7 @@ class DBusObject( object ):
         self.onResourceChanged = []
         self.onAccuracyChanged = []
         self.onPositionChanged = []
+        self.onSatellitesChanged = []
         self.onCallStatus = []
         self.onNetworkStatus = []
         self.onNewMessage = []
@@ -1655,6 +1668,7 @@ class DBusObject( object ):
         self.gps_obj = None
         self.gps_accuracy_iface = None
         self.gps_position_iface = None
+        self.gps_satellite_iface = None
 
         self.gsm_device_obj = None
         self.gsm_device_iface = None
@@ -1719,10 +1733,14 @@ class DBusObject( object ):
         if self.gps_obj and not self.gps_position_iface:
             self.gps_position_iface = Interface(self.gps_obj, 'org.freedesktop.Gypsy.Position')
             self.gps_position_iface.connect_to_signal( "PositionChanged", self.cbPositionChanged )
-        if not self.gps_obj or not self.gps_accuracy_iface or not self.gps_position_iface:
+        if self.gps_obj and not self.gps_satellite_iface:
+            self.gps_satellite_iface = Interface(self.gps_obj, 'org.freedesktop.Gypsy.Satellite')
+            self.gps_satellite_iface.connect_to_signal( "SatellitesChanged", self.cbSatellitesChanged )
+        if not self.gps_obj or not self.gps_accuracy_iface or not self.gps_position_iface \
+            or not self.gps_satellite_iface:
             failcount += 1
         else:
-            print "gps ok", self.gps_accuracy_iface, self.gps_position_iface
+            print "gps ok", self.gps_accuracy_iface, self.gps_position_iface, self.gps_satellite_iface
 
         # Phone
         self.gsm_device_obj = self.tryGetProxy( 'org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device' )
@@ -1785,6 +1803,10 @@ class DBusObject( object ):
     def cbPositionChanged( self, fields, timestamp, lat, lon, alt ):
         for cb in self.onPositionChanged:
             cb( fields=fields, timestamp=timestamp, lat=lat, lon=lon, alt=alt )
+
+    def cbSatellitesChanged( self, satellites ):
+        for cb in self.onSatellitesChanged:
+            cb( satellites )
 
     def cbCallStatus( self, id, status, properties ):
         print "CALL STATUS=", id, status, properties
