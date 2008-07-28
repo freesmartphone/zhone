@@ -11,6 +11,14 @@ Zen Phone - A Phone UI
 GPLv2 or later
 """
 
+import logging
+logger = logging.getLogger( "zhone" )
+logger.setLevel( logging.DEBUG )
+logging.basicConfig( level    = logging.DEBUG,
+                    format   = '%(asctime)s %(levelname)s %(message)s',
+                    filename = '/tmp/zhone.log',
+                    filemode = 'w' )
+
 #----------------------------------------------------------------------------#
 WIDTH = 480
 HEIGHT = 640
@@ -39,8 +47,8 @@ import math
 illume = None
 try:
     import illume
-except:
-    print "could not load illume interface"
+except ImportError:
+    logger.warning( "could not load illume interface module" )
 
 #----------------------------------------------------------------------------#
 
@@ -96,7 +104,7 @@ class pyphone_main(edje_group):
                     dbus_object.gsm_network_iface.Register()
                 except DBusException, e:
                     # TODO handle this better
-                    print e
+                    logger.exception( "can't power on antenna and register" )
                     try:
                         authstatus = dbus_object.gsm_sim_iface.GetAuthStatus()
                         if authstatus == "SIM PUK":
@@ -104,7 +112,7 @@ class pyphone_main(edje_group):
                         elif authstatus == "SIM PIN":
                             target = "pin"
                     except DBusException, e:
-                        print e
+                        logger.exception( "can't get auth status!?" )
 
         self.main.transition_to(target)
 
@@ -225,15 +233,15 @@ class pyphone_sms(edje_group):
         self.selected = None
 
     def cbSendReply( self ):
-        print "sent message"
+        logger.info( "sent message" )
 
     def cbSendError( self, e ):
-        print "error while sending message"
+        logger.warning( "error while sending message" )
 
     def cbStoreReply( self, result ):
-        print "stored message: ", result
+        logger.info( "stored message: %s" % result )
         if dbus_object.gsm_device_obj:
-            print "retrieving phonebook"
+            logger.info( "trying to retrieve phonebook..." )
             dbus_object.gsm_sim_iface.SendStoredMessage(
                 result,
                 reply_handler=self.cbSendReply,
@@ -248,7 +256,7 @@ class pyphone_sms(edje_group):
             self.busy = True
 
     def cbStoreError( self, e ):
-        print "error while storing message"
+        logger.warning( "error while storing message" )
 
     def cbSend1( self, selected, cb_data ):
         self.main.groups["text_edit"].setup(
@@ -332,18 +340,18 @@ class pyphone_sms(edje_group):
             )
 
     def cbMessagebookReply( self, result ):
-        print "retrieved messagebook: ", result
+        logger.info( "retrieved messagebook: %s" % result )
         self.busy = False
         self.messagebook = result
         self.ready = True
         self.updateList()
 
     def cbMessagebookError( self, e ):
-        print "error while retrieving messagebook"
+        logger.warning( "error while retrieving messagebook" )
         self.busy = False
 
     def onNewMessage( self, index ):
-        print "new message, retrieving messagebook"
+        logger.info( "new message! Retrieving messagebook..." )
         if not self.busy:
             dbus_object.gsm_sim_iface.RetrieveMessagebook(
                 "all",
@@ -355,7 +363,7 @@ class pyphone_sms(edje_group):
     def prepare( self ):
         if not self.ready and not self.busy:
             if dbus_object.gsm_device_obj:
-                print "retrieving messagebook"
+                logger.info( "retrieving messagebook..." )
                 dbus_object.gsm_sim_iface.RetrieveMessagebook(
                     "all",
                     reply_handler=self.cbMessagebookReply,
@@ -545,7 +553,7 @@ class pyphone_contacts(edje_group):
             )
 
     def cbPhonebookReply( self, result ):
-        print "retrieved phonebook: ", result
+        logger.info( "retrieved phonebook: %s" % result )
         self.busy = False
         self.phonebook = result
         self.phonebook.sort( key = lambda x: x[1].lower() )
@@ -553,13 +561,13 @@ class pyphone_contacts(edje_group):
         self.updateList()
 
     def cbPhonebookError( self, e ):
-        print "error while retrieving phonebook"
+        logger.error( "error while retrieving phonebook" )
         self.busy = False
 
     def prepare( self ):
         if not self.ready and not self.busy:
             if dbus_object.gsm_device_obj:
-                print "retrieving phonebook"
+                logger.info( "retrieving phonebook..." )
                 dbus_object.gsm_sim_iface.RetrievePhonebook(
                     reply_handler=self.cbPhonebookReply,
                     error_handler=self.cbPhonebookError
@@ -636,7 +644,7 @@ class pyphone_contacts(edje_group):
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
-    	self.main.groups["menu"].activate(("edit name", "edit number", "new", "delete"), self.cbMenu)
+        self.main.groups["menu"].activate(("edit name", "edit number", "new", "delete"), self.cbMenu)
 
 #----------------------------------------------------------------------------#
 class pyphone_location( edje_group ):
@@ -737,7 +745,7 @@ class pyphone_location( edje_group ):
             self.update()
             self.img.resize( *self.img.image_size )
             self.img.fill_set(0, 0, *self.img.image_size )
-        
+
         def update( self, values = None ):
             if values is not None:
                 self.values = values
@@ -1001,7 +1009,7 @@ class pyphone_message(edje_group):
         # bug due to some problems with scaling of text parts.
         self.part_text_set("label", "".join(self.text)+" ")
         self.set_button_text(0)
-        print "mouse up:", time.time()-now
+        logger.debug( "mouse up: %s" % time.time()-now )
 
     @edje.decorators.signal_callback("kb_button_mouse_down", "*")
     def on_edje_signal_dialer_button_mouse_down(self, emission, source):
@@ -1011,7 +1019,7 @@ class pyphone_message(edje_group):
         num = 4*y+x+1
         if self.active == 0:
             self.set_button_text(num)
-        print "mouse down:", time.time()-now
+        logger.debug( "mouse down: %s" % time.time()-now )
 
     @edje.decorators.signal_callback("kb_mutton_mouse_in", "*")
     def on_edje_signal_dialer_button_mouse_in(self, emission, source):
@@ -1019,7 +1027,7 @@ class pyphone_message(edje_group):
         x = int(source[-3:-2])
         y = int(source[-1:])
         self.part_text_set("label_preview", self.button_labels[self.active][y][x])
-        print "mouse in:", time.time()-now
+        logger.debug( "mouse in: %s" % time.time()-now )
 
     def set_button_text(self, num):
         for i in xrange(4):
@@ -1057,7 +1065,8 @@ class pyphone_pin(edje_group):
             if dbus_object.gsm_device_obj:
                 try:
                     self.part_text_set( "label_description", "Sending..." )
-                    dbus_object.gsm_sim_iface.SendAuthCode("".join(self.text))
+                    # call mainloop.processEvents()
+                    dbus_object.gsm_sim_iface.SendAuthCode( "".join(self.text) )
                 except DBusException, e:
                     try:
                         authstatus = dbus_object.gsm_sim_iface.GetAuthStatus()
@@ -1066,7 +1075,7 @@ class pyphone_pin(edje_group):
                         elif authstatus == "SIM PIN":
                             self.part_text_set( "label_description", "Invalid. SIM PIN?" )
                     except DBusException, e:
-                        print e
+                        logger.exception( "can't get auth status" )
                 else:
                     self.part_text_set("label", "")
                     dbus_object.gsm_device_iface.SetAntennaPower(True)
@@ -1103,7 +1112,7 @@ class pyphone_puk(edje_group):
                     self.part_text_set( "label_description", "Sending..." )
                     dbus_object.gsm_sim_iface.Unlock("".join(self.puk), "".join(self.text))
                 except DBusException, e:
-                    print e
+                    logger.exception( "can't unlock SIM" )
                     self.part_text_set( "label_description", "Invalid. SIM PUK?" )
                 else:
                     self.part_text_set("label", "")
@@ -1206,7 +1215,7 @@ class pyphone_number_edit( edje_group ):
             self.main.transition_to(self.parent_name)
             self.cb( self.text, self.cb_data )
         self.last = time.time()
-    
+
     def setup( self, parent_name, text, title, cb_data, cb ):
         self.parent_name = parent_name
         self.text = text
@@ -1265,7 +1274,7 @@ class pyphone_text_edit( edje_group ):
             self.cb( self.text, self.cb_data )
         elif key == "cancel":
             self.main.transition_to(self.parent_name)
-    
+
     def setup( self, parent_name, text, title, cb_data, cb ):
         self.parent_name = parent_name
         self.text = text
@@ -1393,6 +1402,8 @@ class GUI(object):
 #----------------------------------------------------------------------------#
     def __init__( self, options, args ):
 
+        logger.debug( "GUI init" )
+
         edje.frametime_set(1.0 / options.fps)
 
         self.evas_canvas = EvasCanvas(
@@ -1452,14 +1463,17 @@ class GUI(object):
         dbus_object.onNewMessage.append( self.groups["sms"].onNewMessage )
         dbus_object.onIdleStateChanged.append( self.lock_on_idle )
 
+        logger.debug( "GUI init done" )
+
     def run( self ):
+        logger.debug( "entering mainloop" )
         ecore.main_loop_begin()
 
     def shutdown( self ):
         ecore.main_loop_quit()
 
     def dbus_objectInit( self ):
-        print "dbus_objectInit..."
+        logger.debug( "dbus_objectInit..." )
         if not dbus_object.initialize():
             # try again later
             ecore.timer_add( 10.0, self.dbus_objectInit )
@@ -1469,7 +1483,7 @@ class GUI(object):
         return False
 
     def dbus_objectInitOK( self ):
-        print "dbus_objectInitOK!"
+        logger.debug( "dbus_objectInitOK!" )
 
         if dbus_object.gsm_device_obj is not None:
             # FIXME wait for the ready signal
@@ -1480,7 +1494,7 @@ class GUI(object):
                 dbus_object.gsm_network_iface.Register()
             except DBusException, e:
                 # TODO handle this better
-                print e
+                logger.exception( "can't set antenna power and register" )
                 try:
                     authstatus = dbus_object.gsm_sim_iface.GetAuthStatus()
                     if authstatus == "SIM PUK":
@@ -1488,7 +1502,7 @@ class GUI(object):
                     elif authstatus == "SIM PIN":
                         self.transition_to("pin")
                 except DBusException, e:
-                    print e
+                    logger.exception( "can't get auth status" )
 
         if dbus_object.device_power_iface is not None:
             # Update Battery charge as soon as we have DBus
@@ -1551,7 +1565,7 @@ class GUI(object):
     def transition_to(self, target):
         if self.current_group == self.groups[target]:
             return
-        print "transition to", target
+        logger.debug( "transition to %s" % target )
 
         self.previous_group = self.current_group
         self.previous_group.onHide()
@@ -1573,7 +1587,7 @@ class EvasCanvas(object):
             if ecore.evas.engine_type_supported_get("software_x11_16"):
                 f = ecore.evas.SoftwareX11_16
             else:
-                print "warning: x11-16 is not supported, fallback to x11"
+                logger.warning( "x11-16 is not supported, fallback to x11" )
                 f = ecore.evas.SoftwareX11
 
         self.evas_obj = f(w=size[0], h=size[1])
@@ -1658,7 +1672,6 @@ class DBusObject( object ):
         self.onNetworkStatus = []
         self.onNewMessage = []
         self.onIdleStateChanged = []
-        self.ignoreSuspend = False
 
         self.framework_obj = None
 
@@ -1683,6 +1696,8 @@ class DBusObject( object ):
 
         self.fullinit = False
 
+        self.willSuspend = True
+
     def tryGetProxy( self, busname, objname ):
         object = None
         try:
@@ -1691,7 +1706,7 @@ class DBusObject( object ):
             try:
                 object = self.bus.get_object( busname, objname )
             except DBusException, e:
-                print "could not create proxy for %s:%s" % ( busname, objname ), e
+                logger.warning( "could not create proxy for %s:%s" % ( busname, objname ) )
             else:
                 self.objects[ "%s:%s" % ( busname, objname ) ] = object
         return object
@@ -1702,13 +1717,13 @@ class DBusObject( object ):
         try:
             self.bus = SystemBus( mainloop=e_dbus.DBusEcoreMainLoop() )
         except DBusException, e:
-            print "could not connect to dbus_object system bus:", e
+            logger.error( "could not connect to dbus_object system bus: %s" % e )
             return False
 
         # Framework
         fw_obj = self.tryGetProxy( 'org.freesmartphone.frameworkd', '/org/freesmartphone/Framework' )
         if fw_obj is None:
-            print ( "could not connect to org.freesmartphone.frameworkd -- is the framework daemon started?" )
+            logger.error( "could not connect to org.freesmartphone.frameworkd -- is the framework daemon started?" )
             return False
         else:
             self.fw = Interface( fw_obj, "org.freesmartphone.Objects" )
@@ -1723,7 +1738,7 @@ class DBusObject( object ):
         if self.usage_obj is None:
             failcount += 1
         else:
-            print "usage ok", self.usage_iface
+            logger.debug( "usage ok: %s" % self.usage_iface )
 
         # GPS
         self.gps_obj = self.tryGetProxy( 'org.freesmartphone.ogpsd', '/org/freedesktop/Gypsy' )
@@ -1740,14 +1755,12 @@ class DBusObject( object ):
             or not self.gps_satellite_iface:
             failcount += 1
         else:
-            print "gps ok", self.gps_accuracy_iface, self.gps_position_iface, self.gps_satellite_iface
+            logger.debug( "gps ok: %s, %s, %s" % ( self.gps_accuracy_iface, self.gps_position_iface, self.gps_satellite_iface ) )
 
         # Phone
         self.gsm_device_obj = self.tryGetProxy( 'org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device' )
-        print self.gsm_device_obj
 
         if ( self.gsm_device_obj is not None ) and ( self.gsm_device_iface is None ):
-            print "creating gsm interfaces"
             self.gsm_device_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Device')
             self.gsm_sim_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.SIM')
             self.gsm_network_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Network')
@@ -1759,7 +1772,7 @@ class DBusObject( object ):
         if self.gsm_device_obj is None:
             failcount += 1
         else:
-            print "gsm ok", self.gsm_network_iface
+            logger.debug( "gsm ok: %s" % self.gsm_network_iface )
 
         self.device_obj = self.tryGetProxy( 'org.freesmartphone.odeviced', '/org/freesmartphone/Device' )
         if ( self.device_obj is not None ) and ( self.device_iface is None ):
@@ -1777,7 +1790,7 @@ class DBusObject( object ):
             self.inputnotifier_iface = Interface( self.inputnotifier_obj, "org.freesmartphone.Device.Input" )
             self.inputnotifier_iface.connect_to_signal( "Event", self.cbEvent )
 
-            print "displays:", self.fw.ListObjectsByInterface( "org.freesmartphone.Device.Display" )
+            logger.debug( "displays: %s" % self.fw.ListObjectsByInterface( "org.freesmartphone.Device.Display" ) )
             self.display_obj = self.tryGetProxy( "org.freesmartphone.odeviced", self.fw.ListObjectsByInterface( "org.freesmartphone.Device.Display" )[0] )
             if self.display_obj is not None:
                 self.display_iface = Interface( self.display_obj, "org.freesmartphone.Device.Display" )
@@ -1785,9 +1798,9 @@ class DBusObject( object ):
         if self.device_obj is None:
             failcount += 1
         else:
-            print "device ok", self.device_iface
+            logger.debug( "device ok: %s" % self.device_iface )
 
-        print "failcount=", failcount
+        logger.debug( "failcount = %d" % failcount )
         if failcount == 0:
             self.fullinit = True
         return self.fullinit
@@ -1809,7 +1822,7 @@ class DBusObject( object ):
             cb( satellites )
 
     def cbCallStatus( self, id, status, properties ):
-        print "CALL STATUS=", id, status, properties
+        logger.info( "CALL STATUS = %d, %s, %s" % ( id, status, properties ) )
         if self.idlenotifier_iface is not None:
             self.idlenotifier_iface.SetState("BUSY")
         for cb in self.onCallStatus:
@@ -1824,7 +1837,7 @@ class DBusObject( object ):
             cb( index=index )
 
     def cbIdleStateChanged( self, state ):
-        print "IDLE STATE=", state
+        logger.info( "IDLE STATE = %s" % state )
         for cb in self.onIdleStateChanged:
             cb( state=state )
         if state == "BUSY":
@@ -1838,24 +1851,27 @@ class DBusObject( object ):
                 self.display_iface.SetBrightness( 0 )
 
     def cbEvent( self, name, action, seconds ):
-        print "INPUT EVENT=", name, action, seconds
+        logger.info( "INPUT EVENT = %s, %s, %d" % ( name, action, seconds ) )
         if name+action == "AUXpressed":
             # FIXME launch transition to main screen
             pass
-        elif name+action == "POWERpressed":
-            # FIXME should the kernel filter out the button event that triggerd the wakeup?
-            if self.ignoreSuspend: # we've just resumed
-                self.ignoreSuspend = False
-                return
-            self.ignoreSuspend = True
-            self.gsm_device_iface.PrepareForSuspend()
-            print "ENTERING SUSPEND"
-            os.system( "apm -s" )
-            print "RETURN FROM SUSPEND"
-            self.gsm_device_iface.RecoverFromSuspend()
-            self.idlenotifier_iface.SetState("BUSY")
 
+        elif name+action == "POWERheld":
+            self.willSuspend = ( seconds >= 1 )
+
+        elif name+action == "POWERreleased":
+            if self.willSuspend:
+                self.willSuspend = False
+                self.gsm_device_iface.PrepareForSuspend()
+                logger.info( "ENTERING SUSPEND" )
+                os.system( "apm -s" )
+                logger.info( "RETURN FROM SUSPEND" )
+                self.gsm_device_iface.RecoverFromSuspend()
+                self.idlenotifier_iface.SetState("BUSY")
+
+#=========================================================================#
 if __name__ == "__main__":
+#=========================================================================#
 
     options, args = MyOptionParser().parse_args()
     dbus_object = DBusObject()
