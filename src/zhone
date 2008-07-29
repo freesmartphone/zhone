@@ -545,7 +545,7 @@ class pyphone_contacts(edje_group):
                 self.cbNew1
             )
         elif result == "delete":
-    	    self.main.groups["error"].activate(
+            self.main.groups["error"].activate(
                 "delete '%s'?" % self.current[self.selected][1],
                 ("abort", "delete"),
                 self.current[self.selected][0], # reference
@@ -561,7 +561,7 @@ class pyphone_contacts(edje_group):
         self.updateList()
 
     def cbPhonebookError( self, e ):
-        logger.error( "error while retrieving phonebook" )
+        logger.error( "error while retrieving phonebook %s" % e )
         self.busy = False
 
     def prepare( self ):
@@ -1080,6 +1080,9 @@ class pyphone_pin(edje_group):
                     self.part_text_set("label", "")
                     dbus_object.gsm_device_iface.SetAntennaPower(True)
                     dbus_object.gsm_network_iface.Register()
+                    # FIXME wait for the ready signal
+                    self.main.groups["contacts"].prepare()
+                    self.main.groups["sms"].prepare()
                     self.main.transition_to("main")
 
 #----------------------------------------------------------------------------#
@@ -1120,6 +1123,9 @@ class pyphone_puk(edje_group):
                     self.puk = []
                     dbus_object.gsm_device_iface.SetAntennaPower(True)
                     dbus_object.gsm_network_iface.Register()
+                    # FIXME wait for the ready signal
+                    self.main.groups["contacts"].prepare()
+                    self.main.groups["sms"].prepare()
                     self.main.transition_to("main")
 
 #----------------------------------------------------------------------------#
@@ -1486,12 +1492,12 @@ class GUI(object):
         logger.debug( "dbus_objectInitOK!" )
 
         if dbus_object.gsm_device_obj is not None:
-            # FIXME wait for the ready signal
-            self.groups["contacts"].prepare()
-            self.groups["sms"].prepare()
             try:
                 dbus_object.gsm_device_iface.SetAntennaPower(True)
                 dbus_object.gsm_network_iface.Register()
+                # FIXME wait for the ready signal
+                self.groups["contacts"].prepare()
+                self.groups["sms"].prepare()
             except DBusException, e:
                 # TODO handle this better
                 logger.exception( "can't set antenna power and register" )
