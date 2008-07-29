@@ -377,6 +377,13 @@ class pyphone_sms(edje_group):
                     (1, "read", "+456663443", "Zhone!"),
                 ] )
 
+    def onReadyStatus( self, status ):
+        logger.debug( "SIM is ready: %s" % status )
+        if status:
+            # Force update
+            self.ready = False
+            self.prepare()
+
     def onShow( self ):
         self.prepare()
         self.updateList()
@@ -584,6 +591,13 @@ class pyphone_contacts(edje_group):
                     (6, 'Sulu', '+013244344'),
                     (7, 'Chekov', '+013244344'),
                 ] )
+
+    def onReadyStatus( self, status ):
+        logger.debug( "SIM is ready: %s" % status )
+        if status:
+            # Force update
+            self.ready = False
+            self.prepare()
 
     def onShow( self ):
         self.prepare()
@@ -1080,9 +1094,9 @@ class pyphone_pin(edje_group):
                     self.part_text_set("label", "")
                     dbus_object.gsm_device_iface.SetAntennaPower(True)
                     dbus_object.gsm_network_iface.Register()
-                    # FIXME wait for the ready signal
-                    self.main.groups["contacts"].prepare()
-                    self.main.groups["sms"].prepare()
+#                    # FIXME wait for the ready signal
+#                    self.main.groups["contacts"].prepare()
+#                    self.main.groups["sms"].prepare()
                     self.main.transition_to("main")
 
 #----------------------------------------------------------------------------#
@@ -1123,9 +1137,9 @@ class pyphone_puk(edje_group):
                     self.puk = []
                     dbus_object.gsm_device_iface.SetAntennaPower(True)
                     dbus_object.gsm_network_iface.Register()
-                    # FIXME wait for the ready signal
-                    self.main.groups["contacts"].prepare()
-                    self.main.groups["sms"].prepare()
+#                    # FIXME wait for the ready signal
+#                    self.main.groups["contacts"].prepare()
+#                    self.main.groups["sms"].prepare()
                     self.main.transition_to("main")
 
 #----------------------------------------------------------------------------#
@@ -1466,6 +1480,8 @@ class GUI(object):
         dbus_object.onPositionChanged.append( self.groups["location"].onPositionChanged )
         dbus_object.onSatellitesChanged.append( self.groups["location"].onSatellitesChanged )
         dbus_object.onCallStatus.append( self.groups["call"].onCallStatus )
+        dbus_object.onReadyStatus.append( self.groups["contacts"].onReadyStatus )
+        dbus_object.onReadyStatus.append( self.groups["sms"].onReadyStatus )
         dbus_object.onNewMessage.append( self.groups["sms"].onNewMessage )
         dbus_object.onIdleStateChanged.append( self.lock_on_idle )
 
@@ -1495,9 +1511,9 @@ class GUI(object):
             try:
                 dbus_object.gsm_device_iface.SetAntennaPower(True)
                 dbus_object.gsm_network_iface.Register()
-                # FIXME wait for the ready signal
-                self.groups["contacts"].prepare()
-                self.groups["sms"].prepare()
+                if dbus_object.gsm_sim_iface.GetSimReady():
+                    self.groups["contacts"].prepare()
+                    self.groups["sms"].prepare()
             except DBusException, e:
                 # TODO handle this better
                 logger.exception( "can't set antenna power and register" )
@@ -1675,6 +1691,7 @@ class DBusObject( object ):
         self.onPositionChanged = []
         self.onSatellitesChanged = []
         self.onCallStatus = []
+        self.onReadyStatus = []
         self.onNetworkStatus = []
         self.onNewMessage = []
         self.onIdleStateChanged = []
@@ -1773,6 +1790,7 @@ class DBusObject( object ):
             self.gsm_call_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Call')
             self.gsm_test_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Test')
             self.gsm_sim_iface.connect_to_signal( "NewMessage", self.cbNewMessage )
+            self.gsm_sim_iface.connect_to_signal( "ReadyStatus", self.cbReadyStatus )
             self.gsm_call_iface.connect_to_signal( "CallStatus", self.cbCallStatus )
             self.gsm_network_iface.connect_to_signal( "Status", self.cbNetworkStatus )
         if self.gsm_device_obj is None:
@@ -1833,6 +1851,10 @@ class DBusObject( object ):
             self.idlenotifier_iface.SetState("BUSY")
         for cb in self.onCallStatus:
             cb( id=id, status=status, properties=properties )
+
+    def cbReadyStatus( self, status ):
+        for cb in self.onReadyStatus:
+            cb( status=status )
 
     def cbNetworkStatus( self, status ):
         for cb in self.onNetworkStatus:
