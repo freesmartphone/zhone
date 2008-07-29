@@ -21,7 +21,7 @@ setup(
     scripts = [ "src/zhone" ],
     data_files = [
         ( "zhone/", ["data/themes/zhone.edj"] ),
-        ( "share/pixmaps", ["data/launcher/zhone.png"] ),
-        ( "share/applications", ["data/launcher/zhone.desktop"] ),
+        ( "pixmaps", ["data/launcher/zhone.png"] ),
+        ( "applications", ["data/launcher/zhone.desktop"] ),
         ]
 )
