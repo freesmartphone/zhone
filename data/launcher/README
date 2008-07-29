@@ -1,0 +1,4 @@
+Files for fd.o launcher integration. Need to go to
+* ${datadir}/pixmaps 
+* ${datadir}/applications
+

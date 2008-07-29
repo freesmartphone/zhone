@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Zhone
+Comment=Feature Phone UI
+Exec=zhone
+Icon=zhone
+Terminal=false
+Type=Application
+Categories=Office;
+MimeType=text/x-vcard;
+SingleInstance=true
+StartupNotify=true
