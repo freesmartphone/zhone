@@ -509,7 +509,7 @@ class pyphone_contacts(edje_group):
                 name,
                 number
             )
-        self.phonebook.append( ( str(reference), name, number ) )
+        self.phonebook.append( ( reference, name, number ) )
         self.phonebook.sort( key = lambda x: x[1].lower() )
         self.updateList()
 
