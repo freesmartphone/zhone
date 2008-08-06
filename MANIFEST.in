@@ -1,0 +1,3 @@
+include AUTHORS COPYING ChangeLog
+recursive-include src *.c
+recursive-include data *

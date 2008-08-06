@@ -9,8 +9,8 @@ if result != 0:
     raise Exception( "Can't build theme files. Built edje_cc?" )
 
 setup(
-    name = "Zen Phone",
-    version = "milestone1+git",
+    name = "zhone",
+    version = "milestone2+git",
     author = "See AUTHORS",
     author_email = "mlauer@vanille-media.de",
     url = "http://www.freesmartphone.org",
