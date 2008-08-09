@@ -652,9 +652,25 @@ class pyphone_contacts(edje_group):
         self.prepare()
         self.updateList()
 
+    def comparePhoneNumber(self, number1, number2):
+        '''
+        Compares two phone numbers. They are considered equal if:
+          a) Both start with a "+", and all following digits are equal
+        or
+          b) At least one of them does not start with a "+", and the
+             last 7 digits are equal
+        '''
+        number1 = filter (lambda c: c.isdigit() or c == '+', number1)
+        number2 = filter (lambda c: c.isdigit() or c == '+', number2)
+
+        if number1[0] == number2[0] == '+':
+            return number1 == number2
+        else:
+            return number1[-7:] == number2[-7:]
+
     def tryNumberToName( self, number ):
         for i in range( len( self.phonebook ) ):
-            if self.phonebook[i][2] == number:
+            if self.comparePhoneNumber(self.phonebook[i][2], number):
                 return self.phonebook[i][1]
         return number
 
