@@ -220,6 +220,55 @@ class pyphone_call(edje_group):
             self.main.transition_to("call")
         self.status = status
 
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
+    def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
+        self.main.transition_to("dtmf")
+
+#----------------------------------------------------------------------------#
+class pyphone_dtmf(edje_group):
+#----------------------------------------------------------------------------#
+    def __init__(self, main):
+        edje_group.__init__(self, main, "dtmf")
+        self.text = []
+        self.last = 0.0
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_*" )
+    def on_edje_signal_dialer_button_pressed(self, emission, source):
+        key = source.split("_", 1)[1]
+        if key in ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"):
+            self.text.append(key)
+            # The trailing whitespace is a workaround for the one char invisible
+            # bug due to some problems with scaling of text parts.
+            self.part_text_set("label", "".join(self.text)+" ")
+        elif key in "star":
+            if self.text and ( time.time()-self.last < self.TIMEOUT ):
+                if self.text[-1] == "*":
+                    del self.text[-1]
+                    self.text.append( "+" )
+                elif self.text[-1] == "+":
+                    del self.text[-1]
+                    self.text.append( "*" )
+                else:
+                    self.text.append( "*" )
+            else:
+                self.text.append("*")
+            self.part_text_set( "label", "".join(self.text)+" " )
+        elif key in "hash":
+            self.text += "#"
+            self.part_text_set( "label", "".join(self.text)+" " )
+        elif key in "delete":
+            self.text = self.text[:-1]
+            self.part_text_set("label", "".join(self.text)+" ")
+        elif key in "dial":
+            if dbus_object.gsm_device_obj:
+                dbus_object.gsm_call_iface.SendDtmf( "".join(self.text))
+                self.main.transition_to("call")
+
+    @edje.decorators.signal_callback("call_button_pressed", "button_right")
+    def on_edje_signal_call_button_right_pressed(self, emission, source):
+        self.main.transition_to("call")
+
+
 #----------------------------------------------------------------------------#
 class pyphone_sms(edje_group):
 #----------------------------------------------------------------------------#
@@ -1439,7 +1488,7 @@ class GUI(object):
 
         for page in (
                 "main",
-                "phone", "call",
+                "phone", "call", "dtmf",
                 "sms",
                 "contacts",
                 "location",

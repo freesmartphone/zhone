@@ -159,6 +159,7 @@ parts {
 }
 programs {
     ACTIVATE("button_bottom_right");
+    ACTIVATE("button_bottom_middle");
 
     ACTIVATE("button_left");
     ACTIVATE("button_right");

@@ -1287,6 +1287,10 @@ collections {
         #include "zhone_pin.edc"
     }
     group {
+        name: "dtmf";
+        #include "zhone_dial.edc"
+    }
+    group {
         name: "list_choose";
         #include "zhone_list_choose.edc"
     }
