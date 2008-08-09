@@ -132,7 +132,7 @@ class pyphone_phone(edje_group):
             self.text.append(key)
             # The trailing whitespace is a workaround for the one char invisible
             # bug due to some problems with scaling of text parts.
-            self.part_text_set("label", "".join(self.text)+" ")
+            self.part_text_set("label", u"".join(self.text)+u" ")
         elif key in "star":
             if self.text and ( time.time()-self.last < self.TIMEOUT ):
                 if self.text[-1] == "*":
@@ -145,13 +145,13 @@ class pyphone_phone(edje_group):
                     self.text.append( "*" )
             else:
                 self.text.append("*")
-            self.part_text_set( "label", "".join(self.text)+" " )
+            self.part_text_set( "label", u"".join(self.text)+u" " )
         elif key in "hash":
             self.text += "#"
-            self.part_text_set( "label", "".join(self.text)+" " )
+            self.part_text_set( "label", u"".join(self.text)+u" " )
         elif key in "delete":
             self.text = self.text[:-1]
-            self.part_text_set("label", "".join(self.text)+" ")
+            self.part_text_set("label", u"".join(self.text)+u" ")
         elif key in "dial":
             if dbus_object.gsm_device_obj:
                 dbus_object.gsm_call_iface.Initiate( "".join(self.text), "voice" )
@@ -201,20 +201,20 @@ class pyphone_call(edje_group):
     def update_status(self, status):
         self.part_text_set( "label_description", status )
         if status == "outgoing":
-            self.part_text_set( "label_left", "" )
-            self.part_text_set( "label_right", "cancel" )
+            self.part_text_set( "label_left", u"" )
+            self.part_text_set( "label_right", u"cancel" )
         elif status == "active":
-            self.part_text_set( "label_left", "hold" )
-            self.part_text_set( "label_right", "hangup" )
+            self.part_text_set( "label_left", u"hold" )
+            self.part_text_set( "label_right", u"hangup" )
         elif status == "incoming":
-            self.part_text_set( "label_left", "answer" )
-            self.part_text_set( "label_right", "reject" )
+            self.part_text_set( "label_left", u"answer" )
+            self.part_text_set( "label_right", u"reject" )
         elif status == "held":
-            self.part_text_set( "label_left", "resume" )
-            self.part_text_set( "label_right", "hangup" )
+            self.part_text_set( "label_left", u"resume" )
+            self.part_text_set( "label_right", u"hangup" )
         else:
-            self.part_text_set( "label_left", "" )
-            self.part_text_set( "label_right", "" )
+            self.part_text_set( "label_left", u"" )
+            self.part_text_set( "label_right", u"" )
         if status in ["incoming", "outgoing"] and not self.status == status:
             # TODO make sure we get displayed
             self.main.transition_to("call")
@@ -445,14 +445,14 @@ class pyphone_sms(edje_group):
         if self.page < 0:
             self.page = 0
         self.current = self.messagebook[self.page*6:(self.page+1)*6]
-        self.part_text_set( "pager", "".join( ["□"]*self.page+["▣"]+["□"]*(self.pages-self.page-1) ) )
+        self.part_text_set( "pager", u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) ) )
         for i in range( 0, len( self.current ) ):
             main_text = self.main.groups["contacts"].tryNumberToName( self.current[i][2] )
             self.part_text_set( "label_main_list_%i" % i, main_text )
-            self.part_text_set( "label_sub_list_%i" % i, "(%s) %s" % ( self.current[i][1], self.current[i][3] ) )
+            self.part_text_set( "label_sub_list_%i" % i, u"(%s) %s" % ( self.current[i][1], self.current[i][3] ) )
         for i in range( len( self.current ), 6):
-            self.part_text_set( "label_main_list_%i" % i, "" )
-            self.part_text_set( "label_sub_list_%i" % i, "" )
+            self.part_text_set( "label_main_list_%i" % i, u"" )
+            self.part_text_set( "label_sub_list_%i" % i, u"" )
         self.selected = None
         for i in range( 6 ):
             self.signal_emit( "deactivate_target_list_%i" % i, "" )
@@ -632,13 +632,13 @@ class pyphone_contacts(edje_group):
             else:
                 # Fake phonebook...
                 self.cbPhonebookReply( [
-                    (1, 'Kirk', '+023224433'),
-                    (2, 'Spock', '+034433463'),
-                    (3, 'McCoy', '+013244344'),
-                    (4, 'Scott', '+013244344'),
-                    (5, 'Uhura', '+013244344'),
-                    (6, 'Sulu', '+013244344'),
-                    (7, 'Chekov', '+013244344'),
+                    (1, u'Kirk', '+023224433'),
+                    (2, u'Spock', '+034433463'),
+                    (3, u'McCoy', '+013244344'),
+                    (4, u'Scott', '+013244344'),
+                    (5, u'Uhura', '+013244344'),
+                    (6, u'Sulu', '+013244344'),
+                    (7, u'Chekov', '+013244344'),
                 ] )
 
     def onReadyStatus( self, status ):
@@ -665,13 +665,13 @@ class pyphone_contacts(edje_group):
         if self.page < 0:
             self.page = 0
         self.current = self.phonebook[self.page*6:(self.page+1)*6]
-        self.part_text_set( "pager", "".join( ["□"]*self.page+["▣"]+["□"]*(self.pages-self.page-1) ) )
+        self.part_text_set( "pager", u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) ) )
         for i in range( 0, len( self.current ) ):
             self.part_text_set( "label_main_list_%i" % i, self.current[i][1] )
             self.part_text_set( "label_sub_list_%i" % i, self.current[i][2] )
         for i in range( len( self.current ), 6):
-            self.part_text_set( "label_main_list_%i" % i, "" )
-            self.part_text_set( "label_sub_list_%i" % i, "" )
+            self.part_text_set( "label_main_list_%i" % i, u"" )
+            self.part_text_set( "label_sub_list_%i" % i, u"" )
         self.selected = None
         for i in range( 6 ):
             self.signal_emit( "deactivate_target_list_%i" % i, "" )
@@ -883,19 +883,19 @@ class pyphone_location( edje_group ):
         else:
             text.append( "P/H/V-DOP:<tab>N/A")
         if self.page == "left":
-            self.part_text_set( "status", "<br>".join( text ) )
+            self.part_text_set( "status", u"<br>".join( text ) )
             if self.part_swallow_get( "swallow" ):
                 self.part_swallow_get( "swallow" ).hide()
                 self.part_unswallow( self.part_swallow_get( "swallow" ) )
         #elif self.page == "middle":
-        #    self.part_text_set( "status", "" )
+        #    self.part_text_set( "status", u"" )
         #    if self.part_swallow_get( "swallow" ):
         #        self.part_swallow_get( "swallow" ).hide()
         #        self.part_unswallow( self.part_swallow_get( "swallow" ) )
         #    self.part_swallow( "swallow", self.signalgraph )
         #    self.signalgraph.show()
         elif self.page == "right":
-            self.part_text_set( "status", "" )
+            self.part_text_set( "status", u"" )
             if self.part_swallow_get( "swallow" ):
                 self.part_swallow_get( "swallow" ).hide()
                 self.part_unswallow( self.part_swallow_get( "swallow" ) )
@@ -942,10 +942,10 @@ class pyphone_message(edje_group):
         self.text = []
         self.button_labels2 = [
             [
-                [".,?!", "abc", "def", ""],
-                ["ghi", "jkl", "mno", ""],
-                ["pqrs", "tuv", "wxyz", ""],
-                ["", "", "⇦⇧⇨", ""],
+                [u".,?!", u"abc", "def", ""],
+                [u"ghi", u"jkl", "mno", ""],
+                [u"pqrs", u"tuv", "wxyz", ""],
+                [u"", u"", u"⇦⇧⇨", ""],
             ],
             [
                 ["", "", "", ""],
@@ -956,10 +956,10 @@ class pyphone_message(edje_group):
         ]
         self.button_labels = [
             [
-                ["1", "2", "3", "↤"],
-                ["4", "5", "6", "↲"],
+                ["1", "2", "3", u"↤"],
+                ["4", "5", "6", u"↲"],
                 ["7", "8", "9", "Abc"],
-                ["+", "0", "⇩", "+"],
+                ["+", "0", u"⇩", "+"],
             ],
             [
                 ["1", "?", "", ""],
@@ -980,7 +980,7 @@ class pyphone_message(edje_group):
                 ["", "", "", ""],
             ],
             [
-                ["", "", "", "↤"],
+                ["", "", "", u"↤"],
                 ["", "", "", ""],
                 ["", "", "", ""],
                 ["", "", "", ""],
@@ -1048,8 +1048,8 @@ class pyphone_message(edje_group):
             [
                 ["", "", "", ""],
                 ["", "", "", ""],
-                ["", "", "⇧", ""],
-                ["", "⇦", "⇩", "⇨"],
+                ["", "", u"⇧", ""],
+                ["", u"⇦", u"⇩", u"⇨"],
             ],
             [
                 ["", "", "", ""],
@@ -1110,7 +1110,7 @@ class pyphone_pin(edje_group):
 #----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "pin")
-        self.part_text_set( "label_description", "SIM PIN?" )
+        self.part_text_set( "label_description", u"SIM PIN?" )
         self.text = []
 
     @edje.decorators.signal_callback("pin_button_pressed", "*")
@@ -1120,14 +1120,14 @@ class pyphone_pin(edje_group):
             self.text.append(key)
             # The trailing whitespace is a workaround for the one char invisible
             # bug due to some problems with scaling of text parts.
-            self.part_text_set("label", "".join(self.text)+" ")
+            self.part_text_set("label", u"".join(self.text)+u" ")
         elif key in "delete":
             self.text = self.text[:-1]
-            self.part_text_set("label", "".join(self.text)+" ")
+            self.part_text_set("label", u"".join(self.text)+u" ")
         elif key in "done":
             if dbus_object.gsm_device_obj:
                 try:
-                    self.part_text_set( "label_description", "Sending..." )
+                    self.part_text_set( "label_description", u"Sending..." )
                     # call mainloop.processEvents()
                     dbus_object.gsm_sim_iface.SendAuthCode( "".join(self.text) )
                 except DBusException, e:
@@ -1136,11 +1136,11 @@ class pyphone_pin(edje_group):
                         if authstatus == "SIM PUK":
                             self.main.transition_to("puk")
                         elif authstatus == "SIM PIN":
-                            self.part_text_set( "label_description", "Invalid. SIM PIN?" )
+                            self.part_text_set( "label_description", u"Invalid. SIM PIN?" )
                     except DBusException, e:
                         logger.exception( "can't get auth status" )
                 else:
-                    self.part_text_set("label", "")
+                    self.part_text_set("label", u"")
                     dbus_object.gsm_device_iface.SetAntennaPower(True)
                     dbus_object.gsm_network_iface.Register()
 #                    # FIXME wait for the ready signal
@@ -1153,7 +1153,7 @@ class pyphone_puk(edje_group):
 #----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "puk")
-        self.part_text_set( "label_description", "SIM PUK?" )
+        self.part_text_set( "label_description", u"SIM PUK?" )
         self.text = []
         self.puk = []
 
@@ -1164,24 +1164,24 @@ class pyphone_puk(edje_group):
             self.text.append(key)
             # The trailing whitespace is a workaround for the one char invisible
             # bug due to some problems with scaling of text parts.
-            self.part_text_set("label", "".join(self.text)+" ")
+            self.part_text_set("label", u"".join(self.text)+u" ")
         elif key in "delete":
             self.text = self.text[:-1]
-            self.part_text_set("label", "".join(self.text)+" ")
+            self.part_text_set("label", u"".join(self.text)+u" ")
         elif key in "done":
             if self.puk == []:
-              self.part_text_set( "label_description", "New PIN?" )
+              self.part_text_set( "label_description", u"New PIN?" )
               self.puk = self.text
               self.text = []
             elif dbus_object.gsm_device_obj:
                 try:
-                    self.part_text_set( "label_description", "Sending..." )
+                    self.part_text_set( "label_description", u"Sending..." )
                     dbus_object.gsm_sim_iface.Unlock("".join(self.puk), "".join(self.text))
                 except DBusException, e:
                     logger.exception( "can't unlock SIM" )
-                    self.part_text_set( "label_description", "Invalid. SIM PUK?" )
+                    self.part_text_set( "label_description", u"Invalid. SIM PUK?" )
                 else:
-                    self.part_text_set("label", "")
+                    self.part_text_set("label", u"")
                     self.text = []
                     self.puk = []
                     dbus_object.gsm_device_iface.SetAntennaPower(True)
@@ -1208,13 +1208,13 @@ class pyphone_list_choose(edje_group):
         if self.page < 0:
             self.page = 0
         self.current = self.list_data[self.page*6:(self.page+1)*6]
-        self.part_text_set( "pager", "".join( ["□"]*self.page+["▣"]+["□"]*(self.pages-self.page-1) ) )
+        self.part_text_set( "pager", u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) ) )
         for i in range( 0, len( self.current ) ):
             self.part_text_set( "label_main_list_%i" % i, self.current[i][0] )
             self.part_text_set( "label_sub_list_%i" % i, self.current[i][1] )
         for i in range( len( self.current ), 6):
-            self.part_text_set( "label_main_list_%i" % i, "" )
-            self.part_text_set( "label_sub_list_%i" % i, "" )
+            self.part_text_set( "label_main_list_%i" % i, u"" )
+            self.part_text_set( "label_sub_list_%i" % i, u"" )
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "target_list_*" )
     def on_edje_signal_button_list_pressed( self, emission, source ):
@@ -1262,7 +1262,7 @@ class pyphone_number_edit( edje_group ):
             self.text += key
             # The trailing whitespace is a workaround for the one char invisible
             # bug due to some problems with scaling of text parts.
-            self.part_text_set( "label", " %s " % self.text )
+            self.part_text_set( "label", u" %s " % self.text )
         elif key in "star":
             if self.text and ( time.time()-self.last < self.TIMEOUT ):
                 if self.text[-1] == "*":
@@ -1273,13 +1273,13 @@ class pyphone_number_edit( edje_group ):
                     self.text += "*"
             else:
                 self.text += "*"
-            self.part_text_set( "label", " %s " % self.text )
+            self.part_text_set( "label", u" %s " % self.text )
         elif key in "hash":
             self.text += "#"
-            self.part_text_set( "label", " %s " % self.text )
+            self.part_text_set( "label", u" %s " % self.text )
         elif key in "delete":
             self.text = self.text[:-1]
-            self.part_text_set( "label", " %s " % self.text )
+            self.part_text_set( "label", u" %s " % self.text )
         elif key in "done":
             self.main.transition_to(self.parent_name)
             self.cb( self.text, self.cb_data )
@@ -1291,8 +1291,8 @@ class pyphone_number_edit( edje_group ):
         self.title = title
         self.cb_data = cb_data
         self.cb = cb
-        self.part_text_set( "label_description", " %s " % self.title )
-        self.part_text_set( "label", " %s " % self.text )
+        self.part_text_set( "label_description", u" %s " % self.title )
+        self.part_text_set( "label", u" %s " % self.text )
         self.main.transition_to("number_edit")
 
 #----------------------------------------------------------------------------#
@@ -1350,7 +1350,7 @@ class pyphone_text_edit( edje_group ):
         self.title = title
         self.cb_data = cb_data
         self.cb = cb
-        self.part_text_set( "label_description", " %s " % self.title )
+        self.part_text_set( "label_description", u" %s " % self.title )
         self.part_text_set( "label", self.text )
         self.main.transition_to("text_edit")
 
@@ -1442,16 +1442,16 @@ class pyphone_error( edje_group ):
         self.part_text_set( "description", description )
         if count == 1:
             self.signal_emit( "hide_0", "" )
-            self.part_text_set( "label_0", "" )
+            self.part_text_set( "label_0", u"" )
             self.signal_emit( "show_1", "" )
             self.part_text_set( "label_1", buttons[0] )
             self.signal_emit( "hide_2", "" )
-            self.part_text_set( "label_2", "" )
+            self.part_text_set( "label_2", u"" )
         elif count == 2:
             self.signal_emit( "show_0", "" )
             self.part_text_set( "label_0", buttons[0] )
             self.signal_emit( "hide_1", "" )
-            self.part_text_set( "label_1", "" )
+            self.part_text_set( "label_1", u"" )
             self.signal_emit( "show_2", "" )
             self.part_text_set( "label_2", buttons[1] )
         elif count == 3:
@@ -1509,7 +1509,7 @@ class GUI(object):
 
         self.groups["swallow"].show()
 
-        self.groups["swallow"].part_text_set("label_top_left", "zhone!")
+        self.groups["swallow"].part_text_set("label_top_left", u"zhone!")
 
         self.groups["swallow"].message_send(1, 0.0) # GSM signal strength
         self.groups["swallow"].message_send(2, 0.0) # battery charge
@@ -1520,7 +1520,7 @@ class GUI(object):
         ecore.timer_add(60.0, self.display_time)
         self.display_time()
 
-        self.groups["swallow"].part_text_set( "label_top_right", "no dbus" )
+        self.groups["swallow"].part_text_set( "label_top_right", u"no dbus" )
         ecore.idle_enterer_add( self.dbus_objectInit )
 
         dbus_object.onResourceChanged.append( self.display_resources )
@@ -1616,19 +1616,19 @@ class GUI(object):
             elif policy == 'disabled':
                 items[-1] = "-" + items[-1]
                 continue
-        self.groups["swallow"].part_text_set( "label_top_right", " ".join( items ) )
+        self.groups["swallow"].part_text_set( "label_top_right", u" ".join( items ) )
 
     def update_network( self, **args):
         status = args["status"]
         self.groups["swallow"].message_send(1, status["strength"]/100.0)
         if status["registration"] == "denied":
-            self.groups["swallow"].part_text_set("label_top_left", "SOS only")
+            self.groups["swallow"].part_text_set("label_top_left", u"SOS only")
         elif status["registration"] == "unregistered":
-            self.groups["swallow"].part_text_set("label_top_left", "No Service")
+            self.groups["swallow"].part_text_set("label_top_left", u"No Service")
         elif status["registration"] == "busy":
-            self.groups["swallow"].part_text_set("label_top_left", "Searching...")
+            self.groups["swallow"].part_text_set("label_top_left", u"Searching...")
         elif status["registration"] == "unknown":
-            self.groups["swallow"].part_text_set("label_top_left", "[Unknown]")
+            self.groups["swallow"].part_text_set("label_top_left", u"[Unknown]")
         else:
             self.groups["swallow"].part_text_set("label_top_left", status["provider"])
 
