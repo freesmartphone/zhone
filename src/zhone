@@ -424,6 +424,9 @@ class pyphone_sms(edje_group):
                 self.cbMessagebookReply( [
                     (0, "read", "+4544555", "Hello World!"),
                     (1, "read", "+456663443", "Zhone!"),
+                    (2, "read", "+456663443", "Hi Guy\nGuess what, I now "+
+			"know to write multi-line SMSs.\nIsn't that "+
+			"nice?\n\nSome Buddy"),
                 ] )
 
     def onReadyStatus( self, status ):
@@ -449,7 +452,8 @@ class pyphone_sms(edje_group):
         for i in range( 0, len( self.current ) ):
             main_text = self.main.groups["contacts"].tryNumberToName( self.current[i][2] )
             self.part_text_set( "label_main_list_%i" % i, main_text )
-            self.part_text_set( "label_sub_list_%i" % i, u"(%s) %s" % ( self.current[i][1], self.current[i][3] ) )
+	    sub_text = " ".join(self.current[i][3].splitlines())
+            self.part_text_set( "label_sub_list_%i" % i, u"(%s) %s" % ( self.current[i][1], sub_text ) )
         for i in range( len( self.current ), 6):
             self.part_text_set( "label_main_list_%i" % i, u"" )
             self.part_text_set( "label_sub_list_%i" % i, u"" )
