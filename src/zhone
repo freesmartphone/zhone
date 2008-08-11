@@ -399,7 +399,7 @@ class pyphone_sms(edje_group):
         logger.warning( "error while retrieving messagebook" )
         self.busy = False
 
-    def onNewMessage( self, index ):
+    def onIncomingMessage( self, index ):
         logger.info( "new message! Retrieving messagebook..." )
         if not self.busy:
             dbus_object.gsm_sim_iface.RetrieveMessagebook(
@@ -1531,7 +1531,7 @@ class GUI(object):
         dbus_object.onCallStatus.append( self.groups["call"].onCallStatus )
         dbus_object.onReadyStatus.append( self.groups["contacts"].onReadyStatus )
         dbus_object.onReadyStatus.append( self.groups["sms"].onReadyStatus )
-        dbus_object.onNewMessage.append( self.groups["sms"].onNewMessage )
+        dbus_object.onIncomingMessage.append( self.groups["sms"].onIncomingMessage )
         dbus_object.onIdleStateChanged.append( self.lock_on_idle )
 
         logger.debug( "GUI init done" )
@@ -1742,7 +1742,7 @@ class DBusObject( object ):
         self.onCallStatus = []
         self.onReadyStatus = []
         self.onNetworkStatus = []
-        self.onNewMessage = []
+        self.onIncomingMessage = []
         self.onIdleStateChanged = []
 
         self.framework_obj = None
@@ -1838,7 +1838,7 @@ class DBusObject( object ):
             self.gsm_network_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Network')
             self.gsm_call_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Call')
             self.gsm_test_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Test')
-            self.gsm_sim_iface.connect_to_signal( "NewMessage", self.cbNewMessage )
+            self.gsm_sim_iface.connect_to_signal( "IncomingMessage", self.cbIncomingMessage )
             self.gsm_sim_iface.connect_to_signal( "ReadyStatus", self.cbReadyStatus )
             self.gsm_call_iface.connect_to_signal( "CallStatus", self.cbCallStatus )
             self.gsm_network_iface.connect_to_signal( "Status", self.cbNetworkStatus )
@@ -1909,8 +1909,8 @@ class DBusObject( object ):
         for cb in self.onNetworkStatus:
             cb( status=status )
 
-    def cbNewMessage( self, index ):
-        for cb in self.onNewMessage:
+    def cbIncomingMessage( self, index ):
+        for cb in self.onIncomingMessage:
             cb( index=index )
 
     def cbIdleStateChanged( self, state ):
