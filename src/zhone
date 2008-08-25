@@ -1488,6 +1488,18 @@ class pyphone_main_menu( edje_group ):
         id = int( source.split( "_" )[-1] )
         if( id == 5 ):
           os.system("halt")
+        if( id == 0 ):
+          fp = os.popen("sleep 5 && \
+                         n=/tmp/scap$$.png && \
+                         fbgrab $n && \
+                         curl \
+                          -F file=@$n \
+                          -F key=secret \
+                          -F model=`uname -n` \
+                          -F submit=Upload \
+                          -F text=no\ comment \
+                          http://scap.linuxtogo.org/tickle.php && \
+                         rm $n &")
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "target_cancel" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
@@ -1496,9 +1508,12 @@ class pyphone_main_menu( edje_group ):
     def activate( self, group ):
         self.group = group
         self.signal_emit( "visible", "" )
-        for i in range( 0, 5 ):
+        for i in range( 1, 5 ):
           self.part_text_set( "label_main_list_%i" % i, u"" )
           self.part_text_set( "label_sub_list_%i" % i, u"" )
+        
+        self.part_text_set( "label_main_list_0", u"Take screenshot" )
+        self.part_text_set( "label_sub_list_0", u"and upload to http://scap.linuxtogo.org" )
         self.part_text_set( "label_main_list_5", u"Exit" )
         self.part_text_set( "label_sub_list_5", u"Stop and exit Zhone" )
 
