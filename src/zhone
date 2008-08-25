@@ -454,7 +454,7 @@ class pyphone_sms(edje_group):
         if self.page < 0:
             self.page = 0
         self.current = self.messagebook[self.page*6:(self.page+1)*6]
-        text = u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) ).encode( 'utf-8', 'replace' )
+        text = u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) )
         self.part_text_set( "pager", text )
         for i in range( 0, len( self.current ) ):
             main_text = self.main.groups["contacts"].tryNumberToName( self.current[i][2] )
@@ -750,7 +750,7 @@ class pyphone_contacts(edje_group):
         if self.page < 0:
             self.page = 0
         self.current = self.phonebook[self.page*6:(self.page+1)*6]
-        text = u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) ).encode('utf-8', 'replace')
+        text = u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) )
         self.part_text_set( "pager", text )
         for i in range( 0, len( self.current ) ):
             self.part_text_set( "label_main_list_%i" % i, self.current[i][1] )
@@ -1181,7 +1181,7 @@ class pyphone_message(edje_group):
     def set_button_text(self, num):
         for i in xrange(4):
             for j in xrange(4):
-                text = self.button_labels[num][j][i].encode('utf-8', 'replace')
+                text = self.button_labels[num][j][i]
                 self.part_text_set("label_%d_%d" % (i,j) , text)
         self.active = num
 
@@ -1190,7 +1190,7 @@ class pyphone_message(edje_group):
 
         for i in xrange(4):
             for j in xrange(4):
-                text = self.button_labels2[num][j][i].encode('utf-8', 'replace')
+                text = self.button_labels2[num][j][i]
                 self.part_text_set("label2_%d_%d" % (i,j) , text)
 
 #----------------------------------------------------------------------------#
