@@ -448,7 +448,8 @@ class pyphone_sms(edje_group):
         if self.page < 0:
             self.page = 0
         self.current = self.messagebook[self.page*6:(self.page+1)*6]
-        self.part_text_set( "pager", u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) ) )
+        text = u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) ).encode( 'utf-8', 'replace' )
+        self.part_text_set( "pager", text )
         for i in range( 0, len( self.current ) ):
             main_text = self.main.groups["contacts"].tryNumberToName( self.current[i][2] )
             self.part_text_set( "label_main_list_%i" % i, main_text )
@@ -497,6 +498,64 @@ class pyphone_sms(edje_group):
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
     	self.main.groups["menu"].activate( ( "send", "delete", "forward", "reply" ), self.cbMenu )
+    	
+    	
+#----------------------------------------------------------------------------#
+class pyphone_configuration(edje_group):
+#----------------------------------------------------------------------------#
+    def __init__(self, main):
+        edje_group.__init__(self, main, "configuration")
+        self.selected = None
+        self.profiles = []
+        
+    def onShow( self ):
+        self.prepare()
+        self.updateList()
+        
+    def prepare( self ):
+        # Set the current profile label
+        if dbus_object.prefs_obj:
+            current = dbus_object.prefs_iface.GetProfile()
+            self.profiles = dbus_object.prefs_iface.GetProfiles()
+        else:
+            current = 'Test1'
+            self.profiles = ["Test1", "Test2"]
+        self.part_text_set( "current_label", u"Current : %s" % current )
+
+    def updateList( self):
+        self.main.groups["configuration"].prepare()
+        # We put all the profile names in the slots
+        for i in range(6):
+            if i < len(self.profiles):
+                name = self.profiles[i]
+            else:
+                name = u""
+            self.part_text_set( "label_main_list_%i" % i, name )
+            self.part_text_set( "label_sub_list_%i" % i, u"" )
+        self.selected = None
+        for i in range( 6 ):
+            self.signal_emit( "deactivate_target_list_%i" % i, "" )
+        
+    @edje.decorators.signal_callback( "mouse,clicked,1", "target_list_*" )
+    def on_edje_signal_button_list_pressed( self, emission, source ):
+        id = int( source.split( "_" )[-1] )
+        if self.selected == id:
+            return
+        if self.selected is not None:
+            self.signal_emit( "deactivate_target_list_%i" % self.selected, "" )
+        self.signal_emit( "activate_target_list_%i" % id, "" )
+        self.selected = id
+        
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_use" )
+    def on_edje_signal_button_action_use_pressed( self, emission, source ):
+        if self.selected is None:
+            return
+        if self.selected >= len(self.profiles):
+            return
+        profile = self.profiles[self.selected]
+        self.part_text_set( "current_label", u"Current : %s" % profile )
+        if dbus_object.prefs_obj:
+            dbus_object.prefs_iface.SetProfile(profile)
 
 #----------------------------------------------------------------------------#
 class pyphone_contacts(edje_group):
@@ -685,7 +744,8 @@ class pyphone_contacts(edje_group):
         if self.page < 0:
             self.page = 0
         self.current = self.phonebook[self.page*6:(self.page+1)*6]
-        self.part_text_set( "pager", u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) ) )
+        text = u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) ).encode('utf-8', 'replace')
+        self.part_text_set( "pager", text )
         for i in range( 0, len( self.current ) ):
             self.part_text_set( "label_main_list_%i" % i, self.current[i][1] )
             self.part_text_set( "label_sub_list_%i" % i, self.current[i][2] )
@@ -1115,7 +1175,8 @@ class pyphone_message(edje_group):
     def set_button_text(self, num):
         for i in xrange(4):
             for j in xrange(4):
-                self.part_text_set("label_%d_%d" % (i,j) , self.button_labels[num][j][i])
+                text = self.button_labels[num][j][i].encode('utf-8', 'replace')
+                self.part_text_set("label_%d_%d" % (i,j) , text)
         self.active = num
 
         if num != 0:
@@ -1123,7 +1184,8 @@ class pyphone_message(edje_group):
 
         for i in xrange(4):
             for j in xrange(4):
-                self.part_text_set("label2_%d_%d" % (i,j) , self.button_labels2[num][j][i])
+                text = self.button_labels2[num][j][i].encode('utf-8', 'replace')
+                self.part_text_set("label2_%d_%d" % (i,j) , text)
 
 #----------------------------------------------------------------------------#
 class pyphone_pin(edje_group):
@@ -1512,6 +1574,7 @@ class GUI(object):
                 "sms",
                 "contacts",
                 "location",
+                "configuration",
                 "pin", "puk",
                 "list_choose", "number_edit", "text_edit", "text_show", "message"
             ):
@@ -1785,6 +1848,8 @@ class DBusObject( object ):
         self.inputnotifier_iface = None
         self.display_obj = None
         self.display_iface = None
+        self.prefs_obj = None
+        self.prefs_iface = None
 
         self.fullinit = False
 
@@ -1892,6 +1957,11 @@ class DBusObject( object ):
             failcount += 1
         else:
             logger.debug( "device ok: %s" % self.device_iface )
+            
+        # Prefs
+        self.prefs_obj = self.tryGetProxy( 'org.freesmartphone.opreferencesd', '/org/freesmartphone/Preferences' )
+        self.prefs_iface = Interface( self.prefs_obj, 'org.freesmartphone.Preferences' )
+        logger.debug( "preferences ok: %s" % self.prefs_iface )
 
         logger.debug( "failcount = %d" % failcount )
         if failcount == 0:

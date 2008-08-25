@@ -1,0 +1,99 @@
+parts {
+    SWALLOWCLIP();
+    
+    part {
+        name: "current_label";
+        type: TEXT;
+        effect: SOFT_OUTLINE;
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.02;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 1.0 0.1;
+                offset: -1 -1;
+            }
+            text {
+                font: "Sans";
+                text: label;
+                size: BUTTON_FONT_SIZE;
+                align: 0.5 0.5;
+            }
+        }
+    }
+
+    part {
+        name: "list_button_box";
+        type: RECT;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.1;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 1.0 0.67;
+                offset: -1 -1;
+            }
+            color: 0 0 0 0;
+        }
+    }
+    
+    PAGER(0.65, 0.75);
+    
+    part {
+        name: "action_button_box";
+        type: RECT;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.75;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 1.0 0.9;
+                offset: -1 -1;
+            }
+            color: 0 0 0 0;
+        }
+    }
+
+    GRID_TARGET_2LINE("list_button_box", "list_0", 0, 0, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_1", 0, 1, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_2", 0, 2, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_3", 0, 3, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_4", 0, 4, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_5", 0, 5, 1, 6, "", "");
+
+    GRID_BUTTON_SYMBOL("action_button_box", "action_left", 0, 0, 3, 1, SYMBOL_LEFT);
+    GRID_BUTTON("action_button_box", "action_use", 1, 0, 3, 1, "use");
+    GRID_BUTTON_SYMBOL("action_button_box", "action_right", 2, 0, 3, 1, SYMBOL_RIGHT);
+
+    BUTTONS_BOTTOM();
+//    BUTTON_OPTIONS();
+//    BUTTON_MENU();
+    BUTTON_CLOSE();
+}
+programs {
+//    ACTIVATE("button_bottom_middle");
+    ACTIVATE("button_bottom_right");
+
+    SELECTABLE("target_list_0");
+    SELECTABLE("target_list_1");
+    SELECTABLE("target_list_2");
+    SELECTABLE("target_list_3");
+    SELECTABLE("target_list_4");
+    SELECTABLE("target_list_5");
+
+//    ACTIVATE("button_action_left");
+    ACTIVATE("button_action_use");
+//    ACTIVATE("button_action_right");
+
+    TRANSITION();
+}
