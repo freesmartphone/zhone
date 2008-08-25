@@ -1853,7 +1853,7 @@ class DBusObject( object ):
 
         self.fullinit = False
 
-        self.willSuspend = True
+        self.willSuspend = False
 
     def tryGetProxy( self, busname, objname ):
         object = None
