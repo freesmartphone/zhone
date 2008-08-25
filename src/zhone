@@ -68,6 +68,7 @@ class edje_group(edje.Edje):
     def __init__(self, main, group, parent_name="main"):
         self.main = main
         self.parent_name = parent_name
+        self.group = group
         global edjepath
         f = edjepath
         try:
@@ -85,6 +86,11 @@ class edje_group(edje.Edje):
     @edje.decorators.signal_callback("mouse,clicked,1", "button_bottom_right")
     def on_edje_signal_button_bottom_right_pressed(self, emission, source):
         self.main.transition_to(self.parent_name)
+
+    @edje.decorators.signal_callback("mouse,clicked,1", "button_bottom_left")
+    def on_edje_signal_button_bottom_left_pressed(self, emission, source):
+        self.main.groups["main_menu"].activate( self.group )
+        self.main.transition_to("main_menu")
 
 #----------------------------------------------------------------------------#
 class pyphone_main(edje_group):
@@ -1471,6 +1477,37 @@ class pyphone_menu( edje_group ):
 
 
 #----------------------------------------------------------------------------#
+class pyphone_main_menu( edje_group ):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        edje_group.__init__( self, main, "main_menu" )
+        self.signal_emit( "invisible", "" )
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "target_list_*" )
+    def on_edje_signal_button_list_pressed( self, emission, source ):
+        id = int( source.split( "_" )[-1] )
+        if( id == 5 ):
+          os.system("halt")
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "target_cancel" )
+    def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
+        self.deactivate()
+
+    def activate( self, group ):
+        self.group = group
+        self.signal_emit( "visible", "" )
+        for i in range( 0, 5 ):
+          self.part_text_set( "label_main_list_%i" % i, u"" )
+          self.part_text_set( "label_sub_list_%i" % i, u"" )
+        self.part_text_set( "label_main_list_5", u"Exit" )
+        self.part_text_set( "label_sub_list_5", u"Stop and exit Zhone" )
+
+    def deactivate( self ):
+        self.signal_emit( "invisible", "" )
+        self.main.transition_to(self.group)
+
+
+#----------------------------------------------------------------------------#
 class pyphone_lock( edje_group ):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
@@ -1583,7 +1620,7 @@ class GUI(object):
                 self.groups[page] = ctor( self )
                 self.evas_canvas.evas_obj.data[page] = self.groups[page]
 
-        for overlay in ( "menu", "lock", "error" ):
+        for overlay in ("main_menu", "menu", "lock", "error" ):
             ctor = globals().get( "pyphone_%s" % overlay, None )
             if ctor:
                 self.groups[overlay] = ctor( self )

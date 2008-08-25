@@ -1245,6 +1245,11 @@ collections {
     }
 
     group {
+        name: "main_menu";
+        #include "zhone_main_menu.edc"
+    }
+
+    group {
         name: "menu";
         #include "zhone_menu.edc"
     }
