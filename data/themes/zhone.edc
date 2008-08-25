@@ -27,6 +27,7 @@ images {
    image: "button_phone.png" COMP;
    image: "button_sms.png" COMP;
    image: "button_location.png" COMP;
+   image: "button_configuration.png" COMP;
    image: "button_main_background.png" COMP;
    image: "button_main_background_active.png" COMP;
    image: "button_background.png" COMP;
@@ -1179,12 +1180,12 @@ collections {
                 description {                                            \
                     state: "default" 0.0;                                \
                     rel1 {                                               \
-                        relative: 0.05+(xpos*0.5) 0.35+(ypos*0.3);       \
+                        relative: 0.05+(xpos*0.3) 0.35+(ypos*0.3);       \
                         offset: 0 0;                                     \
                         to: "swallow_clip";                              \
                     }                                                    \
                     rel2 {                                               \
-                        relative: 0.45+(xpos*0.5) 0.6+(ypos*0.3);        \
+                        relative: 0.05+((xpos+0.9)*0.3) 0.35+((ypos+0.9)*0.3);        \
                         offset: -1 -1;                                   \
                         to: "swallow_clip";                              \
                     }                                                    \
@@ -1230,12 +1231,14 @@ collections {
             ICON("contacts", 0, 1);
             ICON("sms", 1, 0);
             ICON("location", 1, 1);
+            ICON("configuration", 2, 0);
         }
         programs {
             ACTIVATE("target_phone");
             ACTIVATE("target_contacts");
             ACTIVATE("target_sms");
             ACTIVATE("target_location");
+            ACTIVATE("target_configuration");
 
             TRANSITION();
         }
@@ -1258,6 +1261,12 @@ collections {
         name: "contacts";
         #include "zhone_contacts.edc"
     }
+    
+    group {
+        name: "configuration";
+        #include "zhone_configuration.edc"
+    }
+    
     group {
         name: "phone";
         #include "zhone_dial.edc"
