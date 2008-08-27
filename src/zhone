@@ -802,15 +802,24 @@ class pyphone_location( edje_group ):
         def __init__( self, *args, **kargs ):
             evas.ClippedSmartObject.__init__( self, *args, **kargs )
             self.textheight = 45
-            self.font = ( "Sans", 35 )
+            self.font = ( "Sans", 15 )
             self.children = []
             self.values = []
             self.maxvalue = None
+            self.resized = 0
 
         def resize( self, w, h ):
+            self.w = w
+            self.h = h
+            self.render()
+            self.resized = 1
+
+        def render( self ):
             x, y = self.pos
-            barwidth = w / len( self.children )
-            barheight = h - self.textheight
+            if len ( self.children ) == 0:
+                return
+            barwidth = self.w / len( self.children )
+            barheight = self.h - self.textheight
             for (rect, key_text, value_text), (key, value) in zip( self.children, self.values ):
                 key_text.text = str( key )
                 value_text.text = str( value )
@@ -829,6 +838,7 @@ class pyphone_location( edje_group ):
                     barwidth, self.textheight
                 )
                 x += barwidth
+
 
         def addChild( self ):
             rect = self.Rectangle( color=( 0, 255, 0, 255 ) )
@@ -861,11 +871,15 @@ class pyphone_location( edje_group ):
                     self.values = [(0, 0)]
                 else:
                     self.maxvalue = max( [ x[1] for x in values] )
+                    if self.maxvalue == 0:
+                        self.maxvalue = 1
 
             while len( self.children ) > len( self.values ):
                 self.delChild()
             while len( self.children ) < len( self.values ):
                 self.addChild()
+            if self.resized:
+                self.render()
             self.resize( *self.size )
 
     class PositionGraph( evas.ClippedSmartObject ):
@@ -945,7 +959,7 @@ class pyphone_location( edje_group ):
 
     def __init__(self, main):
         edje_group.__init__( self, main, "location" )
-        #self.signalgraph = self.SignalGraph( self.evas )
+        self.signalgraph = self.SignalGraph( self.evas )
         self.positiongraph = self.PositionGraph( self.evas )
 
         self.page = "left"
@@ -973,13 +987,13 @@ class pyphone_location( edje_group ):
             if self.part_swallow_get( "swallow" ):
                 self.part_swallow_get( "swallow" ).hide()
                 self.part_unswallow( self.part_swallow_get( "swallow" ) )
-        #elif self.page == "middle":
-        #    self.part_text_set( "status", u"" )
-        #    if self.part_swallow_get( "swallow" ):
-        #        self.part_swallow_get( "swallow" ).hide()
-        #        self.part_unswallow( self.part_swallow_get( "swallow" ) )
-        #    self.part_swallow( "swallow", self.signalgraph )
-        #    self.signalgraph.show()
+        elif self.page == "middle":
+            self.part_text_set( "status", u"" )
+            if self.part_swallow_get( "swallow" ):
+                self.part_swallow_get( "swallow" ).hide()
+                self.part_unswallow( self.part_swallow_get( "swallow" ) )
+            self.part_swallow( "swallow", self.signalgraph )
+            self.signalgraph.show()
         elif self.page == "right":
             self.part_text_set( "status", u"" )
             if self.part_swallow_get( "swallow" ):
@@ -997,8 +1011,9 @@ class pyphone_location( edje_group ):
         self.update()
 
     def onSatellitesChanged( self, satellites ):
-        #signallist = [ (int(sat[0]), float(sat[4])) for sat in satellites ]
-        #self.signalgraph.update( signallist )
+        if self.page == "middle":
+            signallist = [ (int(sat[0]), float(sat[4])) for sat in satellites ]
+            self.signalgraph.update( signallist )
         positionlist = [ (int(sat[0]), int(sat[3]), int(sat[2])) for sat in satellites ]
         self.positiongraph.update( positionlist )
 
