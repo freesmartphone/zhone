@@ -1399,6 +1399,59 @@ class pyphone_number_edit( edje_group ):
         self.main.transition_to("number_edit")
 
 #----------------------------------------------------------------------------#
+class pyphone_pin_edit( edje_group ):
+#----------------------------------------------------------------------------#
+    DELAY = 1.0
+    def __init__( self, main ):
+        edje_group.__init__( self, main, "number_edit" )
+        self.text = ""
+        self.cb_data = None
+        self.cb = None
+        self.timer = None
+        self.last = 0.0
+        self.part_text_set( "label_main_star", u"" )
+        self.part_text_set( "label_sub_star", u"" )
+        self.part_text_set( "label_main_hash", u"" )
+        self.part_text_set( "label_sub_hash", u"" )
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_*" )
+    def on_edje_signal_button_pressed( self, emission, source ):
+        key = source.split( "_", 1 )[1]
+        if key in ( "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ):
+            self.text += key
+            # The trailing whitespace is a workaround for the one char invisible
+            # bug due to some problems with scaling of text parts.
+            output = u"●"*( len( self.text ) - 1) + self.text[-1]
+            self.part_text_set( "label", u" %s " % output )
+            if self.timer:
+                self.timer.delete()
+            self.timer = ecore.timer_add( self.DELAY, self.timerCb )
+        elif key in "delete":
+            self.text = self.text[:-1]
+            output = u"●"*len( self.text )
+            self.part_text_set( "label", u" %s " % output )
+        elif key in "done":
+            self.main.transition_to(self.parent_name)
+            self.cb( self.text, self.cb_data )
+        self.last = time.time()
+
+    def timerCb( self ):
+        output = u"●"*len( self.text )
+        self.part_text_set( "label", u" %s " % output )
+        self.timer = None
+        return False
+
+    def setup( self, parent_name, text, title, cb_data, cb ):
+        self.parent_name = parent_name
+        self.text = text
+        self.title = title
+        self.cb_data = cb_data
+        self.cb = cb
+        self.part_text_set( "label_description", u" %s " % self.title )
+        self.part_text_set( "label", u" %s " % self.text )
+        self.main.transition_to("number_edit")
+
+#----------------------------------------------------------------------------#
 class pyphone_text_show( edje_group ):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
@@ -1643,7 +1696,7 @@ class GUI(object):
                 "location",
                 "configuration",
                 "pin", "puk",
-                "list_choose", "number_edit", "text_edit", "text_show", "message"
+                "list_choose", "number_edit", "pin_edit", "text_edit", "text_show", "message"
             ):
             ctor = globals().get( "pyphone_%s" % page, None )
             if ctor:
