@@ -2035,9 +2035,9 @@ class DBusObject( object ):
             self.fullinit = True
         return self.fullinit
 
-    def cbResourceChanged( self, resourcename ):
+    def cbResourceChanged( self, resourcename, state, attributes ):
         for cb in self.onResourceChanged:
-            cb( resourcename=resourcename )
+            cb( resourcename=resourcename, state=state, attributes=attributes )
 
     def cbAccuracyChanged( self, fields, pdop, hdop, vdop ):
         for cb in self.onAccuracyChanged:
