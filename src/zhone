@@ -1664,9 +1664,9 @@ class GUI(object):
         self.groups["swallow"].message_send(1, 0.0) # GSM signal strength
         self.groups["swallow"].message_send(2, 0.0) # battery charge
 
-        self.groups["swallow"].part_swallow("swallow", self.groups["main"])
-        self.current_group = self.groups["main"]
-        self.previous_group = self.groups["phone"]
+        self.current_group = self.groups[options.start]
+        self.previous_group = None
+        self.groups["swallow"].part_swallow("swallow", self.current_group)
         ecore.timer_add(60.0, self.display_time)
         self.display_time()
 
@@ -1729,9 +1729,6 @@ class GUI(object):
             # Update Battery charge as soon as we have DBus
             batcharge = dbus_object.device_power_iface.GetEnergyPercentage()
             self.groups["swallow"].message_send(2, batcharge/100.0) # battery charge
-
-        if options.start:
-            self.transition_to(options.start)
 
     def lock_on_idle( self, state ):
         if state == "LOCK":
@@ -1868,7 +1865,7 @@ class MyOptionParser(OptionParser):
         self.add_option("-s",
                       "--start",
                       type="string",
-                      default=None,
+                      default="main",
                       help="start with the given page")
 
     def parse_geometry(option, opt, value, parser):
