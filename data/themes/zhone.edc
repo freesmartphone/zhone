@@ -1293,14 +1293,6 @@ collections {
         #include "zhone_call.edc"
     }
     group {
-        name: "pin";
-        #include "zhone_pin.edc"
-    }
-    group {
-        name: "puk";
-        #include "zhone_pin.edc"
-    }
-    group {
         name: "dtmf";
         #include "zhone_dial.edc"
     }

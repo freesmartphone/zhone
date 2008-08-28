@@ -1209,92 +1209,6 @@ class pyphone_message(edje_group):
                 self.part_text_set("label2_%d_%d" % (i,j) , text)
 
 #----------------------------------------------------------------------------#
-class pyphone_pin(edje_group):
-#----------------------------------------------------------------------------#
-    def __init__(self, main):
-        edje_group.__init__(self, main, "pin")
-        self.part_text_set( "label_description", u"SIM PIN?" )
-        self.text = []
-
-    @edje.decorators.signal_callback("pin_button_pressed", "*")
-    def on_edje_signal_pin_button_pressed(self, emission, source):
-        key = source.split("_", 1)[1]
-        if key in ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"):
-            self.text.append(key)
-            # The trailing whitespace is a workaround for the one char invisible
-            # bug due to some problems with scaling of text parts.
-            self.part_text_set("label", u"".join(self.text)+u" ")
-        elif key in "delete":
-            self.text = self.text[:-1]
-            self.part_text_set("label", u"".join(self.text)+u" ")
-        elif key in "done":
-            if dbus_object.gsm_device_obj:
-                try:
-                    self.part_text_set( "label_description", u"Sending..." )
-                    # call mainloop.processEvents()
-                    dbus_object.gsm_sim_iface.SendAuthCode( "".join(self.text) )
-                except DBusException, e:
-                    try:
-                        authstatus = dbus_object.gsm_sim_iface.GetAuthStatus()
-                        if authstatus == "SIM PUK":
-                            self.main.transition_to("puk")
-                        elif authstatus == "SIM PIN":
-                            self.part_text_set( "label_description", u"Invalid. SIM PIN?" )
-                    except DBusException, e:
-                        logger.exception( "can't get auth status" )
-                else:
-                    self.part_text_set("label", u"")
-                    dbus_object.gsm_device_iface.SetAntennaPower(True)
-                    dbus_object.gsm_network_iface.Register()
-#                    # FIXME wait for the ready signal
-#                    self.main.groups["contacts"].prepare()
-#                    self.main.groups["sms"].prepare()
-                    self.main.transition_to("main")
-
-#----------------------------------------------------------------------------#
-class pyphone_puk(edje_group):
-#----------------------------------------------------------------------------#
-    def __init__(self, main):
-        edje_group.__init__(self, main, "puk")
-        self.part_text_set( "label_description", u"SIM PUK?" )
-        self.text = []
-        self.puk = []
-
-    @edje.decorators.signal_callback("pin_button_pressed", "*")
-    def on_edje_signal_puk_button_pressed(self, emission, source):
-        key = source.split("_", 1)[1]
-        if key in ("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"):
-            self.text.append(key)
-            # The trailing whitespace is a workaround for the one char invisible
-            # bug due to some problems with scaling of text parts.
-            self.part_text_set("label", u"".join(self.text)+u" ")
-        elif key in "delete":
-            self.text = self.text[:-1]
-            self.part_text_set("label", u"".join(self.text)+u" ")
-        elif key in "done":
-            if self.puk == []:
-              self.part_text_set( "label_description", u"New PIN?" )
-              self.puk = self.text
-              self.text = []
-            elif dbus_object.gsm_device_obj:
-                try:
-                    self.part_text_set( "label_description", u"Sending..." )
-                    dbus_object.gsm_sim_iface.Unlock("".join(self.puk), "".join(self.text))
-                except DBusException, e:
-                    logger.exception( "can't unlock SIM" )
-                    self.part_text_set( "label_description", u"Invalid. SIM PUK?" )
-                else:
-                    self.part_text_set("label", u"")
-                    self.text = []
-                    self.puk = []
-                    dbus_object.gsm_device_iface.SetAntennaPower(True)
-                    dbus_object.gsm_network_iface.Register()
-#                    # FIXME wait for the ready signal
-#                    self.main.groups["contacts"].prepare()
-#                    self.main.groups["sms"].prepare()
-                    self.main.transition_to("main")
-
-#----------------------------------------------------------------------------#
 class pyphone_list_choose(edje_group):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
@@ -1695,7 +1609,6 @@ class GUI(object):
                 "contacts",
                 "location",
                 "configuration",
-                "pin", "puk",
                 "list_choose", "number_edit", "pin_edit", "text_edit", "text_show", "message"
             ):
             ctor = globals().get( "pyphone_%s" % page, None )
