@@ -1367,7 +1367,7 @@ class pyphone_pin_edit( edje_group ):
         self.cb = cb
         self.part_text_set( "label_description", u" %s " % self.title )
         self.part_text_set( "label", u" %s " % self.text )
-        self.main.transition_to("number_edit")
+        self.main.transition_to("pin_edit")
 
 #----------------------------------------------------------------------------#
 class pyphone_text_show( edje_group ):
@@ -1604,30 +1604,19 @@ class GSMAgent( object ):
         """
         This is called to start the authentication process
         """
-        self.setState( "Enabling GSM" )
-        dbus_object.gsm_device_iface.SetAntennaPower(
-            True,
-            reply_handler=self.cbAntennaPowerReply,
-            error_handler=self.cbAntennaPowerError
-        )
-
-    def cbAntennaPowerReply( self ):
         self.setState( "Reading authentication status" )
         dbus_object.gsm_sim_iface.GetAuthStatus(
             reply_handler=self.cbAuthStatusReply,
             error_handler=self.cbAuthStatusError
         )
-        
-    def cbAntennaPowerError( self, e ):
-        self.setState( "Failed to enable GSM" )
-        logger.exception( e )
 
     def cbAuthStatusReply( self, authstatus ):
         if authstatus == "READY":
-            self.setState( "Registering to network" )
-            dbus_object.gsm_network_iface.Register(
-                reply_handler=self.cbRegisterReply,
-                error_handler=self.cbRegisterError
+            self.setState( "Enabling GSM" )
+            dbus_object.gsm_device_iface.SetAntennaPower(
+                True,
+                reply_handler=self.cbAntennaPowerReply,
+                error_handler=self.cbAntennaPowerError
             )
         elif authstatus == "SIM PIN":
             self.setState( "Waiting for PIN" )
@@ -1692,6 +1681,17 @@ class GSMAgent( object ):
     def cbUnlockError( self ):
         # retry
         self.cbAntennaPowerReply()
+
+    def cbAntennaPowerReply( self ):
+        self.setState( "Registering to network" )
+        dbus_object.gsm_network_iface.Register(
+            reply_handler=self.cbRegisterReply,
+            error_handler=self.cbRegisterError
+        )
+        
+    def cbAntennaPowerError( self, e ):
+        self.setState( "Failed to enable GSM" )
+        logger.exception( e )
 
     def cbRegisterReply( self ):
         self.setState( "Registered to network" )
