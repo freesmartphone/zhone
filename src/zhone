@@ -1654,9 +1654,11 @@ class GSMAgent( object ):
     def cbAuthCodeReply( self ):
         self.cbAuthStatusReply( "READY" )
 
-    def cbAuthCodeError( self ):
+    def cbAuthCodeError( self, e ):
+        self.setState( "Error while sending PIN" )
+        logger.exception( e )
         # retry
-        self.cbAntennaPowerReply()
+        self.cbDBusReady()
 
     def cbPUKDone( self, puk, *args ):
         self.main.groups["pin_edit"].setup(
@@ -1678,9 +1680,11 @@ class GSMAgent( object ):
     def cbUnlockReply( self ):
         self.cbAuthStatusReply( "READY" )
 
-    def cbUnlockError( self ):
+    def cbUnlockError( self, e ):
+        self.setState( "Error while sending PIN" )
+        logger.exception( e )
         # retry
-        self.cbAntennaPowerReply()
+        self.cbDBusReady()
 
     def cbAntennaPowerReply( self ):
         self.setState( "Registering to network" )
