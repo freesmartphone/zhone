@@ -24,10 +24,15 @@ fonts {
 images {
    image: "background.png" COMP;
    image: "button_contacts.png" COMP;
+   image: "button_contacts_inactive.png" COMP;
    image: "button_phone.png" COMP;
+   image: "button_phone_inactive.png" COMP;
    image: "button_sms.png" COMP;
+   image: "button_sms_inactive.png" COMP;
    image: "button_location.png" COMP;
+   image: "button_location_inactive.png" COMP;
    image: "button_configuration.png" COMP;
+   image: "button_configuration_inactive.png" COMP;
    image: "button_main_background.png" COMP;
    image: "button_main_background_active.png" COMP;
    image: "button_background.png" COMP;
@@ -111,6 +116,20 @@ styles {
         signal: "mouse,out";                                            \
         source: part_name;                                              \
         action: STATE_SET "default" 0.0;                                \
+        target: part_name;                                              \
+    }
+    
+#define ACTIVATE_ICON(part_name)                                        \
+    program {                                                           \
+        name: "activate_"part_name;                                     \
+        signal: "activate_"part_name;                                   \
+        action: STATE_SET "default" 0.0;                                \
+        target: part_name;                                              \
+    }                                                                   \
+    program {                                                           \
+        name: "deactivate_"part_name;                                   \
+        signal: "deactivate_"part_name;                                 \
+        action: STATE_SET "inactive" 0.0;                               \
         target: part_name;                                              \
     }
 
@@ -1226,6 +1245,13 @@ collections {
                         normal: "button_"part_name".png";                \
                     }                                                    \
                 }                                                        \
+                description {                                            \
+                    state: "inactive" 0.0;                               \
+                    inherit: "default" 0.0;                              \
+                    image {                                              \
+                        normal: "button_"part_name"_inactive.png";       \
+                    }                                                    \
+                }                                                        \
             }
             ICON("phone", 0, 0);
             ICON("contacts", 0, 1);
@@ -1235,10 +1261,15 @@ collections {
         }
         programs {
             ACTIVATE("target_phone");
+            ACTIVATE_ICON("target_icon_phone");
             ACTIVATE("target_contacts");
+            ACTIVATE_ICON("target_icon_contacts");
             ACTIVATE("target_sms");
+            ACTIVATE_ICON("target_icon_sms");
             ACTIVATE("target_location");
+            ACTIVATE_ICON("target_icon_location");
             ACTIVATE("target_configuration");
+            ACTIVATE_ICON("target_icon_configuration");
 
             TRANSITION();
         }
