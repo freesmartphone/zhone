@@ -435,6 +435,7 @@ class pyphone_sms(edje_group):
                     (2, "read", "+456663443", "Hi Guy\nGuess what, I now "+
 			"know to write multi-line SMSs.\nIsn't that "+
 			"nice?\n\nSome Buddy"),
+                    (3, "read", "Flash SMS", "An SMS without digits. Strange, isn't it?"),
                 ] )
 
     def onReadyStatus( self, status ):
@@ -711,7 +712,7 @@ class pyphone_contacts(edje_group):
                     (4, u'Scott', '+013244344'),
                     (5, u'Uhura', '+013244344'),
                     (6, u'Sulu', '+013244344'),
-                    (7, u'Chekov', '+013244344'),
+                    (7, u'Chekov', '+456663443'),
                 ] )
 
     def onReadyStatus( self, status ):
@@ -728,18 +729,22 @@ class pyphone_contacts(edje_group):
     def comparePhoneNumber(self, number1, number2):
         '''
         Compares two phone numbers. They are considered equal if:
-          a) Both start with a "+", and all following digits are equal
+	  a) One does not contain digits, and they are equal as strings
+	or
+          b) Both start with a "+", and all following digits are equal
         or
-          b) At least one of them does not start with a "+", and the
+          c) At least one of them does not start with a "+", and the
              last 7 digits are equal
         '''
-        number1 = filter (lambda c: c.isdigit() or c == '+', number1)
-        number2 = filter (lambda c: c.isdigit() or c == '+', number2)
+        digits1 = filter (lambda c: c.isdigit() or c == '+', number1)
+        digits2 = filter (lambda c: c.isdigit() or c == '+', number2)
 
-        if number1[0] == number2[0] == '+':
-            return number1 == number2
-        else:
-            return number1[-7:] == number2[-7:]
+	if digits1 == '' or digits2 == '':
+	    return number1 == number2	
+	if digits1[0] == digits2[0] == '+':
+            return digits1 == digits2
+	else:
+            return digits1[-7:] == digits2[-7:]
 
     def tryNumberToName( self, number ):
         for i in range( len( self.phonebook ) ):
