@@ -1761,22 +1761,14 @@ class GUI(object):
 
         self.groups["swallow"].show()
 
-        self.groups["swallow"].part_text_set("label_top_left", u"zhone!")
-
-        self.groups["swallow"].message_send(1, 0.0) # GSM signal strength
-        self.groups["swallow"].message_send(2, 0.0) # battery charge
-
         self.current_group = self.groups[options.start]
         self.previous_group = None
         self.groups["swallow"].part_swallow("swallow", self.current_group)
         ecore.timer_add(60.0, self.display_time)
         self.display_time()
 
-        self.groups["swallow"].part_text_set( "label_top_right", u"no dbus" )
         ecore.idle_enterer_add( self.dbus_objectInit )
 
-        dbus_object.onResourceChanged.append( self.display_resources )
-        dbus_object.onNetworkStatus.append( self.update_network )
         dbus_object.onAccuracyChanged.append( self.groups["location"].onAccuracyChanged )
         dbus_object.onPositionChanged.append( self.groups["location"].onPositionChanged )
         dbus_object.onSatellitesChanged.append( self.groups["location"].onSatellitesChanged )
@@ -1811,60 +1803,14 @@ class GUI(object):
         if dbus_object.gsm_device_obj is not None:
             self.agents["gsm"].cbDBusReady()
 
-        if dbus_object.device_power_iface is not None:
-            # Update Battery charge as soon as we have DBus
-            batcharge = dbus_object.device_power_iface.GetEnergyPercentage()
-            self.groups["swallow"].message_send(2, batcharge/100.0) # battery charge
-
     def lock_on_idle( self, state ):
         if state == "LOCK":
             self.groups["lock"].activate()
 
     def display_time(self):
         self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()))
-        self.groups["swallow"].part_text_set("label_top_center", time.strftime("%Y-%m-%d", time.localtime()))
-        if ( dbus_object is not None ) and ( dbus_object.device_power_iface is not None ):
-            batcharge = dbus_object.device_power_iface.GetEnergyPercentage()
-            self.groups["swallow"].message_send(2, batcharge/100.0) # battery charge
+        self.groups["main"].part_text_set("label_year", time.strftime("%Y-%m-%d", time.localtime()))
         return True
-
-    def display_resources( self, **args ):
-        items = []
-        names = {
-            "GSM": "G",
-            "WiFi": "W",
-            "GPS": "S",
-            "Bluetooth": "B",
-        }
-        for resourcename in dbus_object.usage_iface.ListResources():
-            if dbus_object.usage_iface.GetResourceState( resourcename ):
-                users = dbus_object.usage_iface.GetResourceUsers( resourcename )
-                items.append( "%s%s" % ( names[resourcename], len( users ) ) )
-            else:
-                items.append( "%s" % ( names[resourcename].lower() ) )
-            policy = dbus_object.usage_iface.GetResourcePolicy( resourcename )
-            if policy == 'enabled':
-                items[-1] = "+" + items[-1]
-            elif policy == 'disabled':
-                items[-1] = "-" + items[-1]
-            if resourcename == "GPS":
-                self.groups["main"].targets["location"] = True
-                self.groups["main"].update()
-        self.groups["swallow"].part_text_set( "label_top_right", u" ".join( items ) )
-
-    def update_network( self, **args):
-        status = args["status"]
-        self.groups["swallow"].message_send(1, status["strength"]/100.0)
-        if status["registration"] == "denied":
-            self.groups["swallow"].part_text_set("label_top_left", u"SOS only")
-        elif status["registration"] == "unregistered":
-            self.groups["swallow"].part_text_set("label_top_left", u"No Service")
-        elif status["registration"] == "busy":
-            self.groups["swallow"].part_text_set("label_top_left", u"Searching...")
-        elif status["registration"] == "unknown":
-            self.groups["swallow"].part_text_set("label_top_left", u"[Unknown]")
-        else:
-            self.groups["swallow"].part_text_set("label_top_left", status["provider"])
 
     # TODO better state management for transitions
     def transition_to(self, target):
