@@ -370,7 +370,7 @@ class pyphone_sms(edje_group):
                     self.cbSend1
                 )
         elif result == "delete":
-    	    self.main.groups["error"].activate(
+            self.main.groups["error"].activate(
                 "delete?",
                 ("abort", "delete"),
                 self.current[self.selected][0], # reference
@@ -384,9 +384,9 @@ class pyphone_sms(edje_group):
                     [ (x[1], x[2] ) for x in  self.main.groups["contacts"].phonebook],
                     self.current[self.selected][3],
                     self.cbForward
-            )
+                )
         elif result == "reply":
-    	    self.main.groups["text_edit"].setup(
+            self.main.groups["text_edit"].setup(
                 "sms",
                 "", # text
                 self.current[self.selected][2], # title = number
@@ -433,8 +433,8 @@ class pyphone_sms(edje_group):
                     (0, "read", "+4544555", "Hello World!"),
                     (1, "read", "+456663443", "Zhone!"),
                     (2, "read", "+456663443", "Hi Guy\nGuess what, I now "+
-			"know to write multi-line SMSs.\nIsn't that "+
-			"nice?\n\nSome Buddy"),
+                        "know to write multi-line SMSs.\nIsn't that "+
+                        "nice?\n\nSome Buddy"),
                     (3, "read", "Flash SMS", "An SMS without digits. Strange, isn't it?"),
                 ] )
 
@@ -462,7 +462,7 @@ class pyphone_sms(edje_group):
         for i in range( 0, len( self.current ) ):
             main_text = self.main.groups["contacts"].tryNumberToName( self.current[i][2] )
             self.part_text_set( "label_main_list_%i" % i, main_text )
-	    sub_text = " ".join(self.current[i][3].splitlines())
+            sub_text = " ".join(self.current[i][3].splitlines())
             self.part_text_set( "label_sub_list_%i" % i, u"(%s) %s" % ( self.current[i][1], sub_text ) )
         for i in range( len( self.current ), 6):
             self.part_text_set( "label_main_list_%i" % i, u"" )
@@ -506,9 +506,9 @@ class pyphone_sms(edje_group):
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
-    	self.main.groups["menu"].activate( ( "send", "delete", "forward", "reply" ), self.cbMenu )
-    	
-    	
+        self.main.groups["menu"].activate( ( "send", "delete", "forward", "reply" ), self.cbMenu )
+
+
 #----------------------------------------------------------------------------#
 class pyphone_configuration(edje_group):
 #----------------------------------------------------------------------------#
@@ -649,7 +649,7 @@ class pyphone_contacts(edje_group):
 
     def cbMenu( self, result ):
         if result == "edit name":
-    	    self.main.groups["text_edit"].setup(
+            self.main.groups["text_edit"].setup(
                 "contacts",
                 self.current[self.selected][1], # name
                 self.current[self.selected][2], # title = number
@@ -657,7 +657,7 @@ class pyphone_contacts(edje_group):
                 self.cbNameEdit
             )
         elif result == "edit number":
-    	    self.main.groups["number_edit"].setup(
+            self.main.groups["number_edit"].setup(
                 "contacts",
                 self.current[self.selected][2], # number
                 self.current[self.selected][1], # title = name
@@ -665,7 +665,7 @@ class pyphone_contacts(edje_group):
                 self.cbNumberEdit
             )
         elif result == "new":
-    	    self.main.groups["text_edit"].setup(
+            self.main.groups["text_edit"].setup(
                 "contacts",
                 "", # name
                 "name?", # title
@@ -729,8 +729,8 @@ class pyphone_contacts(edje_group):
     def comparePhoneNumber(self, number1, number2):
         '''
         Compares two phone numbers. They are considered equal if:
-	  a) One does not contain digits, and they are equal as strings
-	or
+          a) One does not contain digits, and they are equal as strings
+        or
           b) Both start with a "+", and all following digits are equal
         or
           c) At least one of them does not start with a "+", and the
@@ -739,11 +739,11 @@ class pyphone_contacts(edje_group):
         digits1 = filter (lambda c: c.isdigit() or c == '+', number1)
         digits2 = filter (lambda c: c.isdigit() or c == '+', number2)
 
-	if digits1 == '' or digits2 == '':
-	    return number1 == number2	
-	if digits1[0] == digits2[0] == '+':
+        if digits1 == '' or digits2 == '':
+            return number1 == number2
+        if digits1[0] == digits2[0] == '+':
             return digits1 == digits2
-	else:
+        else:
             return digits1[-7:] == digits2[-7:]
 
     def tryNumberToName( self, number ):
@@ -1625,7 +1625,7 @@ class GSMAgent( object ):
             )
         elif authstatus == "SIM PIN":
             self.setState( "Waiting for PIN" )
-    	    self.main.groups["pin_edit"].setup(
+            self.main.groups["pin_edit"].setup(
                 "main",
                 "", # number
                 "Enter PIN", # title
@@ -1634,7 +1634,7 @@ class GSMAgent( object ):
             )
         elif authstatus == "SIM PUK":
             self.setState( "Waiting for PUK" )
-    	    self.main.groups["pin_edit"].setup(
+            self.main.groups["pin_edit"].setup(
                 "main",
                 "", # number
                 "Enter PUK", # title
@@ -1697,7 +1697,7 @@ class GSMAgent( object ):
             reply_handler=self.cbRegisterReply,
             error_handler=self.cbRegisterError
         )
-        
+
     def cbAntennaPowerError( self, e ):
         self.setState( "Failed to enable GSM" )
         logger.exception( e )
@@ -2054,7 +2054,7 @@ class DBusObject( object ):
             failcount += 1
         else:
             logger.debug( "device ok: %s" % self.device_iface )
-            
+
         # Prefs
         self.prefs_obj = self.tryGetProxy( 'org.freesmartphone.opreferencesd', '/org/freesmartphone/Preferences' )
         self.prefs_iface = Interface( self.prefs_obj, 'org.freesmartphone.Preferences' )
