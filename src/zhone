@@ -1802,6 +1802,9 @@ class GUI(object):
 
         if dbus_object.gsm_device_obj is not None:
             self.agents["gsm"].cbDBusReady()
+        if dbus_object.gps_obj is not None:
+            self.groups["main"].targets["location"] = True
+            self.groups["main"].update()
 
     def lock_on_idle( self, state ):
         if state == "LOCK":
