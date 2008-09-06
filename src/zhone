@@ -13,11 +13,12 @@ GPLv2 or later
 
 import logging
 logger = logging.getLogger( "zhone" )
-logger.setLevel( logging.DEBUG )
 logging.basicConfig( level    = logging.DEBUG,
                     format   = '%(asctime)s %(levelname)s %(message)s',
                     filename = '/tmp/zhone.log',
                     filemode = 'w' )
+logger.addHandler( logging.StreamHandler() )
+logger.setLevel( logging.DEBUG )
 
 #----------------------------------------------------------------------------#
 WIDTH = 480
@@ -516,11 +517,11 @@ class pyphone_configuration(edje_group):
         edje_group.__init__(self, main, "configuration")
         self.selected = None
         self.profiles = []
-        
+
     def onShow( self ):
         self.prepare()
         self.updateList()
-        
+
     def prepare( self ):
         # Set the current profile label
         if dbus_object.prefs_obj:
@@ -544,7 +545,7 @@ class pyphone_configuration(edje_group):
         self.selected = None
         for i in range( 6 ):
             self.signal_emit( "deactivate_target_list_%i" % i, "" )
-        
+
     @edje.decorators.signal_callback( "mouse,clicked,1", "target_list_*" )
     def on_edje_signal_button_list_pressed( self, emission, source ):
         id = int( source.split( "_" )[-1] )
@@ -554,7 +555,7 @@ class pyphone_configuration(edje_group):
             self.signal_emit( "deactivate_target_list_%i" % self.selected, "" )
         self.signal_emit( "activate_target_list_%i" % id, "" )
         self.selected = id
-        
+
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_use" )
     def on_edje_signal_button_action_use_pressed( self, emission, source ):
         if self.selected is None:
@@ -1502,7 +1503,7 @@ class pyphone_main_menu( edje_group ):
         for i in range( 1, 5 ):
           self.part_text_set( "label_main_list_%i" % i, u"" )
           self.part_text_set( "label_sub_list_%i" % i, u"" )
-        
+
         self.part_text_set( "label_main_list_0", u"Take screenshot" )
         self.part_text_set( "label_sub_list_0", u"and upload to http://scap.linuxtogo.org" )
         self.part_text_set( "label_main_list_5", u"Exit" )
@@ -1609,20 +1610,34 @@ class GSMAgent( object ):
         """
         This is called to start the authentication process
         """
+        self.setState( "Turning on Antenna" )
+        dbus_object.gsm_device_iface.SetAntennaPower(
+            True,
+            reply_handler=self.cbAntennaPowerReply,
+            error_handler=self.cbAntennaPowerError,
+        )
+
+    def cbAntennaPowerReply( self ):
+        logger.info( "Antenna power OK. Registering to network now." )
+        self.setState( "Registering to network" )
+        dbus_object.gsm_network_iface.Register(
+            reply_handler=self.cbRegisterReply,
+            error_handler=self.cbRegisterError
+        )
+
+    def cbAntennaPowerError( self, e ):
+        logger.info( "SIM seems to be protected. Checking auth status now" )
         self.setState( "Reading authentication status" )
         dbus_object.gsm_sim_iface.GetAuthStatus(
             reply_handler=self.cbAuthStatusReply,
-            error_handler=self.cbAuthStatusError
+            error_handler=self.cbAuthStatusError,
         )
 
     def cbAuthStatusReply( self, authstatus ):
         if authstatus == "READY":
-            self.setState( "Enabling GSM" )
-            dbus_object.gsm_device_iface.SetAntennaPower(
-                True,
-                reply_handler=self.cbAntennaPowerReply,
-                error_handler=self.cbAntennaPowerError
-            )
+            self.setState( "Telephony Ready" )
+            # restart auth, should lead to registering this time...
+            self.cbDBusReady()
         elif authstatus == "SIM PIN":
             self.setState( "Waiting for PIN" )
             self.main.groups["pin_edit"].setup(
@@ -1642,7 +1657,7 @@ class GSMAgent( object ):
                 self.cbPUKDone
             )
         else:
-            logger.exception( "Unkown authentication status %s" % authstatus )
+            logger.exception( "Unknown authentication status %s" % authstatus )
 
     def cbAuthStatusError( self, e ):
         self.setState( "Failed to read authentication status" )
@@ -1690,17 +1705,6 @@ class GSMAgent( object ):
         logger.exception( e )
         # retry
         self.cbDBusReady()
-
-    def cbAntennaPowerReply( self ):
-        self.setState( "Registering to network" )
-        dbus_object.gsm_network_iface.Register(
-            reply_handler=self.cbRegisterReply,
-            error_handler=self.cbRegisterError
-        )
-
-    def cbAntennaPowerError( self, e ):
-        self.setState( "Failed to enable GSM" )
-        logger.exception( e )
 
     def cbRegisterReply( self ):
         self.setState( "Registered to network" )
