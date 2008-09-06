@@ -1600,6 +1600,9 @@ class GSMAgent( object ):
         self.state = "Waiting for DBus"
         self.onState = []
 
+    def registerStateCallback( self, callback ):
+        self.onState.append( callback )
+
     def setState( self, state ):
         logger.debug( state )
         self.state = state
@@ -1735,7 +1738,8 @@ class GUI(object):
 
         self.agents = {}
 
-        self.agents["gsm"] = GSMAgent( self )
+        self.agents["gsm"] = agent = GSMAgent( self )
+        agent.registerStateCallback( self.onAgentStateChanged )
 
         self.groups = {}
 
@@ -1794,6 +1798,7 @@ class GUI(object):
     def dbus_objectInit( self ):
         logger.debug( "dbus_objectInit..." )
         if not dbus_object.initialize():
+            self.display_state( "connecting w/ dbus..." )
             # try again later
             ecore.timer_add( 10.0, self.dbus_objectInit )
             return False
@@ -1819,6 +1824,9 @@ class GUI(object):
         self.groups["main"].part_text_set("label_year", time.strftime("%Y-%m-%d", time.localtime()))
         return True
 
+    def display_state(self, state):
+        self.groups["main"].part_text_set("label_year", state )
+
     # TODO better state management for transitions
     def transition_to(self, target):
         if self.current_group == self.groups[target]:
@@ -1834,6 +1842,9 @@ class GUI(object):
         self.current_group.signal_emit("visible", "")
         self.groups["swallow"].part_swallow("swallow", self.current_group)
         self.previous_group.signal_emit("invisible", "")
+
+    def onAgentStateChanged( self, state ):
+        self.display_state( state )
 
 #----------------------------------------------------------------------------#
 class EvasCanvas(object):
