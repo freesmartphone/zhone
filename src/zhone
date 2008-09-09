@@ -287,6 +287,7 @@ class pyphone_sms(edje_group):
         self.current = []
         self.page = 0
         self.selected = None
+        self.newindex = None
         self.senderTimer = ecore.timer_add( 60, self.processUnsentMessages )
 
     def processUnsentMessages( self ):
@@ -416,6 +417,19 @@ class pyphone_sms(edje_group):
         self.updateList()
         self.main.groups["main"].targets["sms"] = True
         self.main.groups["main"].update()
+        if not self.newindex is None:
+            message = [x for x in self.messagebook if x[0] == self.newindex]
+            self.newindex = None
+            if message and self.main.current_group == self.main.groups["main"]:
+                message = message[0]
+                from_text = self.main.groups["contacts"].tryNumberToName( message[2] )
+                self.main.groups["text_show"].setup(
+                    "sms",
+                    "From: %s<p>%s" % (
+                        from_text,
+                        message[3].replace( '\n', '<br>' )
+                    )
+                )
 
     def cbMessagebookError( self, e ):
         logger.warning( "error while retrieving messagebook" )
@@ -423,6 +437,7 @@ class pyphone_sms(edje_group):
 
     def onIncomingMessage( self, index ):
         logger.info( "new message! Retrieving messagebook..." )
+        self.newindex = index
         if not self.busy:
             dbus_object.gsm_sim_iface.RetrieveMessagebook(
                 "all",
