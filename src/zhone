@@ -20,6 +20,12 @@ logging.basicConfig( level    = logging.DEBUG,
 logger.addHandler( logging.StreamHandler() )
 logger.setLevel( logging.DEBUG )
 
+def dbus_error( desc ):
+    def dbus_error( e, desc = desc ):
+        print dir(e)
+        logger.error( "%s (%s %s: %s)" % ( desc, e.__class__.__name__, e.get_dbus_name(), e.get_dbus_message() ) )
+    return dbus_error
+
 #----------------------------------------------------------------------------#
 WIDTH = 480
 HEIGHT = 640
@@ -2129,10 +2135,14 @@ class DBusObject( object ):
 
     def cbCallStatus( self, id, status, properties ):
         logger.info( "CALL STATUS = %d, %s, %s" % ( id, status, properties ) )
-        if self.idlenotifier_iface is not None:
-            self.idlenotifier_iface.SetState("BUSY")
         for cb in self.onCallStatus:
             cb( id=id, status=status, properties=properties )
+        if not self.idlenotifier_iface is None:
+            self.idlenotifier_iface.SetState(
+                "BUSY",
+                reply_handler=lambda: None,
+                error_handler=dbus_error( "could not set idle state to BUSY" )
+            )
 
     def cbReadyStatus( self, status ):
         for cb in self.onReadyStatus:
