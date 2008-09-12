@@ -1549,6 +1549,32 @@ class pyphone_main_menu( edje_group ):
 
 
 #----------------------------------------------------------------------------#
+class pyphone_suspend( edje_group ):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        edje_group.__init__( self, main, "suspend" )
+        self.deactivate()
+	self.stage = -1
+
+    def activate( self ):
+	self.stage = -1
+        for id in range( 0, 4 ):
+	    self.signal_emit( "unhighlight_%i" % id, "" )
+        self.signal_emit( "visible", "" )
+
+    def deactivate( self ):
+	self.stage = -1
+        self.signal_emit( "invisible", "" )
+
+    def enter_stage( self, stage ):
+	self.stage = stage
+        for id in range( 0, 4 ):
+	    if id <= self.stage:
+		self.signal_emit( "highlight_%i" % id, "" )
+	    else:
+		self.signal_emit( "unhighlight_%i" % id, "" )
+
+#----------------------------------------------------------------------------#
 class pyphone_lock( edje_group ):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
@@ -1794,7 +1820,7 @@ class GUI(object):
                 self.groups[page] = ctor( self )
                 self.evas_canvas.evas_obj.data[page] = self.groups[page]
 
-        for overlay in ("main_menu", "menu", "lock", "error" ):
+        for overlay in ("main_menu", "menu", "lock", "error", "suspend"):
             ctor = globals().get( "pyphone_%s" % overlay, None )
             if ctor:
                 self.groups[overlay] = ctor( self )
@@ -1819,6 +1845,7 @@ class GUI(object):
         dbus_object.onReadyStatus.append( self.groups["sms"].onReadyStatus )
         dbus_object.onIncomingMessage.append( self.groups["sms"].onIncomingMessage )
         dbus_object.onIdleStateChanged.append( self.lock_on_idle )
+        dbus_object.onInputEvent.append( self.suspend_on_powerbutton )
 
         logger.debug( "GUI init done" )
 
@@ -1852,6 +1879,45 @@ class GUI(object):
     def lock_on_idle( self, state ):
         if state == "LOCK":
             self.groups["lock"].activate()
+    
+    def suspend_on_powerbutton( self, name, action, seconds ):
+        if name+action == "AUXpressed":
+            # FIXME launch transition to main screen
+            pass
+
+        elif name+action == "POWERpressed":
+	    self.groups["suspend"].activate()
+	    self.groups["suspend"].enter_stage(0)
+
+        elif name+action == "POWERheld":
+	    if   seconds < 1:
+		# we should aleady be in stage 0, but let’s be explicit
+		self.groups["suspend"].enter_stage(0)
+	    elif 1 <= seconds < 3:
+		self.groups["suspend"].enter_stage(1)
+	    elif 3 <= seconds:
+		self.groups["suspend"].deactivate()
+
+        elif name+action == "POWERreleased":
+            if self.groups["suspend"].stage == 1:
+
+		self.groups["suspend"].enter_stage(2)
+		ecore.main_loop_iterate()
+
+                dbus_object.gsm_device_iface.PrepareForSuspend()
+        
+
+                logger.info( "ENTERING SUSPEND" )
+                os.system( "apm -s" )
+                logger.info( "RETURN FROM SUSPEND" )
+
+		self.groups["suspend"].enter_stage(3)
+		ecore.main_loop_iterate()
+
+                dbus_object.gsm_device_iface.RecoverFromSuspend()
+                dbus_object.idlenotifier_iface.SetState("BUSY")
+
+	    self.groups["suspend"].deactivate()
 
     def display_time(self):
         self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()))
@@ -1976,6 +2042,7 @@ class DBusObject( object ):
         self.onNetworkStatus = []
         self.onIncomingMessage = []
         self.onIdleStateChanged = []
+        self.onInputEvent = []
 
         self.framework_obj = None
 
@@ -2001,8 +2068,6 @@ class DBusObject( object ):
         self.prefs_iface = None
 
         self.fullinit = False
-
-        self.willSuspend = False
 
     def tryGetProxy( self, busname, objname ):
         object = None
@@ -2172,22 +2237,8 @@ class DBusObject( object ):
 
     def cbEvent( self, name, action, seconds ):
         logger.info( "INPUT EVENT = %s, %s, %d" % ( name, action, seconds ) )
-        if name+action == "AUXpressed":
-            # FIXME launch transition to main screen
-            pass
-
-        elif name+action == "POWERheld":
-            self.willSuspend = ( seconds >= 1 )
-
-        elif name+action == "POWERreleased":
-            if self.willSuspend:
-                self.willSuspend = False
-                self.gsm_device_iface.PrepareForSuspend()
-                logger.info( "ENTERING SUSPEND" )
-                os.system( "apm -s" )
-                logger.info( "RETURN FROM SUSPEND" )
-                self.gsm_device_iface.RecoverFromSuspend()
-                self.idlenotifier_iface.SetState("BUSY")
+	for cb in self.onInputEvent:
+	    cb( name, action, seconds )
 
 #=========================================================================#
 if __name__ == "__main__":
