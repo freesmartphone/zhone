@@ -1552,23 +1552,23 @@ class pyphone_main_menu( edje_group ):
 class pyphone_suspend( edje_group ):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
-        edje_group.__init__( self, main, "suspend" )
-        self.deactivate()
+	edje_group.__init__( self, main, "suspend" )
+	self.deactivate()
 	self.stage = -1
 
     def activate( self ):
 	self.stage = -1
-        for id in range( 0, 4 ):
+	for id in range( 0, 4 ):
 	    self.signal_emit( "unhighlight_%i" % id, "" )
-        self.signal_emit( "visible", "" )
+	self.signal_emit( "visible", "" )
 
     def deactivate( self ):
 	self.stage = -1
-        self.signal_emit( "invisible", "" )
+	self.signal_emit( "invisible", "" )
 
     def enter_stage( self, stage ):
 	self.stage = stage
-        for id in range( 0, 4 ):
+	for id in range( 0, 4 ):
 	    if id <= self.stage:
 		self.signal_emit( "highlight_%i" % id, "" )
 	    else:
@@ -1884,16 +1884,16 @@ class GUI(object):
             self.groups["lock"].activate()
     
     def suspend_on_powerbutton( self, name, action, seconds ):
-        if name+action == "AUXpressed":
-            # FIXME launch transition to main screen
-            pass
+	if name+action == "AUXpressed":
+	    # FIXME launch transition to main screen
+	    pass
 
-        elif name+action == "POWERpressed":
+	elif name+action == "POWERpressed":
 	    self.groups["suspend"].activate()
 	    self.groups["suspend"].enter_stage(0)
 
-        elif name+action == "POWERheld":
-	    if   seconds < 1:
+	elif name+action == "POWERheld":
+	    if	 seconds < 1:
 		# we should aleady be in stage 0, but let’s be explicit
 		self.groups["suspend"].enter_stage(0)
 	    elif 1 <= seconds < 3:
@@ -1901,24 +1901,24 @@ class GUI(object):
 	    elif 3 <= seconds:
 		self.groups["suspend"].deactivate()
 
-        elif name+action == "POWERreleased":
-            if self.groups["suspend"].stage == 1:
+	elif name+action == "POWERreleased":
+	    if self.groups["suspend"].stage == 1:
 
 		self.groups["suspend"].enter_stage(2)
 		ecore.main_loop_iterate()
 
-                dbus_object.gsm_device_iface.PrepareForSuspend()
-        
+		dbus_object.gsm_device_iface.PrepareForSuspend()
+	
 
-                logger.info( "ENTERING SUSPEND" )
-                os.system( "apm -s" )
-                logger.info( "RETURN FROM SUSPEND" )
+		logger.info( "ENTERING SUSPEND" )
+		os.system( "apm -s" )
+		logger.info( "RETURN FROM SUSPEND" )
 
 		self.groups["suspend"].enter_stage(3)
 		ecore.main_loop_iterate()
 
-                dbus_object.gsm_device_iface.RecoverFromSuspend()
-                dbus_object.idlenotifier_iface.SetState("BUSY")
+		dbus_object.gsm_device_iface.RecoverFromSuspend()
+		dbus_object.idlenotifier_iface.SetState("BUSY")
 
 	    self.groups["suspend"].deactivate()
 
