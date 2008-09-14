@@ -1882,45 +1882,43 @@ class GUI(object):
     def lock_on_idle( self, state ):
         if state == "LOCK":
             self.groups["lock"].activate()
-    
+
     def suspend_on_powerbutton( self, name, action, seconds ):
-	if name+action == "AUXpressed":
-	    # FIXME launch transition to main screen
-	    pass
+        if name+action == "AUXpressed":
+            # FIXME launch transition to main screen
+            pass
 
-	elif name+action == "POWERpressed":
-	    self.groups["suspend"].activate()
-	    self.groups["suspend"].enter_stage(0)
+        elif name+action == "POWERpressed":
+            self.groups["suspend"].activate()
+            self.groups["suspend"].enter_stage(0)
 
-	elif name+action == "POWERheld":
-	    if	 seconds < 1:
-		# we should aleady be in stage 0, but let’s be explicit
-		self.groups["suspend"].enter_stage(0)
-	    elif 1 <= seconds < 3:
-		self.groups["suspend"].enter_stage(1)
-	    elif 3 <= seconds:
-		self.groups["suspend"].deactivate()
+        elif name+action == "POWERheld":
+            if seconds < 1:
+            # we should aleady be in stage 0, but let’s be explicit
+                self.groups["suspend"].enter_stage(0)
+            elif 1 <= seconds < 3:
+                self.groups["suspend"].enter_stage(1)
+            elif 3 <= seconds:
+                self.groups["suspend"].deactivate()
 
-	elif name+action == "POWERreleased":
-	    if self.groups["suspend"].stage == 1:
+        elif name+action == "POWERreleased":
+            if self.groups["suspend"].stage == 1:
+                self.groups["suspend"].enter_stage(2)
+                ecore.main_loop_iterate()
 
-		self.groups["suspend"].enter_stage(2)
-		ecore.main_loop_iterate()
+                dbus_object.gsm_device_iface.PrepareForSuspend()
 
-		dbus_object.gsm_device_iface.PrepareForSuspend()
-	
+                logger.info( "ENTERING SUSPEND" )
+                os.system( "apm -s" )
+                logger.info( "RETURN FROM SUSPEND" )
 
-		logger.info( "ENTERING SUSPEND" )
-		os.system( "apm -s" )
-		logger.info( "RETURN FROM SUSPEND" )
+                self.groups["suspend"].enter_stage(3)
+                ecore.main_loop_iterate()
 
-		self.groups["suspend"].enter_stage(3)
-		ecore.main_loop_iterate()
+                dbus_object.gsm_device_iface.RecoverFromSuspend()
+                dbus_object.idlenotifier_iface.SetState("BUSY")
 
-		dbus_object.gsm_device_iface.RecoverFromSuspend()
-		dbus_object.idlenotifier_iface.SetState("BUSY")
-
-	    self.groups["suspend"].deactivate()
+                self.groups["suspend"].deactivate()
 
     def display_time(self):
         self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()))
@@ -2060,7 +2058,6 @@ class DBusObject( object ):
         self.gsm_device_obj = None
         self.gsm_device_iface = None
         self.device_iface = None
-        self.device_power_iface = None
         self.idlenotifier_obj = None
         self.idlenotifier_iface = None
         self.inputnotifier_obj = None
@@ -2153,9 +2150,6 @@ class DBusObject( object ):
         if ( self.device_obj is not None ) and ( self.device_iface is None ):
             self.device_iface = Interface( self.device_obj, 'org.freesmartphone.Device' )
 
-            self.device_power_obj = self.tryGetProxy( "org.freesmartphone.odeviced", self.fw.ListObjectsByInterface( "org.freesmartphone.Device.PowerSupply" )[0] )
-            self.device_power_iface = Interface(self.device_power_obj, 'org.freesmartphone.Device.PowerSupply')
-
             self.idlenotifier_obj = self.tryGetProxy( "org.freesmartphone.odeviced", self.fw.ListObjectsByInterface( "org.freesmartphone.Device.IdleNotifier" )[0] )
 
             self.idlenotifier_iface = Interface( self.idlenotifier_obj, "org.freesmartphone.Device.IdleNotifier" )
@@ -2240,8 +2234,8 @@ class DBusObject( object ):
 
     def cbEvent( self, name, action, seconds ):
         logger.info( "INPUT EVENT = %s, %s, %d" % ( name, action, seconds ) )
-	for cb in self.onInputEvent:
-	    cb( name, action, seconds )
+        for cb in self.onInputEvent:
+            cb( name, action, seconds )
 
 #=========================================================================#
 if __name__ == "__main__":
