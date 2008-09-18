@@ -9,6 +9,15 @@ Zen Phone - A Phone UI
 (C) 2008 Daniel 'Alphaone' Willmann
 (C) 2008 Openmoko, Inc.
 GPLv2 or later
+
+Warning: Please don't let yourself be inspired too much by this software,
+it's lacking proper design, modularity, and stability. We did this as a
+quick hack to demonstrate the feasibility of our dbus service level
+framework. A proper redesign would be in order, but alas the framework
+team has no resources to do that.
+
+You have been warned :)
+
 """
 
 import logging
