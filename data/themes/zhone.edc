@@ -2,6 +2,8 @@
 #define HEIGHT 640
 #endif
 
+#define FONT_NAME "Sans:style=bold"
+
 #define BIG_FONT_SIZE 140
 #define ENTRYFIELD_FONT_SIZE 40
 #define BUTTON_FONT_SIZE 36
@@ -16,10 +18,6 @@
 #if HEIGHT == 320
 #error incomplete config for HEIGHT = 320
 #endif
-
-fonts {
-   font: "DejaVuSans-Bold.ttf" "Sans";
-}
 
 images {
    image: "background.png" COMP;
@@ -56,26 +54,26 @@ images {
 styles {
    style {
       name: "char_style";
-      base: "font=Sans font_size=36 color=#fff wrap=char outline_color=#000 style=soft_outline tabstops=60";
+      base: "font="FONT_NAME" font_size=36 color=#fff wrap=char outline_color=#000 style=soft_outline tabstops=60";
       tag:  "br" "  \n";
       tag:  "tab" "  \t";
    }
    style {
       name: "simple_style";
-      base: "font=Sans font_size=36 color=#fff wrap=char outline_color=#000 style=soft_outline tabstops=60";
+      base: "font="FONT_NAME" font_size=36 color=#fff wrap=char outline_color=#000 style=soft_outline tabstops=60";
       tag:  "br" "  \n";
       tag:  "tab" "  \t";
    }
    style {
       name: "sms_style";
-      base: "font=Sans font_size=20 color=#fff wrap=word outline_color=#000 style=soft_outline tabstops=60";
+      base: "font="FONT_NAME" font_size=20 color=#fff wrap=word outline_color=#000 style=soft_outline tabstops=60";
       tag:  "br" "  \n";
       tag:  "p" "  \n \n";
       tag:  "tab" "  \t";
    }
    style {
       name: "error_style";
-      base: "font=Sans font_size=36 align=center valign=center color=#fff wrap=word outline_color=#000 style=soft_outline";
+      base: "font="FONT_NAME" font_size=36 align=center valign=center color=#fff wrap=word outline_color=#000 style=soft_outline";
       tag:  "br" "  \n";
       tag:  "tab" "  \t";
    }
@@ -271,7 +269,7 @@ styles {
                 to: "button_"part_name;                                 \
             }                                                           \
             text {                                                      \
-                font: "Sans";                                           \
+                font: FONT_NAME;                                        \
                 text: label;                                            \
                 size: BUTTON_FONT_SIZE;                                 \
                 align: 0.5 0.5;                                         \
@@ -357,7 +355,7 @@ styles {
                 to: "button_"part_name;                                 \
             }                                                           \
             text {                                                      \
-                font: "Sans";                                           \
+                font: FONT_NAME;                                        \
                 text: label;                                            \
                 size: BUTTON_SYMBOL_FONT_SIZE;                          \
                 align: 0.5 0.5;                                         \
@@ -444,7 +442,7 @@ styles {
                 to: "button_"part_name;                                 \
             }                                                           \
             text {                                                      \
-                font: "Sans";                                           \
+                font: FONT_NAME;                                        \
                 text: label_main;                                       \
                 size: BUTTON_MAIN_FONT_SIZE;                            \
                 align: 0.5 0.5;                                         \
@@ -470,7 +468,7 @@ styles {
                 to: "button_"part_name;                                 \
             }                                                           \
             text {                                                      \
-                font: "Sans";                                           \
+                font: FONT_NAME;                                        \
                 text: label_sub;                                        \
                 size: BUTTON_SUB_FONT_SIZE;                             \
                 align: 0.5 0.5;                                         \
@@ -532,7 +530,7 @@ styles {
                 to: "target_"part_name;                                             \
             }                                                                       \
             text {                                                                  \
-                font: "Sans";                                                       \
+                font: FONT_NAME;                                                    \
                 text: label;                                                        \
                 size: 1;                                                            \
                 fit: 1 1;                                                           \
@@ -593,7 +591,7 @@ styles {
                 to: "target_"part_name;                                             \
             }                                                                       \
             text {                                                                  \
-                font: "Sans";                                                       \
+                font: FONT_NAME;                                                    \
                 text: label_main;                                                   \
                 size: BUTTON_MAIN_FONT_SIZE;                                        \
                 align: 0.5 0.5;                                                     \
@@ -619,7 +617,7 @@ styles {
                 to: "target_"part_name;                                             \
             }                                                                       \
             text {                                                                  \
-                font: "Sans";                                                       \
+                font: FONT_NAME;                                                    \
                 text: label_sub;                                                    \
                 size: BUTTON_SUB_FONT_SIZE;                                         \
                 align: 0.5 0.5;                                                     \
@@ -712,7 +710,7 @@ styles {
             }                                                                       \
             align: 0.5 0.5;                                                         \
             text {                                                                  \
-                font: "Sans";                                                       \
+                font: FONT_NAME;                                                    \
                 size: PAGER_FONT_SIZE;                                              \
                 align: 0.5 0.5;                                                     \
             }                                                                       \
@@ -1032,7 +1030,7 @@ collections {
                     }
                     align: 0.5 0.5;
                     text {
-                        font: "Sans";
+                        font: FONT_NAME;
                         size: 1;
                         fit: 1 1;
                     }
@@ -1059,7 +1057,7 @@ collections {
                     }
                     align: 0.5 0.5;
                     text {
-                        font: "Sans";
+                        font: FONT_NAME;
                         size: 1;
                         fit: 1 1;
                     }

@@ -71,7 +71,7 @@ parts {
                 to: "box_"part_name;                                    \
             }                                                           \
             text {                                                      \
-                font: "Sans";                                           \
+                font: FONT_NAME;                                        \
                 text: label;                                            \
                 size: 1;                                                \
                 fit: 1 1;                                               \
@@ -80,13 +80,13 @@ parts {
     }                                                                   \
     program {                                                           \
         name: "highlight_"part_name;                                    \
-        signal: "highlight_"part_name;                                 \
+        signal: "highlight_"part_name;                                  \
         action: STATE_SET "highlighted" 0.0;                            \
         target: "box_"part_name;                                        \
     }                                                                   \
     program {                                                           \
         name: "unhighlight_"part_name;                                  \
-        signal: "unhighlight_"part_name;                                 \
+        signal: "unhighlight_"part_name;                                \
         action: STATE_SET "default" 0.0;                                \
         target: "box_"part_name;                                        \
     }                                                                   \

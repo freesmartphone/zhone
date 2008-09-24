@@ -139,7 +139,7 @@ parts {
                 to: "button_"part_name;                                 \
             }                                                           \
             text {                                                      \
-                font: "Sans";                                           \
+                font: FONT_NAME;                                        \
                 text: label;                                            \
                 size: 1;                                                \
                 fit: 1 1;                                               \

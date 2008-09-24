@@ -111,7 +111,7 @@ parts {
                 to: "button_"xpos"_"ypos;                               \
             }                                                           \
             text {                                                      \
-                font: "Sans";                                           \
+                font: FONT_NAME;                                        \
                 size: BUTTON_MAIN_FONT_SIZE;                            \
                 align: 0.5 0.5;                                         \
             }                                                           \
@@ -136,7 +136,7 @@ parts {
                 to: "button_"xpos"_"ypos;                               \
             }                                                           \
             text {                                                      \
-                font: "Sans";                                           \
+                font: FONT_NAME;                                        \
                 size: BUTTON_SUB_FONT_SIZE;                             \
                 align: 0.5 0.5;                                         \
             }                                                           \
@@ -204,7 +204,7 @@ parts {
                 to: "preview_box";
             }
             text {
-                font: "Sans";
+                font: FONT_NAME;
                 size: BIG_FONT_SIZE;
             }
             visible: 0;

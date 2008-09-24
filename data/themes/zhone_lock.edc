@@ -70,7 +70,7 @@ parts {
                 to: "target_"part_name;                          \
             }                                                    \
             text {                                               \
-                font: "Sans";                                    \
+                font: FONT_NAME;                                 \
                 text: " "part_name" ";                           \
                 size: 1;                                         \
                 fit: 1 1;                                        \

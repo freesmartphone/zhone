@@ -20,7 +20,7 @@ parts {
                 to: "swallow_clip";
             }
             text {
-                font: "Sans";
+                font: FONT_NAME;
                 size: 1;
                 fit: 1 1;
                 align: 0.0 0.5;

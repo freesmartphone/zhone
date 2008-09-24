@@ -18,7 +18,7 @@ parts {
                 offset: -1 -1;
             }
             text {
-                font: "Sans";
+                font: FONT_NAME;
                 size: 1;
                 fit: 1 1;
                 align: 0.0 0.5;
@@ -64,7 +64,7 @@ parts {
                 to: "label_background";
             }
             text {
-                font: "Sans";
+                font: FONT_NAME;
                 size: 1;
                 fit: 1 1;
                 align: 0.0 0.5;
