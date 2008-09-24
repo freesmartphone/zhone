@@ -183,6 +183,21 @@ class pyphone_phone(edje_group):
                 self.main.groups["call"].onCallStatus( None, "outgoing", {"peer": "".join(self.text)} )
         self.last = time.time()
 
+    def onNetworkStatus( self, status ):
+        logger.info( "network status changed: %s" % status )
+        #if(status.has_key("registration") != "busy")  # XXX this might work too.  which is better?
+        if(status.has_key('provider')):
+            self.main.agents["gsm"].setState("Registered: %s" % status['provider'])
+            self.main.groups["main"].targets["phone"] = True
+            self.main.groups["main"].update()
+            if dbus_object.gsm_sim_iface.GetSimReady():
+                self.main.groups["contacts"].prepare()
+                self.main.groups["sms"].prepare()
+        else:
+            self.main.agents["gsm"].setState("Failed to register to network")
+            self.main.groups["main"].targets["phone"] = False
+            self.main.groups["main"].update()
+
 #----------------------------------------------------------------------------#
 class pyphone_call(edje_group):
 #----------------------------------------------------------------------------#
@@ -1779,15 +1794,9 @@ class GSMAgent( object ):
         self.cbDBusReady()
 
     def cbRegisterReply( self ):
-        self.setState( "Registered to network" )
-        self.main.groups["main"].targets["phone"] = True
-        self.main.groups["main"].update()
-        if dbus_object.gsm_sim_iface.GetSimReady():
-            self.main.groups["contacts"].prepare()
-            self.main.groups["sms"].prepare()
+        pass
 
     def cbRegisterError( self, e ):
-        self.setState( "Failed to register to network" )
         logger.exception( e )
         if dbus_object.gsm_sim_iface.GetSimReady():
             self.main.groups["contacts"].prepare()
@@ -1858,6 +1867,7 @@ class GUI(object):
         dbus_object.onIncomingMessage.append( self.groups["sms"].onIncomingMessage )
         dbus_object.onIdleStateChanged.append( self.lock_on_idle )
         dbus_object.onInputEvent.append( self.suspend_on_powerbutton )
+        dbus_object.onNetworkStatus.append( self.groups["phone"].onNetworkStatus )
 
         logger.debug( "GUI init done" )
 
