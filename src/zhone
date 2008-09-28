@@ -2241,15 +2241,6 @@ class DBusObject( object ):
         logger.info( "IDLE STATE = %s" % state )
         for cb in self.onIdleStateChanged:
             cb( state=state )
-        if state == "BUSY":
-            if self.display_iface is not None:
-                self.display_iface.SetBrightness( 90 )
-        elif state == "IDLE_DIM":
-            if self.display_iface is not None:
-                self.display_iface.SetBrightness( 20 )
-        elif state == "IDLE_PRELOCK":
-            if self.display_iface is not None:
-                self.display_iface.SetBrightness( 0 )
 
     def cbEvent( self, name, action, seconds ):
         logger.info( "INPUT EVENT = %s, %s, %d" % ( name, action, seconds ) )
