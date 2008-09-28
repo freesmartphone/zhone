@@ -1592,27 +1592,27 @@ class pyphone_main_menu( edje_group ):
 class pyphone_suspend( edje_group ):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
-	edje_group.__init__( self, main, "suspend" )
-	self.deactivate()
-	self.stage = -1
+        edje_group.__init__( self, main, "suspend" )
+        self.deactivate()
+        self.stage = -1
 
     def activate( self ):
-	self.stage = -1
-	for id in range( 0, 4 ):
-	    self.signal_emit( "unhighlight_%i" % id, "" )
-	self.signal_emit( "visible", "" )
+        self.stage = -1
+        for id in range( 0, 4 ):
+            self.signal_emit( "unhighlight_%i" % id, "" )
+        self.signal_emit( "visible", "" )
 
     def deactivate( self ):
-	self.stage = -1
-	self.signal_emit( "invisible", "" )
+        self.stage = -1
+        self.signal_emit( "invisible", "" )
 
     def enter_stage( self, stage ):
-	self.stage = stage
-	for id in range( 0, 4 ):
-	    if id <= self.stage:
-		self.signal_emit( "highlight_%i" % id, "" )
-	    else:
-		self.signal_emit( "unhighlight_%i" % id, "" )
+        self.stage = stage
+        for id in range( 0, 4 ):
+            if id <= self.stage:
+                self.signal_emit( "highlight_%i" % id, "" )
+            else:
+                self.signal_emit( "unhighlight_%i" % id, "" )
 
 #----------------------------------------------------------------------------#
 class pyphone_lock( edje_group ):
