@@ -1925,16 +1925,13 @@ class GUI(object):
                 self.groups["suspend"].enter_stage(2)
                 ecore.main_loop_iterate()
 
-                dbus_object.gsm_device_iface.PrepareForSuspend()
-
                 logger.info( "ENTERING SUSPEND" )
-                os.system( "apm -s" )
+                dbus_object.usage_iface.Suspend()
                 logger.info( "RETURN FROM SUSPEND" )
 
                 self.groups["suspend"].enter_stage(3)
                 ecore.main_loop_iterate()
 
-                dbus_object.gsm_device_iface.RecoverFromSuspend()
                 dbus_object.idlenotifier_iface.SetState("BUSY")
 
                 self.groups["suspend"].deactivate()
