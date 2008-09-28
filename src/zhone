@@ -370,7 +370,7 @@ class pyphone_sms(edje_group):
     def cbSend2( self, text, number ):
         if dbus_object.gsm_device_obj:
             dbus_object.gsm_sim_iface.StoreMessage(
-                number, text,
+                number, text, {},
                 reply_handler=self.cbStoreReply,
                 error_handler=self.cbStoreError
             )
@@ -391,7 +391,7 @@ class pyphone_sms(edje_group):
     def cbForward( self, selected, text ):
         if dbus_object.gsm_device_obj:
             dbus_object.gsm_sim_iface.StoreMessage(
-                selected[1], text,
+                selected[1], text, {},
                 reply_handler=self.cbStoreReply,
                 error_handler=self.cbStoreError
             )
@@ -399,7 +399,7 @@ class pyphone_sms(edje_group):
     def cbReply( self, text, number):
         if dbus_object.gsm_device_obj:
             dbus_object.gsm_sim_iface.StoreMessage(
-                number, text,
+                number, text, {},
                 reply_handler=self.cbStoreReply,
                 error_handler=self.cbStoreError
             )
@@ -452,11 +452,19 @@ class pyphone_sms(edje_group):
             self.newindex = None
             if message and self.main.current_group == self.main.groups["main"]:
                 message = message[0]
+                if "read" in message[1]:
+                    from_to = "From"
+                    timestamp = message[4]["timestamp"]
+                else:
+                    from_to = "To"
+                    timestamp = "Unknown"
                 from_text = self.main.groups["contacts"].tryNumberToName( message[2] )
                 self.main.groups["text_show"].setup(
                     "sms",
-                    "From: %s<p>%s" % (
+                    "%s: %s<br>Date: %s<p>%s" % (
+                        from_to,
                         from_text,
+                        timestamp,
                         message[3].replace( '\n', '<br>' )
                     )
                 )
@@ -554,11 +562,19 @@ class pyphone_sms(edje_group):
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_open" )
     def on_edje_signal_button_action_open_pressed( self, emission, source ):
         if self.selected is not None:
+            if "read" in self.current[self.selected][1]:
+                from_to = "From"
+                timestamp = self.current[self.selected][4]["timestamp"]
+            else:
+                from_to = "To"
+                timestamp = "Unknown"
             from_text = self.main.groups["contacts"].tryNumberToName( self.current[self.selected][2] )
             self.main.groups["text_show"].setup(
                 "sms",
-                "From: %s<p>%s" % (
+                "%s: %s<br>Date: %s<p>%s" % (
+                    from_to,
                     from_text,
+                    timestamp,
                     self.current[self.selected][3].replace( '\n', '<br>' )
                 )
             )
