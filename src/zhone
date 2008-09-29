@@ -2094,8 +2094,6 @@ class DBusObject( object ):
         self.idlenotifier_iface = None
         self.inputnotifier_obj = None
         self.inputnotifier_iface = None
-        self.display_obj = None
-        self.display_iface = None
         self.prefs_obj = None
         self.prefs_iface = None
 
@@ -2190,12 +2188,6 @@ class DBusObject( object ):
             self.inputnotifier_obj = self.bus.get_object( "org.freesmartphone.odeviced", "/org/freesmartphone/Device/Input" )
             self.inputnotifier_iface = Interface( self.inputnotifier_obj, "org.freesmartphone.Device.Input" )
             self.inputnotifier_iface.connect_to_signal( "Event", self.cbEvent )
-
-            logger.debug( "displays: %s" % self.fw.ListObjectsByInterface( "org.freesmartphone.Device.Display" ) )
-            self.display_obj = self.tryGetProxy( "org.freesmartphone.odeviced", self.fw.ListObjectsByInterface( "org.freesmartphone.Device.Display" )[0] )
-            if self.display_obj is not None:
-                self.display_iface = Interface( self.display_obj, "org.freesmartphone.Device.Display" )
-                self.display_iface.SetBrightness( 90 )
         if self.device_obj is None:
             failcount += 1
         else:
