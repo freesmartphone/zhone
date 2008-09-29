@@ -5,7 +5,7 @@
 #define FONT_NAME "Sans:style=bold"
 
 #define BIG_FONT_SIZE 140
-#define ENTRYFIELD_FONT_SIZE 40
+#define ENTRYFIELD_FONT_SIZE 42
 #define BUTTON_FONT_SIZE 36
 #define BUTTON_SYMBOL_FONT_SIZE 60
 #define BUTTON_MAIN_FONT_SIZE 32
@@ -60,7 +60,13 @@ styles {
    }
    style {
       name: "simple_style";
-      base: "font="FONT_NAME" font_size=36 color=#fff wrap=char outline_color=#000 style=soft_outline tabstops=60";
+      base: "font="FONT_NAME" font_size=22 color=#fff wrap=char outline_color=#000 style=soft_outline tabstops=180";
+      tag:  "br" "  \n";
+      tag:  "tab" "  \t";
+   }
+   style {
+      name: "entry_style";
+      base: "font="FONT_NAME" font_size="ENTRYFIELD_FONT_SIZE" color=#fff wrap=char outline_color=#000 style=soft_outline tabstops=60";
       tag:  "br" "  \n";
       tag:  "tab" "  \t";
    }
