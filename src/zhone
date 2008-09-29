@@ -35,6 +35,12 @@ def log_dbus_error( e, desc ):
 def handle_dbus_error( desc ):
     return lambda e: log_dbus_error( e, desc = desc )
 
+def textblock_escape( text ):
+    text = text.replace('&', '&amp;')
+    text = text.replace('<', '&lt;')
+    text = text.replace('>', '&gt;')
+    return text
+
 #----------------------------------------------------------------------------#
 WIDTH = 480
 HEIGHT = 640
@@ -465,7 +471,7 @@ class pyphone_sms(edje_group):
                         from_to,
                         from_text,
                         timestamp,
-                        message[3].replace( '\n', '<br>' )
+                        textblock_escape( message[3] ).replace( '\n', '<br>' )
                     )
                 )
 
@@ -575,7 +581,7 @@ class pyphone_sms(edje_group):
                     from_to,
                     from_text,
                     timestamp,
-                    self.current[self.selected][3].replace( '\n', '<br>' )
+                    textblock_escape( self.current[self.selected][3] ).replace( '\n', '<br>' )
                 )
             )
 
