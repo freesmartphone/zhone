@@ -29,11 +29,11 @@ logging.basicConfig( level    = logging.DEBUG,
 logger.addHandler( logging.StreamHandler() )
 logger.setLevel( logging.DEBUG )
 
-def dbus_error( desc ):
-    def dbus_error( e, desc = desc ):
-        print dir(e)
-        logger.error( "%s (%s %s: %s)" % ( desc, e.__class__.__name__, e.get_dbus_name(), e.get_dbus_message() ) )
-    return dbus_error
+def log_dbus_error( e, desc ):
+    logger.error( "%s (%s %s: %s)" % ( desc, e.__class__.__name__, e.get_dbus_name(), e.get_dbus_message() ) )
+
+def handle_dbus_error( desc ):
+    return lambda e: log_dbus_error( e, desc = desc )
 
 #----------------------------------------------------------------------------#
 WIDTH = 480
@@ -1102,13 +1102,11 @@ class pyphone_location( edje_group ):
         self.positiongraph.update( positionlist )
 
     def onShow( self ):
-        if dbus_object.usage_obj:
-            dbus_object.usage_iface.RequestResource("GPS")
+        self.main.agents["usage"].request( "GPS" )
         self.update()
 
     def onHide( self ):
-        if dbus_object.usage_obj:
-            dbus_object.usage_iface.ReleaseResource("GPS")
+        self.main.agents["usage"].release( "GPS" )
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_select_*" )
     def on_edje_signal_button_list_pressed( self, emission, source ):
@@ -1693,9 +1691,10 @@ class pyphone_error( edje_group ):
         self.signal_emit( "invisible", "" )
 
 #----------------------------------------------------------------------------#
-class GSMAgent( object ):
+class Agent( object ):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
+        super( Agent, self ).__init__()
         self.main = main
         self.state = "Waiting for DBus"
         self.onState = []
@@ -1707,9 +1706,102 @@ class GSMAgent( object ):
         logger.debug( state )
         self.state = state
         for cb in self.onState:
-            cb( state )
+            cb( self.name, state )
+
+#----------------------------------------------------------------------------#
+class UsageAgent( Agent ):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        super( UsageAgent, self ).__init__( main )
+        self.name = "Usage"
+        self.busy = None
+        self.want = set( ["GSM"] )
+        self.avail = set()
+        self.have = set()
+        self.error = set()
+
+    def _update( self ):
+        self.main.groups["main"].targets["location"] = "GPS" in (self.avail - self.error)
+        self.main.groups["main"].update()
+        if self.busy is None:
+            pendingRequests = (self.avail & self.want) - self.have - self.error
+            pendingReleases = self.have - self.want
+            if pendingRequests:
+                self.busy = pendingRequests.pop()
+                self.setState( "Requesting resource %s" % self.busy )
+                dbus_object.usage_iface.RequestResource(
+                    self.busy,
+                    reply_handler=self.cbRequestReply,
+                    error_handler=self.cbRequestError,
+                )
+            elif pendingReleases:
+                self.busy = pendingReleases.pop()
+                self.setState( "Releasing resource %s" % self.busy )
+                dbus_object.usage_iface.ReleaseResource(
+                    self.busy,
+                    reply_handler=self.cbReleaseReply,
+                    error_handler=self.cbReleaseError,
+                )
+    
+    def cbRequestReply( self ):
+        self.have.add( self.busy )
+        self.setState( "Requested resource %s" % self.busy )
+        if self.busy == "GSM":
+            self.main.agents["gsm"].cbResourceReady()
+        self.busy = None
+        self._update()
+
+    def cbRequestError( self, e ):
+        log_dbus_error( e, "error while requesting resource %s" % self.busy )
+        self.setState( "Requested resource %s with error" % self.busy )
+        self.error.add( self.busy )
+        self.busy = None
+        self._update()
+
+    def cbReleaseReply( self ):
+        self.have.discard( self.busy )
+        self.setState( "Released resource %s" % self.busy )
+        self.busy = None
+        self._update()
+
+    def cbReleaseError( self, e ):
+        log_dbus_error( e, "error while releasing resource %s" % self.busy )
+        self.setState( "Released resource %s with error" % self.busy )
+        self.have.discard( self.busy )
+        self.error.add( self.busy )
+        self.busy = None
+        self._update()
 
     def cbDBusReady( self ):
+        self.setState( "Requesting resource list" )
+        self.avail = set( dbus_object.usage_iface.ListResources() )
+        self._update()
+
+    def cbResourceAvailable( self, resourcename, state ):
+        if state:
+            self.setState( "Resource added %s" % resourcename )
+            self.avail.add( resourcename )
+        else:
+            self.setState( "Resource removed %s" % resourcename )
+            self.avail.discard( resourcename )
+        self._update()
+
+    def request( self, resourcename ):
+        self.want.add( resourcename )
+        self._update()
+
+    def release( self, resourcename ):
+        self.want.remove( resourcename )
+        self._update()
+
+#----------------------------------------------------------------------------#
+class GSMAgent( Agent ):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        super( GSMAgent, self ).__init__( main )
+        self.name = "GSM"
+
+    def cbResourceReady( self ):
         """
         This is called to start the authentication process
         """
@@ -1729,7 +1821,7 @@ class GSMAgent( object ):
         )
 
     def cbAntennaPowerError( self, e ):
-        logger.info( "SIM seems to be protected. Checking auth status now" )
+        logger.info( "SIM seems to be protected. Checking auth status now." )
         self.setState( "Reading authentication status" )
         dbus_object.gsm_sim_iface.GetAuthStatus(
             reply_handler=self.cbAuthStatusReply,
@@ -1835,6 +1927,10 @@ class GUI(object):
 
         self.agents = {}
 
+        self.agents["usage"] = agent = UsageAgent( self )
+        agent.registerStateCallback( self.onAgentStateChanged )
+        dbus_object.onResourceAvailable.append( self.agents["usage"].cbResourceAvailable )
+
         self.agents["gsm"] = agent = GSMAgent( self )
         agent.registerStateCallback( self.onAgentStateChanged )
 
@@ -1902,17 +1998,9 @@ class GUI(object):
             ecore.timer_add( 10.0, self.dbus_objectInit )
             return False
         else:
-            self.dbus_objectInitOK()
+            logger.debug( "dbus_objectInitOK!" )
+            self.agents["usage"].cbDBusReady()
         return False
-
-    def dbus_objectInitOK( self ):
-        logger.debug( "dbus_objectInitOK!" )
-
-        if dbus_object.gsm_device_obj is not None:
-            self.agents["gsm"].cbDBusReady()
-        if dbus_object.gps_obj is not None:
-            self.groups["main"].targets["location"] = True
-            self.groups["main"].update()
 
     def lock_on_idle( self, state ):
         if state == "LOCK":
@@ -1976,8 +2064,8 @@ class GUI(object):
         self.groups["swallow"].part_swallow("swallow", self.current_group)
         self.previous_group.signal_emit("invisible", "")
 
-    def onAgentStateChanged( self, state ):
-        self.display_state( state )
+    def onAgentStateChanged( self, agentname, state ):
+        self.display_state( "%s: %s" % ( agentname, state ) )
 
 #----------------------------------------------------------------------------#
 class EvasCanvas(object):
@@ -2067,6 +2155,7 @@ class DBusObject( object ):
     def __init__( self ):
         self.objects = {}
         self.onResourceChanged = []
+        self.onResourceAvailable = []
         self.onAccuracyChanged = []
         self.onPositionChanged = []
         self.onSatellitesChanged = []
@@ -2135,7 +2224,7 @@ class DBusObject( object ):
         if ( self.usage_obj is not None ) and ( self.usage_iface is None ):
             self.usage_iface = Interface(self.usage_obj, 'org.freesmartphone.Usage')
             self.usage_iface.connect_to_signal( "ResourceChanged", self.cbResourceChanged )
-            self.usage_iface.RequestResource("GSM")
+            self.usage_iface.connect_to_signal( "ResourceAvailable", self.cbResourceAvailable )
         if self.usage_obj is None:
             failcount += 1
         else:
@@ -2207,6 +2296,10 @@ class DBusObject( object ):
         for cb in self.onResourceChanged:
             cb( resourcename=resourcename, state=state, attributes=attributes )
 
+    def cbResourceAvailable( self, resourcename, state ):
+        for cb in self.onResourceAvailable:
+            cb( resourcename=resourcename, state=state )
+
     def cbAccuracyChanged( self, fields, pdop, hdop, vdop ):
         for cb in self.onAccuracyChanged:
             cb( fields=fields, pdop=pdop, hdop=hdop, vdop=vdop )
@@ -2227,7 +2320,7 @@ class DBusObject( object ):
             self.idlenotifier_iface.SetState(
                 "BUSY",
                 reply_handler=lambda: None,
-                error_handler=dbus_error( "could not set idle state to BUSY" )
+                error_handler=handle_dbus_error( "could not set idle state to BUSY" )
             )
 
     def cbReadyStatus( self, status ):
