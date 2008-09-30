@@ -1838,7 +1838,7 @@ class GSMAgent( Agent ):
         if authstatus == "READY":
             self.setState( "Telephony Ready" )
             # restart auth, should lead to registering this time...
-            self.cbDBusReady()
+            self.cbResourceReady()
         elif authstatus == "SIM PIN":
             self.setState( "Waiting for PIN" )
             self.main.groups["pin_edit"].setup(
@@ -1905,7 +1905,7 @@ class GSMAgent( Agent ):
         self.setState( "Error while sending PIN" )
         logger.exception( e )
         # retry
-        self.cbDBusReady()
+        self.cbResourceReady()
 
     def cbRegisterReply( self ):
         pass
