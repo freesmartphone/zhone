@@ -1273,7 +1273,7 @@ class pyphone_message(edje_group):
             self.set_button_text(num)
         logger.debug( "mouse down: %s" % time.time()-now )
 
-    @edje.decorators.signal_callback("kb_mutton_mouse_in", "*")
+    @edje.decorators.signal_callback("kb_button_mouse_in", "*")
     def on_edje_signal_dialer_button_mouse_in(self, emission, source):
         now = time.time()
         x = int(source[-3:-2])
