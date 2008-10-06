@@ -898,7 +898,8 @@ class pyphone_location( edje_group ):
             self.img.show()
             self.surface = None
             self.ctx = None
-            self.values = []
+            self.generic = None
+            self.ubxinfo = None
             self.current = False
 
         def show( self ):
@@ -919,9 +920,13 @@ class pyphone_location( edje_group ):
             self.img.resize( *self.img.image_size )
             self.img.fill_set(0, 0, *self.img.image_size )
 
-        def update( self, values = None ):
-            if values is not None:
-                self.values = values
+        def update( self, generic = None, ubxinfo = None ):
+            if generic is not None:
+                self.generic = {}
+                for sv, used, signal in generic:
+                    self.generic[sv] = ( used, signal )
+            if ubxinfo is not None:
+                self.ubxinfo = ubxinfo[1:]
             if self.ctx and self.current:
                 self.ctx.set_operator( cairo.OPERATOR_CLEAR )
                 self.ctx.paint()
@@ -931,29 +936,63 @@ class pyphone_location( edje_group ):
                 self.ctx.set_source_rgba(1, 1, 1, 0.5)
                 self.ctx.rectangle(0.0, 0.0, 1.0, 1.0)
                 self.ctx.fill()
-                count = len( self.values )
-                index = 0
-                if count:
-                    maxvalue = max( [x[2] for x in self.values] + [1.0] )
+                rows = []
+                if self.ubxinfo:
+                    for sv in self.ubxinfo:
+                        chn = sv["chn"]
+                        svid = sv["SVID"]
+                        used = sv["Flags"] & 0x01
+                        diff = sv["Flags"] & 0x02
+                        almoreph = sv["Flags"] & 0x04
+                        eph = sv["Flags"] & 0x08
+                        bad = sv["Flags"] & 0x10
+                        qi = {
+                            0: "idle",
+                            1: "searching",
+                            2: "searching",
+                            3: "signal unusable",
+                            4: "code lock",
+                            5: "code&carrier lock",
+                            6: "code&carrier lock",
+                            7: "receiving data"
+                        }[sv["QI"]]
+                        cno = sv["CNO"]
+                        elev = sv["Elev"]
+                        azim = sv["Azim"]
+                        text = "CHN %s %s SV %s: SN %i" % ( chn, qi, svid, cno )
+                        if used: text += " USED"
+                        if diff: text += " DIFF"
+                        if almoreph and not eph: text += " ALM"
+                        if eph: text += " EPH"
+                        if bad: text += " BAD"
+                        rows.append( ( cno, used, text ) )
+                elif self.generic:
+                    for sv, (used, signal) in self.generic.items():
+                        text = "SV %i: SN %i" % ( sv, signal )
+                        rows.append( ( signal, used, text ) )
+                if rows:
+                    count = len( rows )
+                    maxsignal = float( max( [x[0] for x in rows] + [1.0] ) )
                     barwidth = 1.0/count
                     self.ctx.set_font_size( barwidth*0.6 )
-                for sv, used, signal in self.values:
-                    text = "%i: %i" % ( sv, signal )
-                    barlength = signal/maxvalue
-                    if used:
-                        self.ctx.set_source_rgba(0.0, 1.0, 0.0, 1.0)
-                    else:
-                        self.ctx.set_source_rgba(0.75, 0.75, 0.75, 1.0)
-                    self.ctx.rectangle( 0.0, index*barwidth+pixel[1]*4, barlength, barwidth-pixel[1]*8 )
-                    self.ctx.fill()
-                    self.ctx.set_source_rgba(0, 0, 0, 1)
-                    x_bearing, y_bearing, width, height = self.ctx.text_extents( text )[:4]
-                    self.ctx.move_to(
-                        pixel[0]*4, (index+0.5)*barwidth - height / 2 - y_bearing
-                    )
-                    self.ctx.show_text( text )
-                    index += 1
+                    index = 0
+                    for signal, used, text in rows:
+                        barlength = signal/maxsignal
+                        if used:
+                            self.ctx.set_source_rgba(0.0, 1.0, 0.0, 1.0)
+                        else:
+                            self.ctx.set_source_rgba(0.75, 0.75, 0.75, 1.0)
+                        self.ctx.rectangle( 0.0, index*barwidth+pixel[1]*2, barlength, barwidth-pixel[1]*4 )
+                        self.ctx.fill()
+                        self.ctx.set_source_rgba(0, 0, 0, 1)
+                        x_bearing, y_bearing, width, height = self.ctx.text_extents( text )[:4]
+                        self.ctx.move_to(
+                            pixel[0]*3, (index+0.5)*barwidth - height / 2 - y_bearing
+                        )
+                        self.ctx.show_text( text )
+                        index += 1
                 self.img.image_data_set( self.surface.get_data() )
+                self.img.pixels_dirty = True
 
     class PositionGraph( evas.ClippedSmartObject ):
         def __init__( self, *args, **kargs ):
@@ -1041,6 +1080,7 @@ class pyphone_location( edje_group ):
                 #self.surface.write_to_png( "/tmp/zhone-location.png" )
                 #self.img.file_set( "/tmp/zhone-location.png" )
                 self.img.image_data_set( self.surface.get_data() )
+                self.img.pixels_dirty = True
 
     def __init__(self, main):
         edje_group.__init__( self, main, "location" )
@@ -1054,8 +1094,8 @@ class pyphone_location( edje_group ):
         self.position = None
         self.update()
 
-        #self.signalgraph.update( [(1, True, 20.0), (2, False, 34.0), (5, True, 25.0), (10, False, 0.0)] )
-        #self.positiongraph.update( [(1,  True,20.0, 90.0), (2, False, 34.3, 45.0), (5, True, 225.9, 0.0), (10, False, 0.5, 30.0)] )
+        #self.signalgraph.update( values = [(1, True, 20.0), (2, False, 34.0), (5, True, 25.0), (10, False, 0.0)] )
+        #self.positiongraph.update( values = [(1,  True, 20.0, 90.0), (2, False, 34.3, 45.0), (5, True, 225.9, 0.0), (10, False, 0.5, 30.0)] )
 
     def update( self ):
         text = []
@@ -1096,10 +1136,15 @@ class pyphone_location( edje_group ):
         self.update()
 
     def onSatellitesChanged( self, satellites ):
+        satellites.sort()
         signallist = [ (int(sat[0]), sat[1], float(sat[4])) for sat in satellites ]
-        self.signalgraph.update( signallist )
+        self.signalgraph.update( generic = signallist )
         positionlist = [ (int(sat[0]), sat[1], int(sat[3]), int(sat[2])) for sat in satellites ]
         self.positiongraph.update( positionlist )
+
+    def onUBXDebugPacket( self, clid, length, data ):
+        if clid == "NAV-SVINFO":
+            self.signalgraph.update( ubxinfo = data )
 
     def onShow( self ):
         self.main.agents["usage"].request( "GPS" )
@@ -1748,6 +1793,8 @@ class UsageAgent( Agent ):
         self.setState( "Requested resource %s" % self.busy )
         if self.busy == "GSM":
             self.main.agents["gsm"].cbResourceReady()
+        elif self.busy == "GPS":
+            self.main.agents["gps"].cbResourceReady()
         self.busy = None
         self._update()
 
@@ -1911,6 +1958,48 @@ class GSMAgent( Agent ):
             self.main.groups["sms"].prepare()
 
 #----------------------------------------------------------------------------#
+class GPSAgent( Agent ):
+#----------------------------------------------------------------------------#
+    def __init__( self, main ):
+        super( GPSAgent, self ).__init__( main )
+        self.name = "GPS"
+        self.busy = None
+        self.want = set( ["NAV-SVINFO"] )
+        self.have = set()
+        self.error = set()
+
+    def _update( self ):
+        if self.busy is None:
+            pending = self.want - self.have - self.error
+            if pending:
+                self.busy = pending.pop()
+                self.setState( "Requesting packet %s" % self.busy )
+                dbus_object.gps_ubx_iface.SetDebugFilter(
+                    self.busy,
+                    True,
+                    reply_handler=self.cbSetDebugReply,
+                    error_handler=self.cbSetDebugError,
+                )
+    
+    def cbResourceReady( self ):
+        self.setState( "Requesting debug packets." )
+        self.have = set()
+        self._update()
+
+    def cbSetDebugReply( self ):
+        self.have.add( self.busy )
+        self.setState( "Requested debug packet %s" % self.busy )
+        self.busy = None
+        self._update()
+
+    def cbSetDebugError( self, e ):
+        log_dbus_error( e, "error while requesting debug packet %s" % self.busy )
+        self.setState( "Requested debug packet %s with error" % self.busy )
+        self.error.add( self.busy )
+        self.busy = None
+        self._update()
+
+#----------------------------------------------------------------------------#
 class GUI(object):
 #----------------------------------------------------------------------------#
     def __init__( self, options, args ):
@@ -1932,6 +2021,9 @@ class GUI(object):
         dbus_object.onResourceAvailable.append( self.agents["usage"].cbResourceAvailable )
 
         self.agents["gsm"] = agent = GSMAgent( self )
+        agent.registerStateCallback( self.onAgentStateChanged )
+
+        self.agents["gps"] = agent = GPSAgent( self )
         agent.registerStateCallback( self.onAgentStateChanged )
 
         self.groups = {}
@@ -1973,6 +2065,7 @@ class GUI(object):
         dbus_object.onAccuracyChanged.append( self.groups["location"].onAccuracyChanged )
         dbus_object.onPositionChanged.append( self.groups["location"].onPositionChanged )
         dbus_object.onSatellitesChanged.append( self.groups["location"].onSatellitesChanged )
+        dbus_object.onUBXDebugPacket.append( self.groups["location"].onUBXDebugPacket )
         dbus_object.onCallStatus.append( self.groups["call"].onCallStatus )
         dbus_object.onReadyStatus.append( self.groups["contacts"].onReadyStatus )
         dbus_object.onReadyStatus.append( self.groups["sms"].onReadyStatus )
@@ -2159,6 +2252,7 @@ class DBusObject( object ):
         self.onAccuracyChanged = []
         self.onPositionChanged = []
         self.onSatellitesChanged = []
+        self.onUBXDebugPacket = []
         self.onCallStatus = []
         self.onReadyStatus = []
         self.onNetworkStatus = []
@@ -2175,6 +2269,7 @@ class DBusObject( object ):
         self.gps_accuracy_iface = None
         self.gps_position_iface = None
         self.gps_satellite_iface = None
+        self.gps_ubx_iface = None
 
         self.gsm_device_obj = None
         self.gsm_device_iface = None
@@ -2241,6 +2336,9 @@ class DBusObject( object ):
         if self.gps_obj and not self.gps_satellite_iface:
             self.gps_satellite_iface = Interface(self.gps_obj, 'org.freedesktop.Gypsy.Satellite')
             self.gps_satellite_iface.connect_to_signal( "SatellitesChanged", self.cbSatellitesChanged )
+        if self.gps_obj and not self.gps_ubx_iface:
+            self.gps_ubx_iface = Interface(self.gps_obj, 'org.freesmartphone.GPS.UBX')
+            self.gps_ubx_iface.connect_to_signal( "DebugPacket", self.cbUBXDebugPacket )
         if not self.gps_obj or not self.gps_accuracy_iface or not self.gps_position_iface \
             or not self.gps_satellite_iface:
             failcount += 1
@@ -2311,6 +2409,13 @@ class DBusObject( object ):
     def cbSatellitesChanged( self, satellites ):
         for cb in self.onSatellitesChanged:
             cb( satellites )
+
+    def cbUBXDebugPacket( self, clid, length, data ):
+        try:
+            for cb in self.onUBXDebugPacket:
+                cb( clid, length, data )
+        except e:
+            logger.exception("error in callback")
 
     def cbCallStatus( self, id, status, properties ):
         logger.info( "CALL STATUS = %d, %s, %s" % ( id, status, properties ) )
