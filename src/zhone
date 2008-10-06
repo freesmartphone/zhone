@@ -891,86 +891,69 @@ class pyphone_location( edje_group ):
     class SignalGraph( evas.ClippedSmartObject ):
         def __init__( self, *args, **kargs ):
             evas.ClippedSmartObject.__init__( self, *args, **kargs )
-            self.textheight = 45
-            self.font = ( "Sans", 15 )
-            self.children = []
+            self.img = self.Image()
+            self.img.alpha = True
+            self.img.colorspace = evas.EVAS_COLORSPACE_ARGB8888
+            self.img.pos = self.pos
+            self.img.show()
+            self.surface = None
+            self.ctx = None
             self.values = []
-            self.maxvalue = None
-            self.resized = 0
+            self.current = False
+
+        def show( self ):
+            super( pyphone_location.SignalGraph, self ).show()
+            self.current = True
+
+        def hide( self ):
+            super( pyphone_location.SignalGraph, self ).hide()
+            self.current = False
 
         def resize( self, w, h ):
-            self.w = w
-            self.h = h
-            self.render()
-            self.resized = 1
-
-        def render( self ):
-            x, y = self.pos
-            if len ( self.children ) == 0:
-                return
-            barwidth = self.w / len( self.children )
-            barheight = self.h - self.textheight
-            for (rect, key_text, value_text), (key, value) in zip( self.children, self.values ):
-                key_text.text = str( key )
-                value_text.text = str( value )
-                barlength = int( barheight*( value/self.maxvalue ) )
-                valueoffset = max( self.textheight-barlength, 0 )
-                rect.geometry = (
-                    x+5, y+barheight-barlength,
-                    barwidth-5, barlength
-                )
-                key_text.geometry = (
-                    x+(barwidth-key_text.horiz_advance)/2, y+barheight,
-                    barwidth, self.textheight
-                )
-                value_text.geometry = (
-                    x+(barwidth-value_text.horiz_advance)/2, y+5+barheight-barlength-valueoffset,
-                    barwidth, self.textheight
-                )
-                x += barwidth
-
-
-        def addChild( self ):
-            rect = self.Rectangle( color=( 0, 255, 0, 255 ) )
-            rect.show()
-            key_text = self.Text(
-                style = evas.EVAS_TEXT_STYLE_SOFT_OUTLINE,
-                outline_color = ( 0, 0, 0, 255 ),
-                font = self.font
-            )
-            key_text.show()
-            value_text = self.Text(
-                style = evas.EVAS_TEXT_STYLE_SOFT_OUTLINE,
-                outline_color = ( 0, 0, 0, 255 ),
-                font = self.font
-            )
-            value_text.show()
-            self.children.append( ( rect, key_text, value_text ) )
-
-        def delChild( self ):
-            child = self.children[-1]
-            del self.children[-1]
-            for x in child:
-                self.member_del( x )
+            self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
+            self.ctx = cairo.Context(self.surface)
+            self.ctx.scale( w, h )
+            #self.ctx.set_antialias( cairo.ANTIALIAS_NONE )
+            self.img.image_size = ( w, h )
+            self.update()
+            self.img.resize( *self.img.image_size )
+            self.img.fill_set(0, 0, *self.img.image_size )
 
         def update( self, values = None ):
             if values is not None:
                 self.values = values
-                if values == []:
-                    self.maxvalue = 1
-                    self.values = [(0, 0)]
-                else:
-                    self.maxvalue = max( [ x[1] for x in values] )
-                    if self.maxvalue == 0:
-                        self.maxvalue = 1
-
-            while len( self.children ) > len( self.values ):
-                self.delChild()
-            while len( self.children ) < len( self.values ):
-                self.addChild()
-            if self.resized:
-                self.render()
-            self.resize( *self.size )
+            if self.ctx and self.current:
+                self.ctx.set_operator( cairo.OPERATOR_CLEAR )
+                self.ctx.paint()
+                self.ctx.set_operator( cairo.OPERATOR_OVER )
+                pixel = self.ctx.device_to_user_distance( 1, 1 )
+                self.ctx.set_line_width( max( pixel ) )
+                self.ctx.set_source_rgba(1, 1, 1, 0.5)
+                self.ctx.rectangle(0.0, 0.0, 1.0, 1.0)
+                self.ctx.fill()
+                count = len( self.values )
+                index = 0
+                if count:
+                    maxvalue = max( [x[2] for x in self.values] + [1.0] )
+                    barwidth = 1.0/count
+                    self.ctx.set_font_size( barwidth*0.6 )
+                for sv, used, signal in self.values:
+                    text = "%i: %i" % ( sv, signal )
+                    barlength = signal/maxvalue
+                    if used:
+                        self.ctx.set_source_rgba(0.0, 1.0, 0.0, 1.0)
+                    else:
+                        self.ctx.set_source_rgba(0.75, 0.75, 0.75, 1.0)
+                    self.ctx.rectangle( 0.0, index*barwidth+pixel[1]*4, barlength, barwidth-pixel[1]*8 )
+                    self.ctx.fill()
+                    self.ctx.set_source_rgba(0, 0, 0, 1)
+                    x_bearing, y_bearing, width, height = self.ctx.text_extents( text )[:4]
+                    self.ctx.move_to(
+                        pixel[0]*4, (index+0.5)*barwidth - height / 2 - y_bearing
+                    )
+                    self.ctx.show_text( text )
+                    index += 1
+                self.img.image_data_set( self.surface.get_data() )
 
     class PositionGraph( evas.ClippedSmartObject ):
         def __init__( self, *args, **kargs ):
@@ -983,6 +966,15 @@ class pyphone_location( edje_group ):
             self.surface = None
             self.ctx = None
             self.values = []
+            self.current = False
+
+        def show( self ):
+            super( pyphone_location.PositionGraph, self ).show()
+            self.current = True
+
+        def hide( self ):
+            super( pyphone_location.PositionGraph, self ).hide()
+            self.current = False
 
         def proj( self, azim, elev ):
             x = math.sin( math.radians( azim ) )*( elev/90.0 )
@@ -1002,7 +994,7 @@ class pyphone_location( edje_group ):
         def update( self, values = None ):
             if values is not None:
                 self.values = values
-            if self.ctx:
+            if self.ctx and self.current:
                 self.ctx.set_operator( cairo.OPERATOR_CLEAR )
                 self.ctx.paint()
                 self.ctx.set_operator( cairo.OPERATOR_OVER )
@@ -1024,10 +1016,13 @@ class pyphone_location( edje_group ):
                 self.ctx.arc( 0.50, 0.50, 0.15, 0.0, math.pi*2 )
                 self.ctx.stroke()
                 # locations
-                for sv, azim, elev in self.values:
+                for sv, used, azim, elev in self.values:
                     sv = str( sv )
                     x, y = self.proj( azim, elev )
-                    self.ctx.set_source_rgba(0, 1, 0, 1)
+                    if used:
+                        self.ctx.set_source_rgba(0.0, 1.0, 0.0, 1.0)
+                    else:
+                        self.ctx.set_source_rgba(0.75, 0.75, 0.75, 1.0)
                     self.ctx.arc(
                         0.50+x*0.45,
                         0.50+y*0.45,
@@ -1059,8 +1054,8 @@ class pyphone_location( edje_group ):
         self.position = None
         self.update()
 
-        #self.signalgraph.update( [(1, 20.5), (2, 34.3), (5, 25.9), (10, 0.5)] )
-        #self.positiongraph.update( [(1, 20.0, 90.0), (2, 34.3, 45.0), (5, 225.9, 0.0), (10, 0.5, 30.0)] )
+        #self.signalgraph.update( [(1, True, 20.0), (2, False, 34.0), (5, True, 25.0), (10, False, 0.0)] )
+        #self.positiongraph.update( [(1,  True,20.0, 90.0), (2, False, 34.3, 45.0), (5, True, 225.9, 0.0), (10, False, 0.5, 30.0)] )
 
     def update( self ):
         text = []
@@ -1101,10 +1096,9 @@ class pyphone_location( edje_group ):
         self.update()
 
     def onSatellitesChanged( self, satellites ):
-        if self.page == "middle":
-            signallist = [ (int(sat[0]), float(sat[4])) for sat in satellites ]
-            self.signalgraph.update( signallist )
-        positionlist = [ (int(sat[0]), int(sat[3]), int(sat[2])) for sat in satellites ]
+        signallist = [ (int(sat[0]), sat[1], float(sat[4])) for sat in satellites ]
+        self.signalgraph.update( signallist )
+        positionlist = [ (int(sat[0]), sat[1], int(sat[3]), int(sat[2])) for sat in satellites ]
         self.positiongraph.update( positionlist )
 
     def onShow( self ):
