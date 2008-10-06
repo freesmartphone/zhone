@@ -2359,7 +2359,7 @@ class DBusObject( object ):
             self.gsm_network_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Network')
             self.gsm_call_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Call')
             self.gsm_test_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Test')
-            self.gsm_sim_iface.connect_to_signal( "IncomingMessage", self.cbIncomingMessage )
+            self.gsm_sim_iface.connect_to_signal( "IncomingStoredMessage", self.cbIncomingMessage )
             self.gsm_sim_iface.connect_to_signal( "ReadyStatus", self.cbReadyStatus )
             self.gsm_call_iface.connect_to_signal( "CallStatus", self.cbCallStatus )
             self.gsm_network_iface.connect_to_signal( "Status", self.cbNetworkStatus )
