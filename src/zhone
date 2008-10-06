@@ -665,6 +665,7 @@ class pyphone_contacts(edje_group):
                 self.phonebook[i] = ( reference, name, self.phonebook[i][2] )
                 if dbus_object.gsm_device_obj:
                     dbus_object.gsm_sim_iface.StoreEntry(
+                        "contacts",
                         reference,
                         name,
                         self.phonebook[i][2]
@@ -679,6 +680,7 @@ class pyphone_contacts(edje_group):
                 self.phonebook[i] = ( reference, self.phonebook[i][1], number )
                 if dbus_object.gsm_device_obj:
                     dbus_object.gsm_sim_iface.StoreEntry(
+                        "contacts",
                         reference,
                         self.phonebook[i][1],
                         number
@@ -707,6 +709,7 @@ class pyphone_contacts(edje_group):
             return # no space?
         if dbus_object.gsm_device_obj:
             dbus_object.gsm_sim_iface.StoreEntry(
+                "contacts",
                 reference,
                 name,
                 number
@@ -720,6 +723,7 @@ class pyphone_contacts(edje_group):
             return
         if dbus_object.gsm_device_obj:
             dbus_object.gsm_sim_iface.DeleteEntry(
+                "contacts",
                 reference
             )
         for i in range( len( self.phonebook ) ):
@@ -780,6 +784,7 @@ class pyphone_contacts(edje_group):
             if dbus_object.gsm_device_obj:
                 logger.info( "retrieving phonebook..." )
                 dbus_object.gsm_sim_iface.RetrievePhonebook(
+                    "contacts",
                     reply_handler=self.cbPhonebookReply,
                     error_handler=self.cbPhonebookError
                 )
