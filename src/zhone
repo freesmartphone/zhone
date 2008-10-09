@@ -2316,7 +2316,7 @@ class DBusObject( object ):
             logger.error( "could not connect to org.freesmartphone.frameworkd -- is the framework daemon started?" )
             return False
         else:
-            self.fw = Interface( fw_obj, "org.freesmartphone.Objects" )
+            self.fw = Interface( fw_obj, "org.freesmartphone.Framework" )
         failcount = 0
 
         # Usage
