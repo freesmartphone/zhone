@@ -1792,7 +1792,7 @@ class UsageAgent( Agent ):
                     reply_handler=self.cbReleaseReply,
                     error_handler=self.cbReleaseError,
                 )
-    
+
     def cbRequestReply( self ):
         self.have.add( self.busy )
         self.setState( "Requested resource %s" % self.busy )
@@ -1985,7 +1985,7 @@ class GPSAgent( Agent ):
                     reply_handler=self.cbSetDebugReply,
                     error_handler=self.cbSetDebugError,
                 )
-    
+
     def cbResourceReady( self ):
         self.setState( "Requesting debug packets." )
         self.have = set()
@@ -2134,7 +2134,7 @@ class GUI(object):
                 self.groups["suspend"].enter_stage(3)
                 ecore.main_loop_iterate()
 
-                dbus_object.idlenotifier_iface.SetState("BUSY")
+                dbus_object.idlenotifier_iface.SetState("busy")
 
                 self.groups["suspend"].deactivate()
 
@@ -2428,9 +2428,9 @@ class DBusObject( object ):
             cb( id=id, status=status, properties=properties )
         if not self.idlenotifier_iface is None:
             self.idlenotifier_iface.SetState(
-                "BUSY",
+                "busy",
                 reply_handler=lambda: None,
-                error_handler=handle_dbus_error( "could not set idle state to BUSY" )
+                error_handler=handle_dbus_error( "could not set idle state to busy" )
             )
 
     def cbReadyStatus( self, status ):
