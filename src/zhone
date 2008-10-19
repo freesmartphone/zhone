@@ -337,7 +337,7 @@ class pyphone_sms(edje_group):
 
     def cbReceiveUnsentReply( self, messages ):
         for message in messages:
-            index, status, number, content = message
+            index, status, number, content, features = message
             logger.info( "trying to send message w/ index %d..." % index )
             dbus_object.gsm_sim_iface.SendStoredMessage( index, reply_handler=self.cbSendReply, error_handler=self.cbSendError )
 
