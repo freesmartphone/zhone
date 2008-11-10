@@ -1,0 +1,34 @@
+parts {
+    SWALLOWCLIP()
+
+    part {
+        name: "text";
+        type: TEXTBLOCK;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.1 0.05;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 0.9 0.95;
+                offset: -1 -1;
+            }
+            text {
+                style: "sms_style";
+            }
+        }
+    }
+
+    BUTTONS_BOTTOM();
+    BUTTON_OPTIONS();
+    BUTTON_MENU();
+    BUTTON_CLOSE();
+}
+programs {
+    ACTIVATE("button_bottom_right");
+
+    TRANSITION();
+}

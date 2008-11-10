@@ -1,0 +1,79 @@
+parts {
+    SWALLOWCLIP();
+
+    part {
+        name: "menu_background";
+        type: RECT;
+        repeat_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+            }
+            color: 0 0 0 192;
+        }
+    }
+
+    part {
+        name: "menu_target_box";
+        type: RECT;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.05 0.05;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 0.95 0.95;
+                offset: -1 -1;
+            }
+            color: 0 0 0 0;
+        }
+    }
+
+    part {
+        name: "list_button_box";
+        type: RECT;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.02;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 1.0 0.67;
+                offset: -1 -1;
+            }
+            color: 0 0 0 0;
+        }
+    }
+
+    GRID_TARGET_2LINE("list_button_box", "list_0", 0, 0, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_1", 0, 1, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_2", 0, 2, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_3", 0, 3, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_4", 0, 4, 1, 6, "", "");
+    GRID_TARGET_2LINE("list_button_box", "list_5", 0, 5, 1, 6, "", "");
+    TARGET("menu_target_box", "cancel", 0, 2, 1, 3, "cancel");
+
+    TRANSITION();
+}
+programs {
+    ACTIVATE("target_list_0");
+    ACTIVATE("target_list_1");
+    ACTIVATE("target_list_2");
+    ACTIVATE("target_list_3");
+    ACTIVATE("target_list_4");
+    ACTIVATE("target_list_5");
+    ACTIVATE("target_cancel");
+}

@@ -1,0 +1,318 @@
+
+parts {
+    SWALLOWCLIP()
+    
+    part {
+        name: "label_description";
+        type: TEXT;
+        effect: SOFT_OUTLINE;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 1.0 0.2;
+                offset: -1 -1;
+            }
+            text {
+                font: FONT_NAME;
+                size: 1;
+                fit: 1 1;
+                align: 0.0 0.5;
+            }
+        }
+    }
+    part {
+        name: "label_background";
+        type: RECT;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.2;
+                offset: 0 0;
+                to: "swallow_main";
+            }
+            rel2 {
+                relative: 1.0 0.4;
+                offset: -1 -1;
+                to: "swallow_main";
+            }
+            color: 255 255 255 64;
+        }
+    }
+    part {
+        name: "label";
+        type: TEXTBLOCK;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.05 0.05;
+                offset: 0 0;
+                to: "label_background";
+            }
+            rel2 {
+                relative: 0.95 0.95;
+                offset: -1 -1;
+                to: "label_background";
+            }
+            text {
+                style: "entry_style";
+            }
+        }
+    }
+    part {
+        name: "dialer_box";
+        type: RECT;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.42;
+                offset: 0 0;
+                to: "swallow_main";
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+                to: "swallow_main";
+            }
+            color: 255 255 255 255;
+        }
+    }
+    
+    GRID_BUTTON("dialer_box", "1", 0, 0, 4, 4, "1");
+    GRID_BUTTON("dialer_box", "2", 1, 0, 4, 4, "2");
+    GRID_BUTTON("dialer_box", "3", 2, 0, 4, 4, "3");
+    GRID_BUTTON("dialer_box", "4", 0, 1, 4, 4, "4");
+    GRID_BUTTON("dialer_box", "5", 1, 1, 4, 4, "5");
+    GRID_BUTTON("dialer_box", "6", 2, 1, 4, 4, "6");
+    GRID_BUTTON("dialer_box", "7", 0, 2, 4, 4, "7");
+    GRID_BUTTON("dialer_box", "8", 1, 2, 4, 4, "8");
+    GRID_BUTTON("dialer_box", "9", 2, 2, 4, 4, "9");
+    GRID_BUTTON_2LINE("dialer_box", "star", 0, 3, 4, 4, "*", "+");
+    GRID_BUTTON("dialer_box", "0", 1, 3, 4, 4, "0");
+    GRID_BUTTON_2LINE("dialer_box", "hash", 2, 3, 4, 4, "#", "");
+    
+    part {
+        name: "button_delete";
+        type: IMAGE;
+        mouse_events: 1;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.75 0.0;
+                offset: 1 1;
+                to: "dialer_box";
+            }
+            rel2 {
+                relative: 1.0 0.25;
+                offset: -2 -2;
+                to: "dialer_box";
+            }
+            image { normal: "button_background.png"; }
+        }
+        description {
+            state: "active" 0.0;
+            inherit: "default" 0.0;
+            image { normal: "button_background_active.png"; }
+        }
+    }
+    part {
+        name: "icon_delete";
+        mouse_events: 0;
+        type: IMAGE;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            aspect: 1.0 1.0;
+            aspect_preference: BOTH;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+                to: "button_delete";
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+                to: "button_delete";
+            }
+            image { normal: "icon_left.png"; }
+        }
+    }
+    part {
+        name: "button_dial";
+        type: IMAGE;
+        mouse_events: 1;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.75 0.25;
+                offset: 1 1;
+                to: "dialer_box";
+            }
+            rel2 {
+                relative: 1.0 0.75;
+                offset: -2 -2;
+                to: "dialer_box";
+            }
+            image { normal: "button_background.png"; }
+        }
+        description {
+            state: "active" 0.0;
+            inherit: "default" 0.0;
+            image { normal: "button_background_active.png"; }
+        }
+    }
+    part {
+        name: "icon_dial";
+        mouse_events: 0;
+        type: IMAGE;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            aspect: 1.0 1.0;
+            aspect_preference: BOTH;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+                to: "button_dial";
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+                to: "button_dial";
+            }
+            image { normal: "icon_accept.png"; }
+        }
+    }
+    part {
+        name: "button_left";
+        type: IMAGE;
+        mouse_events: 1;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.75 0.75;
+                offset: 1 1;
+                to: "dialer_box";
+            }
+            rel2 {
+                relative: 0.875 1.0;
+                offset: -2 -2;
+                to: "dialer_box";
+            }
+            image { normal: "button_background.png"; }
+        }
+        description {
+            state: "active" 0.0;
+            inherit: "default" 0.0;
+            image { normal: "button_background_active.png"; }
+        }
+    }
+    part {
+        name: "icon_left";
+        mouse_events: 0;
+        type: IMAGE;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            aspect: 1.0 1.0;
+            aspect_preference: BOTH;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+                to: "button_left";
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+                to: "button_left";
+            }
+            image { normal: "icon_left.png"; }
+        }
+    }
+    part {
+        name: "button_right";
+        type: IMAGE;
+        mouse_events: 1;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.875 0.75;
+                offset: 1 1;
+                to: "dialer_box";
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -2 -2;
+                to: "dialer_box";
+            }
+            image { normal: "button_background.png"; }
+        }
+        description {
+            state: "active" 0.0;
+            inherit: "default" 0.0;
+            image { normal: "button_background_active.png"; }
+        }
+    }
+    part {
+        name: "icon_right";
+        mouse_events: 0;
+        type: IMAGE;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            aspect: 1.0 1.0;
+            aspect_preference: BOTH;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+                to: "button_right";
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+                to: "button_right";
+            }
+            image { normal: "icon_right.png"; }
+        }
+    }
+    
+    BUTTONS_BOTTOM();
+    BUTTON_OPTIONS();
+    BUTTON_MENU();
+    BUTTON_CLOSE();
+}
+programs {
+    ACTIVATE("button_bottom_right");
+    
+    ACTIVATE("button_1");
+    ACTIVATE("button_2");
+    ACTIVATE("button_3");
+    ACTIVATE("button_4");
+    ACTIVATE("button_5");
+    ACTIVATE("button_6");
+    ACTIVATE("button_7");
+    ACTIVATE("button_8");
+    ACTIVATE("button_9");
+    ACTIVATE("button_0");
+    ACTIVATE("button_hash");
+    ACTIVATE("button_star");
+    ACTIVATE("button_delete");
+    ACTIVATE("button_dial");
+    
+    TRANSITION();
+}

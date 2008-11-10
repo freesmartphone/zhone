@@ -1,0 +1,173 @@
+parts {
+    SWALLOWCLIP()
+    
+    part {
+        name: "label_description";
+        type: TEXT;
+        effect: SOFT_OUTLINE;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+                to: "swallow_clip";
+            }
+            rel2 {
+                relative: 1.0 0.2;
+                offset: -1 -1;
+                to: "swallow_clip";
+            }
+            text {
+                font: FONT_NAME;
+                size: 1;
+                fit: 1 1;
+                align: 0.0 0.5;
+            }
+        }
+    }
+    part {
+        name: "label_background";
+        type: RECT;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.2;
+                offset: 0 0;
+                to: "swallow_clip";
+            }
+            rel2 {
+                relative: 0.75 1.0;
+                offset: -1 -1;
+                to: "swallow_clip";
+            }
+            color: 255 255 255 64;
+        }
+    }
+    part {
+        name: "label";
+        type: TEXTBLOCK;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+                to: "label_background";
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+                to: "label_background";
+            }
+            text {
+                style: "char_style";
+            }
+        }
+    }
+
+    part {
+        name: "button_done";
+        type: IMAGE;
+        mouse_events: 1;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.75 0.2;
+                offset: 1 1;
+                to: "swallow_clip";
+            }
+            rel2 {
+                relative: 1.0 0.6;
+                offset: -2 -2;
+                to: "swallow_clip";
+            }
+            image { normal: "button_background.png"; }
+        }
+        description {
+            state: "active" 0.0;
+            inherit: "default" 0.0;
+            image { normal: "button_background_active.png"; }
+        }
+    }
+    part {
+        name: "icon_done";
+        mouse_events: 0;
+        type: IMAGE;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            aspect: 1.0 1.0;
+            aspect_preference: BOTH;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+                to: "button_done";
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+                to: "button_done";
+            }
+            image { normal: "icon_accept.png"; }
+        }
+    }
+    part {
+        name: "button_cancel";
+        type: IMAGE;
+        mouse_events: 1;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.75 0.6;
+                offset: 1 1;
+                to: "swallow_clip";
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -2 -2;
+                to: "swallow_clip";
+            }
+            image { normal: "button_background.png"; }
+        }
+        description {
+            state: "active" 0.0;
+            inherit: "default" 0.0;
+            image { normal: "button_background_active.png"; }
+        }
+    }
+    part {
+        name: "icon_cancel";
+        mouse_events: 0;
+        type: IMAGE;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            aspect: 1.0 1.0;
+            aspect_preference: BOTH;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+                to: "button_cancel";
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+                to: "button_cancel";
+            }
+            image { normal: "icon_close.png"; }
+        }
+    }
+}
+programs {
+    ACTIVATE("button_done");
+    ACTIVATE("button_cancel");
+    
+    TRANSITION();
+}
