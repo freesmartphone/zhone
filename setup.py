@@ -11,7 +11,7 @@ class my_build(_build):
 
         # compile theme files
         import subprocess
-        result = subprocess.call( "cd ./data/themes/toby; edje_cc -v -fd ../fonts zhone.edc", shell=True )
+        result = subprocess.call( "cd ./data/themes/toby; edje_cc -v -fd ../fonts zhone.edc; mv zhone.edj ../", shell=True )
         if result != 0:
             raise Exception( "Can't build theme files. Built edje_cc?" )
 
