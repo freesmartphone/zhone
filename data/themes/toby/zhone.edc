@@ -1042,21 +1042,6 @@ collections {
                     }
                 }
             }
-            part {
-                name: "suspend";
-                type: SWALLOW;
-                description {
-                    state: "default" 0.0;
-                    rel1 {
-                        relative: 0.0 HEADER_HEIGHT;
-                        offset: 0 0;
-                    }
-                    rel2 {
-                        relative: 1.0 1.0;
-                        offset: -1 -1;
-                    }
-                }
-            }
         }
     }
     group {
@@ -1251,9 +1236,5 @@ collections {
     group {
         name: "text_show";
         #include "zhone_text_show.edc"
-    }
-    group {
-        name: "suspend";
-        #include "zhone_suspend.edc"
     }
 }
