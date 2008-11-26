@@ -216,7 +216,9 @@ class pyphone_call(edje_group):
         self.call = id
         self.update_status(status)
         try:
-            self.part_text_set( "label", properties[ "peer" ] )
+            self.part_text_set( "label", self.main.groups["contacts"].tryNumberToName( properties[ "peer" ] ) )
+            self.part_text_set( "sublabel", properties[ "peer" ] )
+
         except KeyError:
             pass
 
