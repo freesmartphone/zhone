@@ -2079,7 +2079,7 @@ class GUI(object):
             self.groups["lock"].activate()
 
     def display_time(self):
-        self.groups["main"].part_text_set("label", time.strftime("%H:%M", time.localtime()))
+        self.groups["main"].part_text_set("label", time.strftime("%H:%M %Z".strip(), time.localtime()))
         self.groups["main"].part_text_set("label_year", time.strftime("%Y-%m-%d", time.localtime()))
         return True
 
