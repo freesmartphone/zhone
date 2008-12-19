@@ -253,6 +253,7 @@ class pyphone_call(edje_group):
             self.part_text_set( "label_left", u"hold" )
             self.part_text_set( "label_right", u"hangup" )
         elif status == "incoming":
+            self.main.groups["lock"].deactivate()
             self.part_text_set( "label_left", u"answer" )
             self.part_text_set( "label_right", u"reject" )
         elif status == "held":
