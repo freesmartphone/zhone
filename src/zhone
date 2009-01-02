@@ -20,8 +20,11 @@ You have been warned :)
 
 """
 
+__version__ = "0.0.0"
+MODULE_NAME = "zhone"
+
 import logging
-logger = logging.getLogger( "zhone" )
+logger = logging.getLogger( MODULE_NAME )
 logging.basicConfig( level    = logging.DEBUG,
                     format   = '%(asctime)s %(levelname)s %(message)s',
                     filename = '/tmp/zhone.log',
@@ -1213,7 +1216,7 @@ class pyphone_location( edje_group ):
         logger.debug( "gps time changed: %s (%s)" % (time.strftime("%H:%M:%S", time.gmtime(timestamp))) )
         self.time = timestamp
         self.update()
-        
+
     def onUBXDebugPacket( self, clid, length, data ):
         logger.debug( "gps got ubxdebug packet" )
         if clid == "NAV-SVINFO":
@@ -2396,8 +2399,7 @@ class DBusObject( object ):
         if ( self.device_obj is not None ) and ( self.device_iface is None ):
             self.device_iface = Interface( self.device_obj, 'org.freesmartphone.Device' )
 
-            self.idlenotifier_obj = self.tryGetProxy( "org.freesmartphone.odeviced", self.fw.ListObjectsByInterface( "org.freesmartphone.Device.IdleNotifier" )[0] )
-
+            self.idlenotifier_obj = self.tryGetProxy( "org.freesmartphone.odeviced", "/org/freesmartphone/Device/IdleNotifier/0" )
             self.idlenotifier_iface = Interface( self.idlenotifier_obj, "org.freesmartphone.Device.IdleNotifier" )
             self.idlenotifier_iface.connect_to_signal( "State", self.cbIdleStateChanged )
 
