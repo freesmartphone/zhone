@@ -1128,6 +1128,7 @@ class pyphone_location( edje_group ):
         self.positiongraph = self.PositionGraph( self.evas )
 
         self.page = "left"
+        self.oldpage = None
         self.signal_emit( "activate_button_select_%s" % self.page, "" )
 
         self.time = None
@@ -1162,25 +1163,25 @@ class pyphone_location( edje_group ):
             text.append( "P/H/V-DOP:<tab>%s/%s/%s" % self.accuracy )
         else:
             text.append( "P/H/V-DOP:<tab>N/A")
+        if self.page != self.oldpage:
+            self.oldpage = self.page
+            if self.part_swallow_get( "swallow" ):
+                self.part_swallow_get( "swallow" ).hide()
+                self.part_unswallow( self.part_swallow_get( "swallow" ) )
+            if self.page == "left":
+                pass
+            elif self.page == "middle":
+                self.part_swallow( "swallow", self.signalgraph )
+                self.signalgraph.show()
+            elif self.page == "right":
+                self.part_swallow( "swallow", self.positiongraph )
+                self.positiongraph.show()
         if self.page == "left":
             self.part_text_set( "status", u"<br>".join( text ) )
-            if self.part_swallow_get( "swallow" ):
-                self.part_swallow_get( "swallow" ).hide()
-                self.part_unswallow( self.part_swallow_get( "swallow" ) )
         elif self.page == "middle":
             self.part_text_set( "status", u"" )
-            if self.part_swallow_get( "swallow" ):
-                self.part_swallow_get( "swallow" ).hide()
-                self.part_unswallow( self.part_swallow_get( "swallow" ) )
-            self.part_swallow( "swallow", self.signalgraph )
-            self.signalgraph.show()
         elif self.page == "right":
             self.part_text_set( "status", u"" )
-            if self.part_swallow_get( "swallow" ):
-                self.part_swallow_get( "swallow" ).hide()
-                self.part_unswallow( self.part_swallow_get( "swallow" ) )
-            self.part_swallow( "swallow", self.positiongraph )
-            self.positiongraph.show()
 
     def onFixStatusChanged( self, fixstatus ):
         logger.debug( "gps fix status changed: %s" % fixstatus )
