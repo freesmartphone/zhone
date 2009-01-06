@@ -1214,7 +1214,7 @@ class pyphone_location( edje_group ):
         self.positiongraph.update( positionlist )
 
     def onTimeChanged( self, timestamp ):
-        logger.debug( "gps time changed: %s (%s)" % (time.strftime("%H:%M:%S", time.gmtime(timestamp))) )
+        logger.debug( "gps time changed: %s (%s)" % (time.strftime("%H:%M:%S", time.gmtime(timestamp)), timestamp) )
         self.time = timestamp
         self.update()
 
