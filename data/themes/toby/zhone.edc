@@ -27,8 +27,8 @@ images {
    image: "button_phone_inactive.png" COMP;
    image: "button_sms.png" COMP;
    image: "button_sms_inactive.png" COMP;
-   image: "button_date.png" COMP;
-   image: "button_date_inactive.png" COMP;
+   image: "button_wireless.png" COMP;
+   image: "button_wireless_inactive.png" COMP;
    image: "button_location.png" COMP;
    image: "button_location_inactive.png" COMP;
    image: "button_configuration.png" COMP;
@@ -1147,7 +1147,7 @@ collections {
             GRID_TARGET_MAIN_ICON("target_background", "phone", 0, 0, 3, 2);
             GRID_TARGET_MAIN_ICON("target_background", "contacts", 1, 0, 3, 2);
             GRID_TARGET_MAIN_ICON("target_background", "sms", 2, 0, 3, 2);
-            GRID_TARGET_MAIN_ICON("target_background", "date", 0, 1, 3, 2);
+            GRID_TARGET_MAIN_ICON("target_background", "wireless", 0, 1, 3, 2);
             GRID_TARGET_MAIN_ICON("target_background", "location", 1, 1, 3, 2);
             GRID_TARGET_MAIN_ICON("target_background", "configuration", 2, 1, 3, 2);
         }
@@ -1158,8 +1158,8 @@ collections {
             ACTIVATE_ICON("target_icon_contacts");
             ACTIVATE("target_sms");
             ACTIVATE_ICON("target_icon_sms");
-            ACTIVATE("target_date");
-            ACTIVATE_ICON("target_icon_date");
+            ACTIVATE("target_wireless");
+            ACTIVATE_ICON("target_icon_wireless");
             ACTIVATE("target_location");
             ACTIVATE_ICON("target_icon_location");
             ACTIVATE("target_configuration");
@@ -1212,6 +1212,10 @@ collections {
     group {
         name: "location";
         #include "zhone_location.edc"
+    }
+    group {
+        name: "wireless";
+        #include "zhone_wireless.edc"
     }
     group {
         name: "call";

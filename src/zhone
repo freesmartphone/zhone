@@ -126,7 +126,7 @@ class pyphone_main(edje_group):
             "phone": False,
             "contacts": False,
             "sms": False,
-            "date": False,
+            "wireless": True,
             "location": False,
             "configuration": True,
         }
@@ -895,6 +895,202 @@ class pyphone_contacts(edje_group):
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
         self.main.groups["menu"].activate(("edit name", "edit number", "new", "delete"), self.cbMenu)
+
+#----------------------------------------------------------------------------#
+class pyphone_wireless( edje_group ):
+#----------------------------------------------------------------------------#
+    class NeighbourGraph( evas.ClippedSmartObject ):
+        MAXCELLS = 6
+        def __init__( self, *args, **kargs ):
+            evas.ClippedSmartObject.__init__( self, *args, **kargs )
+            self.img = self.Image()
+            self.img.alpha = True
+            self.img.colorspace = evas.EVAS_COLORSPACE_ARGB8888
+            self.img.pos = self.pos
+            self.img.show()
+            self.surface = None
+            self.ctx = None
+            self.cells = None
+            self.maxsignal = 50.0
+            self.current = False
+
+        def show( self ):
+            evas.ClippedSmartObject.show( self )
+            self.current = True
+            self.update()
+
+        def hide( self ):
+            evas.ClippedSmartObject.hide( self )
+            self.current = False
+
+        def resize( self, w, h ):
+            self.surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
+            self.ctx = cairo.Context(self.surface)
+            self.ctx.scale( w, h )
+            #self.ctx.set_antialias( cairo.ANTIALIAS_NONE )
+            self.img.image_size = ( w, h )
+            self.update()
+            self.img.resize( *self.img.image_size )
+            self.img.fill_set(0, 0, *self.img.image_size )
+
+        def update( self, cells = None ):
+            if cells is not None:
+                self.cells = cells
+            if self.ctx and self.current:
+                self.ctx.set_operator( cairo.OPERATOR_CLEAR )
+                self.ctx.paint()
+                self.ctx.set_operator( cairo.OPERATOR_OVER )
+                pixel = self.ctx.device_to_user_distance( 1, 1 )
+                self.ctx.set_line_width( max( pixel ) )
+                self.ctx.set_source_rgba(1, 1, 1, 0.5)
+                self.ctx.rectangle(0.0, 0.0, 1.0, 1.0)
+                self.ctx.fill()
+                rows = []
+                if self.cells:
+                    for cell in self.cells:
+                        signal = cell["rxlev"]
+                        text = []
+                        text.append( "%s" % cell["arfcn"] )
+                        text.append( "%s/%s" % ( cell["lac"], cell["cid"] ) )
+                        text.append( "%s" % cell["bsic"] )
+                        text.append( "%s" % cell["rxlev"] )
+                        rows.append( ( signal, text ) )
+                if rows:
+                    count = 1 + len( rows )
+                    self.maxsignal = float( max( [x[0] for x in rows] + [self.maxsignal] ) )
+                    barwidth = 1.0/(1 + self.MAXCELLS)
+                    self.ctx.set_font_size( barwidth*0.4 )
+                    self.ctx.set_source_rgba(0, 0, 0, 1)
+                    head = [ "ARFCN", "LAC/CID", "BSIC", "RXLEV" ]
+                    x_bearing, y_bearing, width, height = self.ctx.text_extents( " ".join( head ) )[:4]
+                    w = 0.5*self.ctx.text_extents( u"\u25CF" )[2]
+                    x = pixel[0]*3
+                    cols = []
+                    for h in head:
+                        width = 0.5*self.ctx.text_extents( h )[2]
+                        self.ctx.move_to( x + w, 0.5*barwidth - height / 2 - y_bearing )
+                        cols.append( x + w + width )
+                        x += w + width + width + w
+                        self.ctx.show_text( h )
+                    cols.append( x + w)
+                    index = 1
+                    for signal, text in rows:
+                        barlength = signal/self.maxsignal
+                        self.ctx.set_source_rgba(0.0, 1.0, 0.0, 1.0)
+                        self.ctx.rectangle( 0.0, index*barwidth+pixel[1]*2, barlength, barwidth-pixel[1]*4 )
+                        self.ctx.fill()
+                        self.ctx.set_source_rgba(0, 0, 0, 1)
+                        x_bearing, y_bearing, width, height = self.ctx.text_extents( " ".join( text ) )[:4]
+                        for i in range( len( text ) ):
+                            w = 0.5*self.ctx.text_extents( text[i] )[2]
+                            self.ctx.move_to( cols[i] - w, (index+0.5)*barwidth - height / 2 - y_bearing )
+                            self.ctx.show_text( text[i] )
+                        index += 1
+                self.img.image_data_set( self.surface.get_data() )
+                self.img.pixels_dirty = True
+
+    DELAY = 10.0
+    def __init__(self, main):
+        edje_group.__init__( self, main, "wireless" )
+        self.neighbourgraph = self.NeighbourGraph( self.evas )
+        self.page = "left"
+        self.oldpage = None
+        self.signal_emit( "activate_button_select_%s" % self.page, "" )
+
+        self.timer = None
+
+        self.gsm_serving = None
+        self.gsm_neighbour = None
+        self.update()
+
+    def update( self ):
+        text = []
+        if self.gsm_serving:
+            text.append( "ARFCN:<tab>%s" % self.gsm_serving['arfcn'] )
+            text.append( "LAC/CID:<tab>%s/%s" % ( self.gsm_serving['lac'], self.gsm_serving['cid'] ) )
+            text.append( "RXLEV/C1/C2:<tab>%s/%s/%s" % (
+                self.gsm_serving['rxlev'], self.gsm_serving['c1'], self.gsm_serving['c2']
+            ) )
+            text.append( "TN:<tab>%s" % self.gsm_serving['tn'] )
+            text.append( "TAV:<tab>%s" % self.gsm_serving['tav'] )
+        else:
+            text.append( "Serving Cell:<tab>N/A" )
+        cells = []
+        if self.gsm_serving:
+            cells.append(self.gsm_serving)
+        if self.gsm_neighbour:
+            cells.extend(self.gsm_neighbour)
+        if self.page != self.oldpage:
+            self.oldpage = self.page
+            if self.part_swallow_get( "swallow" ):
+                self.part_swallow_get( "swallow" ).hide()
+                self.part_unswallow( self.part_swallow_get( "swallow" ) )
+            if self.page == "left":
+                pass
+            elif self.page == "middle":
+                self.part_swallow( "swallow", self.neighbourgraph )
+                self.neighbourgraph.show()
+            elif self.page == "right":
+                #self.part_swallow( "swallow", self.positiongraph )
+                #self.positiongraph.show()
+                pass
+        if self.page == "left":
+            self.part_text_set( "status", u"<br>".join( text ) )
+        elif self.page == "middle":
+            self.part_text_set( "status", u"" )
+            self.neighbourgraph.update(cells)
+        elif self.page == "right":
+            self.part_text_set( "status", u"" )
+
+    def cbServingCellReply( self, serving ):
+        logger.debug( "gsm serving cell status updated: %s" % serving )
+        self.gsm_serving = serving
+        self.update()
+
+    def cbServingCellError( self, e ):
+        log_dbus_error( e, "error while requesting serving cell info" )
+        self.gsm_serving = None
+        self.update()
+
+    def cbNeighbourCellReply( self, neighbour ):
+        logger.debug( "gsm neighbour cell status updated: %s" % neighbour )
+        self.gsm_neighbour = neighbour
+        self.update()
+
+    def cbNeighbourCellError( self, e ):
+        log_dbus_error( e, "error while requesting neighbour cell info" )
+        self.gsm_neighbour = None
+        self.update()
+
+    def onShow( self ):
+        if self.timer:
+            self.timer.delete()
+        self.cbTimer()
+        self.timer = ecore.timer_add( self.DELAY, self.cbTimer )
+
+    def onHide( self ):
+        if self.timer:
+            self.timer.delete()
+
+    def cbTimer( self ):
+        dbus_object.gsm_monitor_iface.GetServingCellInformation(
+            reply_handler=self.cbServingCellReply,
+            error_handler=self.cbServingCellError,
+        )
+        dbus_object.gsm_monitor_iface.GetNeighbourCellInformation(
+            reply_handler=self.cbNeighbourCellReply,
+            error_handler=self.cbNeighbourCellError,
+        )
+        return True
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_select_*" )
+    def on_edje_signal_button_list_pressed( self, emission, source ):
+        self.page = source.split( "_" )[-1]
+        self.signal_emit( "deactivate_button_select_left", "" )
+        self.signal_emit( "deactivate_button_select_middle", "" )
+        self.signal_emit( "deactivate_button_select_right", "" )
+        self.signal_emit( "activate_button_select_%s" % self.page, "" )
+        self.update()
 
 #----------------------------------------------------------------------------#
 class pyphone_location( edje_group ):
@@ -2087,6 +2283,7 @@ class GUI(object):
                 "sms",
                 "contacts",
                 "location",
+                "wireless",
                 "configuration",
                 "list_choose", "number_edit", "pin_edit", "text_edit", "text_show", "message"
             ):
@@ -2384,6 +2581,7 @@ class DBusObject( object ):
         if ( self.gsm_device_obj is not None ) and ( self.gsm_device_iface is None ):
             self.gsm_device_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Device')
             self.gsm_sim_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.SIM')
+            self.gsm_monitor_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Monitor')
             self.gsm_network_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Network')
             self.gsm_call_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Call')
             self.gsm_test_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Test')
