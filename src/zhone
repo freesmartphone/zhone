@@ -901,6 +901,7 @@ class pyphone_wireless( edje_group ):
 #----------------------------------------------------------------------------#
     class NeighbourGraph( evas.ClippedSmartObject ):
         MAXCELLS = 6
+        MAXRXLEV = 64
         def __init__( self, *args, **kargs ):
             evas.ClippedSmartObject.__init__( self, *args, **kargs )
             self.img = self.Image()
@@ -911,7 +912,7 @@ class pyphone_wireless( edje_group ):
             self.surface = None
             self.ctx = None
             self.cells = None
-            self.maxsignal = 50.0
+            self.maxsignal = self.MAXRXLEV
             self.current = False
 
         def show( self ):
@@ -1011,8 +1012,12 @@ class pyphone_wireless( edje_group ):
             text.append( "RXLEV/C1/C2:<tab>%s/%s/%s" % (
                 self.gsm_serving['rxlev'], self.gsm_serving['c1'], self.gsm_serving['c2']
             ) )
+            text.append( "RXLEV-F/-S:<tab>%s/%s" % ( self.gsm_serving['rxlev_f'], self.gsm_serving['rxlev_s'] ) )
+            text.append( "TXLEV:<tab>%s" % self.gsm_serving['txlev'] )
             text.append( "TN:<tab>%s" % self.gsm_serving['tn'] )
             text.append( "TAV:<tab>%s" % self.gsm_serving['tav'] )
+            text.append( "DSC:<tab>%s" % self.gsm_serving['dsc'] )
+            text.append( "Cell Type:<tab>%s" % self.gsm_serving['cell_type_ind'] )
         else:
             text.append( "Serving Cell:<tab>N/A" )
         cells = []
