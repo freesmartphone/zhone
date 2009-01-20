@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#coding=utf8
+# -*- coding: utf-8 -*-
 """
 Zen Phone - A Phone UI
 
@@ -27,7 +27,7 @@ MODULE_NAME = "zhone"
 import gettext
 
 try:
-    cat = gettext.Catalog("zhone")
+    cat = gettext.Catalog("zhone", "/usr/share/zhone/locale")
     _ = cat.gettext
 except IOError:
     _ = lambda x: x
@@ -216,6 +216,11 @@ class pyphone_phone(edje_group):
             self.main.groups["main"].targets["phone"] = False
             self.main.groups["main"].update()
 
+_("active")
+_("incoming")
+_("held")
+_("outgoing")
+_("released")
 #----------------------------------------------------------------------------#
 class pyphone_call(edje_group):
 #----------------------------------------------------------------------------#
@@ -257,7 +262,7 @@ class pyphone_call(edje_group):
                 self.update_status("release")
 
     def update_status(self, status):
-        self.part_text_set( "label_description", status )
+        self.part_text_set( "label_description", _(status) )
         if status == "outgoing":
             self.part_text_set( "label_left", u"" )
             self.part_text_set( "label_right", _("cancel") )
@@ -2196,7 +2201,7 @@ class GSMAgent( Agent ):
         self.main.groups["pin_edit"].setup(
             "main",
             "", # number
-            "Enter new PIN", # title
+            _("Enter new PIN"), # title
             puk, # reference
             self.cbNewPINDone
         )
