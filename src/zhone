@@ -23,6 +23,15 @@ You have been warned :)
 __version__ = "0.0.0"
 MODULE_NAME = "zhone"
 
+# Locale support
+import gettext
+
+try:
+    cat = gettext.Catalog("zhone")
+    _ = cat.gettext
+except IOError:
+    _ = lambda x: x
+
 import logging
 logger = logging.getLogger( MODULE_NAME )
 logging.basicConfig( level    = logging.DEBUG,
@@ -196,14 +205,14 @@ class pyphone_phone(edje_group):
         logger.info( "network status changed: %s" % status )
         #if(status.has_key("registration") != "busy")  # XXX this might work too.  which is better?
         if(status.has_key('provider')):
-            self.main.agents["gsm"].setState("Registered: %s" % status['provider'])
+            self.main.agents["gsm"].setState(_("Registered: %s") % status['provider'])
             self.main.groups["main"].targets["phone"] = True
             self.main.groups["main"].update()
             if dbus_object.gsm_sim_iface.GetSimReady():
                 self.main.groups["contacts"].prepare()
                 self.main.groups["sms"].prepare()
         else:
-            self.main.agents["gsm"].setState("Failed to register to network")
+            self.main.agents["gsm"].setState(_("Failed to register to network"))
             self.main.groups["main"].targets["phone"] = False
             self.main.groups["main"].update()
 
@@ -251,17 +260,17 @@ class pyphone_call(edje_group):
         self.part_text_set( "label_description", status )
         if status == "outgoing":
             self.part_text_set( "label_left", u"" )
-            self.part_text_set( "label_right", u"cancel" )
+            self.part_text_set( "label_right", _("cancel") )
         elif status == "active":
-            self.part_text_set( "label_left", u"hold" )
-            self.part_text_set( "label_right", u"hangup" )
+            self.part_text_set( "label_left", _("hold") )
+            self.part_text_set( "label_right", _("hangup") )
         elif status == "incoming":
             self.main.groups["lock"].deactivate()
-            self.part_text_set( "label_left", u"answer" )
-            self.part_text_set( "label_right", u"reject" )
+            self.part_text_set( "label_left", _("answer") )
+            self.part_text_set( "label_right", _("reject") )
         elif status == "held":
-            self.part_text_set( "label_left", u"resume" )
-            self.part_text_set( "label_right", u"hangup" )
+            self.part_text_set( "label_left", _("resume") )
+            self.part_text_set( "label_right", _("hangup") )
         else:
             self.part_text_set( "label_left", u"" )
             self.part_text_set( "label_right", u"" )
@@ -331,6 +340,8 @@ class pyphone_sms(edje_group):
         self.selected = None
         self.newindex = None
         self.senderTimer = ecore.timer_add( 60, self.processUnsentMessages )
+
+        self.part_text_set( "label_action_open", _("open") )
 
     def processUnsentMessages( self ):
         if not dbus_object.gsm_device_obj:
@@ -417,7 +428,7 @@ class pyphone_sms(edje_group):
             )
 
     def cbMenu( self, result ):
-        if result == "send":
+        if result == _("send"):
             self.main.groups["contacts"].prepare()
             if self.main.groups["contacts"].ready:
                 self.main.groups["list_choose"].setup(
@@ -426,14 +437,14 @@ class pyphone_sms(edje_group):
                     None,
                     self.cbSend1
                 )
-        elif result == "delete":
+        elif result == _("delete"):
             self.main.groups["error"].activate(
-                "delete?",
-                ("abort", "delete"),
+                _("delete?"),
+                (_("abort"), _("delete")),
                 self.current[self.selected][0], # reference
                 self.cbDelete
             )
-        elif result == "forward":
+        elif result == _("forward"):
             self.main.groups["contacts"].prepare()
             if self.main.groups["contacts"].ready:
                 self.main.groups["list_choose"].setup(
@@ -442,7 +453,7 @@ class pyphone_sms(edje_group):
                     self.current[self.selected][3],
                     self.cbForward
                 )
-        elif result == "reply":
+        elif result == _("reply"):
             self.main.groups["text_edit"].setup(
                 "sms",
                 "", # text
@@ -465,15 +476,15 @@ class pyphone_sms(edje_group):
             if message and self.main.current_group == self.main.groups["main"]:
                 message = message[0]
                 if "read" in message[1]:
-                    from_to = "From"
+                    from_to = _("From")
                     timestamp = message[4]["timestamp"]
                 else:
-                    from_to = "To"
-                    timestamp = "Unknown"
+                    from_to = _("To")
+                    timestamp = _("Unknown")
                 from_text = self.main.groups["contacts"].tryNumberToName( message[2] )
                 self.main.groups["text_show"].setup(
                     "sms",
-                    "%s: %s<br>Date: %s<p>%s" % (
+                    _("%s: %s<br>Date: %s<p>%s") % (
                         from_to,
                         from_text,
                         timestamp,
@@ -575,15 +586,15 @@ class pyphone_sms(edje_group):
     def on_edje_signal_button_action_open_pressed( self, emission, source ):
         if self.selected is not None:
             if "read" in self.current[self.selected][1]:
-                from_to = "From"
+                from_to = _("From")
                 timestamp = self.current[self.selected][4]["timestamp"]
             else:
-                from_to = "To"
-                timestamp = "Unknown"
+                from_to = _("To")
+                timestamp = _("Unknown")
             from_text = self.main.groups["contacts"].tryNumberToName( self.current[self.selected][2] )
             self.main.groups["text_show"].setup(
                 "sms",
-                "%s: %s<br>Date: %s<p>%s" % (
+                _("%s: %s<br>Date: %s<p>%s") % (
                     from_to,
                     from_text,
                     timestamp,
@@ -593,7 +604,8 @@ class pyphone_sms(edje_group):
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
-        self.main.groups["menu"].activate( ( "send", "delete", "forward", "reply" ), self.cbMenu )
+        self.main.groups["menu"].activate( ( _("send"), _("delete"), _("forward"), _("reply") ), self.cbMenu )
+        self.main.groups["menu"].part_text_set( "target_label_cancel", _("cancel") )
 
 
 #----------------------------------------------------------------------------#
@@ -603,6 +615,8 @@ class pyphone_configuration(edje_group):
         edje_group.__init__(self, main, "configuration")
         self.selected = None
         self.profiles = []
+
+        self.part_text_set( "label_action_use", _("use") )
 
     def onShow( self ):
         self.prepare()
@@ -616,7 +630,7 @@ class pyphone_configuration(edje_group):
         else:
             current = 'Test1'
             self.profiles = ["Test1", "Test2"]
-        self.part_text_set( "current_label", u"Current : %s" % current )
+        self.part_text_set( "current_label", _("Current : %s") % current )
 
     def updateList( self):
         self.main.groups["configuration"].prepare()
@@ -649,7 +663,7 @@ class pyphone_configuration(edje_group):
         if self.selected >= len(self.profiles):
             return
         profile = self.profiles[self.selected]
-        self.part_text_set( "current_label", u"Current : %s" % profile )
+        self.part_text_set( "current_label", _("Current : %s") % profile )
         if dbus_object.prefs_obj:
             dbus_object.prefs_iface.SetProfile(profile)
 
@@ -664,6 +678,8 @@ class pyphone_contacts(edje_group):
         self.current = []
         self.page = 0
         self.selected = None
+
+        self.part_text_set( "label_action_dial", _("dial") )
 
     def cbNameEdit( self, name, reference ):
         for i in range( len( self.phonebook ) ):
@@ -739,7 +755,7 @@ class pyphone_contacts(edje_group):
         self.updateList()
 
     def cbMenu( self, result ):
-        if result == "edit name":
+        if result == _("edit name"):
             self.main.groups["text_edit"].setup(
                 "contacts",
                 self.current[self.selected][1], # name
@@ -747,7 +763,7 @@ class pyphone_contacts(edje_group):
                 self.current[self.selected][0], # reference
                 self.cbNameEdit
             )
-        elif result == "edit number":
+        elif result == _("edit number"):
             self.main.groups["number_edit"].setup(
                 "contacts",
                 self.current[self.selected][2], # number
@@ -755,18 +771,18 @@ class pyphone_contacts(edje_group):
                 self.current[self.selected][0], # reference
                 self.cbNumberEdit
             )
-        elif result == "new":
+        elif result == _("new"):
             self.main.groups["text_edit"].setup(
                 "contacts",
                 "", # name
-                "name?", # title
+                _("name?"), # title
                 None, # reference
                 self.cbNew1
             )
-        elif result == "delete":
+        elif result == _("delete"):
             self.main.groups["error"].activate(
-                "delete '%s'?" % self.current[self.selected][1],
-                ("abort", "delete"),
+                _("delete '%s'?") % self.current[self.selected][1],
+                (_("abort"), _("delete")),
                 self.current[self.selected][0], # reference
                 self.cbDelete
             )
@@ -894,7 +910,8 @@ class pyphone_contacts(edje_group):
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
-        self.main.groups["menu"].activate(("edit name", "edit number", "new", "delete"), self.cbMenu)
+        self.main.groups["menu"].activate((_("edit name"), _("edit number"), _("new"), _("delete")), self.cbMenu)
+        self.main.groups["menu"].part_text_set( "target_label_cancel", _("cancel") )
 
 #----------------------------------------------------------------------------#
 class pyphone_wireless( edje_group ):
@@ -1345,25 +1362,25 @@ class pyphone_location( edje_group ):
     def update( self ):
         text = []
         if self.time:
-            text.append( "GPS Time:<tab>%s" % time.strftime("%H:%M:%S", time.gmtime(self.time)) )
+            text.append( _("GPS Time:<tab>%s") % time.strftime("%H:%M:%S", time.gmtime(self.time)) )
         else:
-            text.append( "GPS Time:<tab>N/A" )
+            text.append( _("GPS Time:<tab>N/A") )
         if self.fix:
-            text.append( "Fix:<tab>%s" % { 1: "none", 2: "2D", 3: "3D" }[self.fix] )
+            text.append( _("Fix:<tab>%s") % { 1: _("none"), 2: "2D", 3: "3D" }[self.fix] )
         else:
-            text.append( "Fix:<tab>N/A" )
+            text.append( _("Fix:<tab>N/A") )
         if self.position:
-            text.append( "Lat:<tab>%s<br>Lon:<tab>%s<br>Alt:<tab>%s" % self.position )
+            text.append( _("Lat:<tab>%s<br>Lon:<tab>%s<br>Alt:<tab>%s") % self.position )
         else:
-            text.append( "Lat:<tab>N/A<br>Lon:<tab>N/A<br>Alt:<tab>N/A" )
+            text.append( _("Lat:<tab>N/A<br>Lon:<tab>N/A<br>Alt:<tab>N/A") )
         if self.course:
-            text.append( "Course:<tab>%s<br>Speed:<tab>%s<br>Climb:<tab>%s" % self.course )
+            text.append( _("Course:<tab>%s<br>Speed:<tab>%s<br>Climb:<tab>%s") % self.course )
         else:
-            text.append( "Course:<tab>N/A<br>Speed:<tab>N/A<br>Climb:<tab>N/A" )
+            text.append( _("Course:<tab>N/A<br>Speed:<tab>N/A<br>Climb:<tab>N/A") )
         if self.accuracy:
-            text.append( "P/H/V-DOP:<tab>%s/%s/%s" % self.accuracy )
+            text.append( _("P/H/V-DOP:<tab>%s/%s/%s") % self.accuracy )
         else:
-            text.append( "P/H/V-DOP:<tab>N/A")
+            text.append( _("P/H/V-DOP:<tab>N/A") )
         if self.page != self.oldpage:
             self.oldpage = self.page
             if self.part_swallow_get( "swallow" ):
@@ -1899,10 +1916,12 @@ class pyphone_main_menu( edje_group ):
           self.part_text_set( "label_main_list_%i" % i, u"" )
           self.part_text_set( "label_sub_list_%i" % i, u"" )
 
-        self.part_text_set( "label_main_list_0", u"Take screenshot" )
-        self.part_text_set( "label_sub_list_0", u"and upload to http://scap.linuxtogo.org" )
-        self.part_text_set( "label_main_list_5", u"Exit" )
-        self.part_text_set( "label_sub_list_5", u"Stop and exit Zhone" )
+        self.part_text_set( "label_main_list_0", _("Take screenshot") )
+        self.part_text_set( "label_sub_list_0", _("and upload to http://scap.linuxtogo.org") )
+        self.part_text_set( "label_main_list_5", _("Exit") )
+        self.part_text_set( "label_sub_list_5", _("Stop and exit Zhone") )
+
+        self.part_text_set( "target_label_cancel", _("cancel") )
 
     def deactivate( self ):
         self.signal_emit( "invisible", "" )
@@ -1992,7 +2011,7 @@ class Agent( object ):
     def __init__( self, main ):
         super( Agent, self ).__init__()
         self.main = main
-        self.state = "Waiting for DBus"
+        self.state = _("Waiting for DBus")
         self.onState = []
 
     def registerStateCallback( self, callback ):
@@ -2009,7 +2028,7 @@ class UsageAgent( Agent ):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
         super( UsageAgent, self ).__init__( main )
-        self.name = "Usage"
+        self.name = _("Usage")
         self.busy = None
         self.want = set( ["GSM"] )
         self.avail = set()
@@ -2024,7 +2043,7 @@ class UsageAgent( Agent ):
             pendingReleases = self.have - self.want
             if pendingRequests:
                 self.busy = pendingRequests.pop()
-                self.setState( "Requesting resource %s" % self.busy )
+                self.setState( _("Requesting resource %s") % self.busy )
                 dbus_object.usage_iface.RequestResource(
                     self.busy,
                     reply_handler=self.cbRequestReply,
@@ -2032,7 +2051,7 @@ class UsageAgent( Agent ):
                 )
             elif pendingReleases:
                 self.busy = pendingReleases.pop()
-                self.setState( "Releasing resource %s" % self.busy )
+                self.setState( _("Releasing resource %s") % self.busy )
                 dbus_object.usage_iface.ReleaseResource(
                     self.busy,
                     reply_handler=self.cbReleaseReply,
@@ -2041,7 +2060,7 @@ class UsageAgent( Agent ):
 
     def cbRequestReply( self ):
         self.have.add( self.busy )
-        self.setState( "Requested resource %s" % self.busy )
+        self.setState( _("Requested resource %s") % self.busy )
         if self.busy == "GSM":
             self.main.agents["gsm"].cbResourceReady()
         elif self.busy == "GPS":
@@ -2051,36 +2070,36 @@ class UsageAgent( Agent ):
 
     def cbRequestError( self, e ):
         log_dbus_error( e, "error while requesting resource %s" % self.busy )
-        self.setState( "Requested resource %s with error" % self.busy )
+        self.setState( _("Requested resource %s with error") % self.busy )
         self.error.add( self.busy )
         self.busy = None
         self._update()
 
     def cbReleaseReply( self ):
         self.have.discard( self.busy )
-        self.setState( "Released resource %s" % self.busy )
+        self.setState( _("Released resource %s") % self.busy )
         self.busy = None
         self._update()
 
     def cbReleaseError( self, e ):
         log_dbus_error( e, "error while releasing resource %s" % self.busy )
-        self.setState( "Released resource %s with error" % self.busy )
+        self.setState( _("Released resource %s with error") % self.busy )
         self.have.discard( self.busy )
         self.error.add( self.busy )
         self.busy = None
         self._update()
 
     def cbDBusReady( self ):
-        self.setState( "Requesting resource list" )
+        self.setState( _("Requesting resource list") )
         self.avail = set( dbus_object.usage_iface.ListResources() )
         self._update()
 
     def cbResourceAvailable( self, resourcename, state ):
         if state:
-            self.setState( "Resource added %s" % resourcename )
+            self.setState( _("Resource added %s") % resourcename )
             self.avail.add( resourcename )
         else:
-            self.setState( "Resource removed %s" % resourcename )
+            self.setState( _("Resource removed %s") % resourcename )
             self.avail.discard( resourcename )
         self._update()
 
@@ -2103,7 +2122,7 @@ class GSMAgent( Agent ):
         """
         This is called to start the authentication process
         """
-        self.setState( "Turning on Antenna" )
+        self.setState( _("Turning on Antenna") )
         dbus_object.gsm_device_iface.SetAntennaPower(
             True,
             reply_handler=self.cbAntennaPowerReply,
@@ -2112,7 +2131,7 @@ class GSMAgent( Agent ):
 
     def cbAntennaPowerReply( self ):
         logger.info( "Antenna power OK. Registering to network now." )
-        self.setState( "Registering to network" )
+        self.setState( _("Registering to network") )
         dbus_object.gsm_network_iface.Register(
             reply_handler=self.cbRegisterReply,
             error_handler=self.cbRegisterError
@@ -2120,7 +2139,7 @@ class GSMAgent( Agent ):
 
     def cbAntennaPowerError( self, e ):
         logger.info( "SIM seems to be protected. Checking auth status now." )
-        self.setState( "Reading authentication status" )
+        self.setState( _("Reading authentication status") )
         dbus_object.gsm_sim_iface.GetAuthStatus(
             reply_handler=self.cbAuthStatusReply,
             error_handler=self.cbAuthStatusError,
@@ -2128,24 +2147,24 @@ class GSMAgent( Agent ):
 
     def cbAuthStatusReply( self, authstatus ):
         if authstatus == "READY":
-            self.setState( "Telephony Ready" )
+            self.setState( _("Telephony Ready") )
             # restart auth, should lead to registering this time...
             self.cbResourceReady()
         elif authstatus == "SIM PIN":
-            self.setState( "Waiting for PIN" )
+            self.setState( _("Waiting for PIN") )
             self.main.groups["pin_edit"].setup(
                 "main",
                 "", # number
-                "Enter PIN", # title
+                _("Enter PIN"), # title
                 None, # reference
                 self.cbPINDone
             )
         elif authstatus == "SIM PUK":
-            self.setState( "Waiting for PUK" )
+            self.setState( _("Waiting for PUK") )
             self.main.groups["pin_edit"].setup(
                 "main",
                 "", # number
-                "Enter PUK", # title
+                _("Enter PUK"), # title
                 None, # reference
                 self.cbPUKDone
             )
@@ -2153,11 +2172,11 @@ class GSMAgent( Agent ):
             logger.exception( "Unknown authentication status %s" % authstatus )
 
     def cbAuthStatusError( self, e ):
-        self.setState( "Failed to read authentication status" )
+        self.setState( _("Failed to read authentication status") )
         logger.exception( e )
 
     def cbPINDone( self, pin, *args ):
-        self.setState( "Sending PIN" )
+        self.setState( _("Sending PIN") )
         dbus_object.gsm_sim_iface.SendAuthCode(
             pin,
             reply_handler=self.cbAuthCodeReply,
@@ -2168,7 +2187,7 @@ class GSMAgent( Agent ):
         self.cbAuthStatusReply( "READY" )
 
     def cbAuthCodeError( self, e ):
-        self.setState( "Error while sending PIN" )
+        self.setState( _("Error while sending PIN") )
         logger.exception( e )
         # retry
         self.cbDBusReady()
@@ -2183,7 +2202,7 @@ class GSMAgent( Agent ):
         )
 
     def cbNewPINDone( self, pin, puk ):
-        self.setState( "Sending PUK and new PIN" )
+        self.setState( _("Sending PUK and new PIN") )
         dbus_object.gsm_sim_iface.Unlock(
             pin, puk,
             reply_handler=self.cbUnlockReply,
@@ -2194,7 +2213,7 @@ class GSMAgent( Agent ):
         self.cbAuthStatusReply( "READY" )
 
     def cbUnlockError( self, e ):
-        self.setState( "Error while sending PIN" )
+        self.setState( _("Error while sending PIN") )
         logger.exception( e )
         # retry
         self.cbResourceReady()
@@ -2224,7 +2243,7 @@ class GPSAgent( Agent ):
             pending = self.want - self.have - self.error
             if pending:
                 self.busy = pending.pop()
-                self.setState( "Requesting packet %s" % self.busy )
+                self.setState( _("Requesting packet %s") % self.busy )
                 dbus_object.gps_ubx_iface.SetDebugFilter(
                     self.busy,
                     True,
@@ -2233,19 +2252,19 @@ class GPSAgent( Agent ):
                 )
 
     def cbResourceReady( self ):
-        self.setState( "Requesting debug packets." )
+        self.setState( _("Requesting debug packets.") )
         self.have = set()
         self._update()
 
     def cbSetDebugReply( self ):
         self.have.add( self.busy )
-        self.setState( "Requested debug packet %s" % self.busy )
+        self.setState( _("Requested debug packet %s") % self.busy )
         self.busy = None
         self._update()
 
     def cbSetDebugError( self, e ):
         log_dbus_error( e, "error while requesting debug packet %s" % self.busy )
-        self.setState( "Requested debug packet %s with error" % self.busy )
+        self.setState( _("Requested debug packet %s with error") % self.busy )
         self.error.add( self.busy )
         self.busy = None
         self._update()
@@ -2340,7 +2359,7 @@ class GUI(object):
     def dbus_objectInit( self ):
         logger.debug( "dbus_objectInit..." )
         if not dbus_object.initialize():
-            self.display_state( "connecting w/ dbus..." )
+            self.display_state( _("connecting w/ dbus...") )
             # try again later
             ecore.timer_add( 10.0, self.dbus_objectInit )
             return False
