@@ -1,0 +1,340 @@
+# SOME DESCRIPTIVE TITLE.
+# This file is put in the public domain.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: zhone\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-01-20 13:26+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: zhone:208
+#, python-format
+msgid "Registered: %s"
+msgstr ""
+
+#: zhone:215
+msgid "Failed to register to network"
+msgstr ""
+
+#: zhone:219
+msgid "active"
+msgstr ""
+
+#: zhone:220
+msgid "incoming"
+msgstr ""
+
+#: zhone:221
+msgid "held"
+msgstr ""
+
+#: zhone:222
+msgid "outgoing"
+msgstr ""
+
+#: zhone:223
+msgid "released"
+msgstr ""
+
+#: zhone:268 zhone:613 zhone:919 zhone:1929
+msgid "cancel"
+msgstr ""
+
+#: zhone:270
+msgid "hold"
+msgstr ""
+
+#: zhone:271 zhone:278
+msgid "hangup"
+msgstr ""
+
+#: zhone:274
+msgid "answer"
+msgstr ""
+
+#: zhone:275
+msgid "reject"
+msgstr ""
+
+#: zhone:277
+msgid "resume"
+msgstr ""
+
+#: zhone:349
+msgid "open"
+msgstr ""
+
+#: zhone:436 zhone:612
+msgid "send"
+msgstr ""
+
+#: zhone:445 zhone:448 zhone:612 zhone:787 zhone:790 zhone:918
+msgid "delete"
+msgstr ""
+
+#: zhone:447
+msgid "delete?"
+msgstr ""
+
+#: zhone:448 zhone:790
+msgid "abort"
+msgstr ""
+
+#: zhone:452 zhone:612
+msgid "forward"
+msgstr ""
+
+#: zhone:461 zhone:612
+msgid "reply"
+msgstr ""
+
+#: zhone:484 zhone:594
+msgid "From"
+msgstr ""
+
+#: zhone:487 zhone:597
+msgid "To"
+msgstr ""
+
+#: zhone:488 zhone:598
+msgid "Unknown"
+msgstr ""
+
+#: zhone:492 zhone:602
+#, python-format
+msgid "%s: %s<br>Date: %s<p>%s"
+msgstr ""
+
+#: zhone:624
+msgid "use"
+msgstr ""
+
+#: zhone:638 zhone:671
+#, python-format
+msgid "Current : %s"
+msgstr ""
+
+#: zhone:687
+msgid "dial"
+msgstr ""
+
+#: zhone:763 zhone:918
+msgid "edit name"
+msgstr ""
+
+#: zhone:771 zhone:918
+msgid "edit number"
+msgstr ""
+
+#: zhone:779 zhone:918
+msgid "new"
+msgstr ""
+
+#: zhone:783
+msgid "name?"
+msgstr ""
+
+#: zhone:789
+#, python-format
+msgid "delete '%s'?"
+msgstr ""
+
+#: zhone:1370
+#, python-format
+msgid "GPS Time:<tab>%s"
+msgstr ""
+
+#: zhone:1372
+msgid "GPS Time:<tab>N/A"
+msgstr ""
+
+#: zhone:1374
+#, python-format
+msgid "Fix:<tab>%s"
+msgstr ""
+
+#: zhone:1374
+msgid "none"
+msgstr ""
+
+#: zhone:1376
+msgid "Fix:<tab>N/A"
+msgstr ""
+
+#: zhone:1378
+#, python-format
+msgid "Lat:<tab>%s<br>Lon:<tab>%s<br>Alt:<tab>%s"
+msgstr ""
+
+#: zhone:1380
+msgid "Lat:<tab>N/A<br>Lon:<tab>N/A<br>Alt:<tab>N/A"
+msgstr ""
+
+#: zhone:1382
+#, python-format
+msgid "Course:<tab>%s<br>Speed:<tab>%s<br>Climb:<tab>%s"
+msgstr ""
+
+#: zhone:1384
+msgid "Course:<tab>N/A<br>Speed:<tab>N/A<br>Climb:<tab>N/A"
+msgstr ""
+
+#: zhone:1386
+#, python-format
+msgid "P/H/V-DOP:<tab>%s/%s/%s"
+msgstr ""
+
+#: zhone:1388
+msgid "P/H/V-DOP:<tab>N/A"
+msgstr ""
+
+#: zhone:1924
+msgid "Take screenshot"
+msgstr ""
+
+#: zhone:1925
+msgid "and upload to http://scap.linuxtogo.org"
+msgstr ""
+
+#: zhone:1926
+msgid "Exit"
+msgstr ""
+
+#: zhone:1927
+msgid "Stop and exit Zhone"
+msgstr ""
+
+#: zhone:2019
+msgid "Waiting for DBus"
+msgstr ""
+
+#: zhone:2036
+msgid "Usage"
+msgstr ""
+
+#: zhone:2051
+#, python-format
+msgid "Requesting resource %s"
+msgstr ""
+
+#: zhone:2059
+#, python-format
+msgid "Releasing resource %s"
+msgstr ""
+
+#: zhone:2068
+#, python-format
+msgid "Requested resource %s"
+msgstr ""
+
+#: zhone:2078
+#, python-format
+msgid "Requested resource %s with error"
+msgstr ""
+
+#: zhone:2085
+#, python-format
+msgid "Released resource %s"
+msgstr ""
+
+#: zhone:2091
+#, python-format
+msgid "Released resource %s with error"
+msgstr ""
+
+#: zhone:2098
+msgid "Requesting resource list"
+msgstr ""
+
+#: zhone:2104
+#, python-format
+msgid "Resource added %s"
+msgstr ""
+
+#: zhone:2107
+#, python-format
+msgid "Resource removed %s"
+msgstr ""
+
+#: zhone:2130
+msgid "Turning on Antenna"
+msgstr ""
+
+#: zhone:2139
+msgid "Registering to network"
+msgstr ""
+
+#: zhone:2147
+msgid "Reading authentication status"
+msgstr ""
+
+#: zhone:2155
+msgid "Telephony Ready"
+msgstr ""
+
+#: zhone:2159
+msgid "Waiting for PIN"
+msgstr ""
+
+#: zhone:2163
+msgid "Enter PIN"
+msgstr ""
+
+#: zhone:2168
+msgid "Waiting for PUK"
+msgstr ""
+
+#: zhone:2172
+msgid "Enter PUK"
+msgstr ""
+
+#: zhone:2180
+msgid "Failed to read authentication status"
+msgstr ""
+
+#: zhone:2184
+msgid "Sending PIN"
+msgstr ""
+
+#: zhone:2195 zhone:2221
+msgid "Error while sending PIN"
+msgstr ""
+
+#: zhone:2204
+msgid "Enter new PIN"
+msgstr ""
+
+#: zhone:2210
+msgid "Sending PUK and new PIN"
+msgstr ""
+
+#: zhone:2251
+#, python-format
+msgid "Requesting packet %s"
+msgstr ""
+
+#: zhone:2260
+msgid "Requesting debug packets."
+msgstr ""
+
+#: zhone:2266
+#, python-format
+msgid "Requested debug packet %s"
+msgstr ""
+
+#: zhone:2272
+#, python-format
+msgid "Requested debug packet %s with error"
+msgstr ""
+
+#: zhone:2367
+msgid "connecting w/ dbus..."
+msgstr ""
