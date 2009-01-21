@@ -37,7 +37,7 @@ setup(
     scripts = [ "src/zhone" ],
     data_files = [
         ( "zhone", ["data/themes/zhone.edj"] ),
-        ( "zhone/locale/ru/LC_MESSAGES", ["data/locale/ru/LC_MESSAGES/zhone.po"] ),
+        ( "zhone/locale/ru/LC_MESSAGES", ["data/locale/ru/LC_MESSAGES/zhone.mo"] ),
         ( "pixmaps", ["data/launcher/zhone.png"] ),
         ( "applications", ["data/launcher/zhone.desktop"] ),
         ]
