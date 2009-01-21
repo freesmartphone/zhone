@@ -24,7 +24,7 @@ class my_clean(_clean):
 
 setup(
     name = "zhone",
-    version = "milestone2+git",
+    version = "milestone4.1+git",
     author = "See AUTHORS",
     author_email = "mlauer@vanille-media.de",
     url = "http://www.freesmartphone.org",
@@ -37,7 +37,7 @@ setup(
     scripts = [ "src/zhone" ],
     data_files = [
         ( "zhone", ["data/themes/zhone.edj"] ),
-        ( "zhone/locale/ru/LC_MESSAGES", ["data/locale/ru/LC_MESSAGES/zhone.mo"] ),
+        ( "zhone/locale/ru/LC_MESSAGES", ["data/locale/ru/LC_MESSAGES/zhone.po"] ),
         ( "pixmaps", ["data/launcher/zhone.png"] ),
         ( "applications", ["data/launcher/zhone.desktop"] ),
         ]
