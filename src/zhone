@@ -384,7 +384,9 @@ class pyphone_sms(edje_group):
             self.busy = True
 
     def cbStoreError( self, e ):
-        logger.warning( "error while storing message" )
+        logger.warning( "error while storing message - %s" % e.get_dbus_name() )
+        if e.get_dbus_name() == "org.freesmartphone.GSM.SIM.MemoryFull":
+            self.main.groups["alert"].activate( "<title>Failed to send message</title>SIM Memory Full", [("OK")] )
 
     def cbSend1( self, selected, cb_data ):
         self.main.groups["text_edit"].setup(
@@ -496,6 +498,10 @@ class pyphone_sms(edje_group):
                         textblock_escape( message[3] ).replace( '\n', '<br>' )
                     )
                 )
+            if dbus_object.gsm_device_obj:
+                messagebookInfo = dbus_object.gsm_sim_iface.GetMessagebookInfo()
+                if messagebookInfo["used"] == messagebookInfo["last"]:
+                    self.main.groups["alert"].activate( "<title>Warning</title>SIM Memory Full", [("OK")] )
 
     def cbMessagebookError( self, e ):
         logger.warning( "error while retrieving messagebook" )
