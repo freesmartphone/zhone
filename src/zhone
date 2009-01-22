@@ -443,7 +443,7 @@ class pyphone_sms(edje_group):
                     self.cbSend1
                 )
         elif result == _("delete"):
-            self.main.groups["error"].activate(
+            self.main.groups["alert"].activate(
                 _("delete?"),
                 (_("abort"), _("delete")),
                 self.current[self.selected][0], # reference
@@ -785,7 +785,7 @@ class pyphone_contacts(edje_group):
                 self.cbNew1
             )
         elif result == _("delete"):
-            self.main.groups["error"].activate(
+            self.main.groups["alert"].activate(
                 _("delete '%s'?") % self.current[self.selected][1],
                 (_("abort"), _("delete")),
                 self.current[self.selected][0], # reference
@@ -1963,10 +1963,10 @@ class pyphone_lock( edje_group ):
         self.signal_emit( "invisible", "" )
 
 #----------------------------------------------------------------------------#
-class pyphone_error( edje_group ):
+class pyphone_alert( edje_group ):
 #----------------------------------------------------------------------------#
     def __init__( self, main ):
-        edje_group.__init__( self, main, "error" )
+        edje_group.__init__( self, main, "alert" )
         self.buttons = None
         self.cb_data = None
         self.cb = None
@@ -1976,9 +1976,10 @@ class pyphone_error( edje_group ):
     def on_edje_signal_button_pressed( self, emission, source ):
         id = int( source.split( "_", 1 )[1] )
         self.deactivate()
-        self.cb( self.part_text_get( "label_%i" % id ), self.cb_data )
+        if self.cb_data is not None:
+            self.cb( self.part_text_get( "label_%i" % id ), self.cb_data )
 
-    def activate( self, description, buttons, cb_data, cb ):
+    def activate( self, description, buttons, cb_data = None, cb = None ):
         self.buttons = buttons
         self.cb_data = cb_data
         self.cb = cb
@@ -2322,7 +2323,7 @@ class GUI(object):
                 self.groups[page] = ctor( self )
                 self.evas_canvas.evas_obj.data[page] = self.groups[page]
 
-        for overlay in ("main_menu", "menu", "lock", "error"):
+        for overlay in ("main_menu", "menu", "lock", "alert"):
             ctor = globals().get( "pyphone_%s" % overlay, None )
             if ctor:
                 self.groups[overlay] = ctor( self )

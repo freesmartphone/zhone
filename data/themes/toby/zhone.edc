@@ -80,10 +80,12 @@ styles {
       tag:  "tab" "  \t";
    }
    style {
-      name: "error_style";
-      base: "font="FONT_NAME" font_size=36 align=center valign=center color=#fff wrap=word outline_color=#000 style=soft_outline";
+      name: "alert_style";
+      base: "font="FONT_NAME" font_size=24 align=center valign=center color=#fff wrap=word outline_color=#000 style=soft_outline";
       tag:  "br" "  \n";
       tag:  "tab" "  \t";
+      tag:  "title"  "+ font_size=36";
+      tag:  "/title" "- \n";
    }
 }
 
@@ -1013,7 +1015,7 @@ collections {
                 }
             }
             part {
-                name: "error";
+                name: "alert";
                 type: SWALLOW;
                 description {
                     state: "default" 0.0;
@@ -1179,8 +1181,8 @@ collections {
         #include "zhone_menu.edc"
     }
     group {
-        name: "error";
-        #include "zhone_error.edc"
+        name: "alert";
+        #include "zhone_alert.edc"
     }
     group {
         name: "lock";
