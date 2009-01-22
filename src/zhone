@@ -195,7 +195,10 @@ class pyphone_phone(edje_group):
             self.part_text_set("label", u"".join(self.text)+u" ")
         elif key in "dial":
             if dbus_object.gsm_device_obj:
-                dbus_object.gsm_call_iface.Initiate( "".join(self.text), "voice" )
+                if "".join(self.text)[0] == "*":
+                    dbus_object.gsm_network_iface.SendUssdRequest( "".join(self.text) )
+                else:
+                    dbus_object.gsm_call_iface.Initiate( "".join(self.text), "voice" )
             else:
                 # Fake onCallStatus...
                 self.main.groups["call"].onCallStatus( None, "outgoing", {"peer": "".join(self.text)} )
@@ -215,6 +218,10 @@ class pyphone_phone(edje_group):
             self.main.agents["gsm"].setState(_("Failed to register to network"))
             self.main.groups["main"].targets["phone"] = False
             self.main.groups["main"].update()
+
+    def onIncomingUssd( self, mode, message ):
+        logger.info( "USSD Message: %s" % message )
+        self.main.groups["alert"].activate( "<title>Operator Message</title>%s" % message, [("OK")] )
 
 _("active")
 _("incoming")
@@ -914,10 +921,10 @@ class pyphone_contacts(edje_group):
     def on_edje_signal_button_action_dial_pressed( self, emission, source ):
         if self.selected is not None:
             if dbus_object.gsm_device_obj:
-                dbus_object.gsm_call_iface.Initiate( self.current[self.selected][2], "voice" )
-            else:
-                # Fake onCallStatus...
-                self.main.groups["call"].onCallStatus( None, "outgoing", {"peer": self.current[self.selected][2]} )
+                if self.current[self.selected][2][0] == "*":
+                    dbus_object.gsm_network_iface.SendUssdRequest( self.current[self.selected][2] )
+                else:
+                    dbus_object.gsm_call_iface.Initiate( self.current[self.selected][2], "voice" )
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
@@ -2357,6 +2364,7 @@ class GUI(object):
         dbus_object.onReadyStatus.append( self.groups["contacts"].onReadyStatus )
         dbus_object.onReadyStatus.append( self.groups["sms"].onReadyStatus )
         dbus_object.onIncomingMessage.append( self.groups["sms"].onIncomingMessage )
+        dbus_object.onIncomingUssd.append( self.groups["phone"].onIncomingUssd )
         dbus_object.onIdleStateChanged.append( self.lock_on_idle )
         dbus_object.onNetworkStatus.append( self.groups["phone"].onNetworkStatus )
 
@@ -2512,6 +2520,7 @@ class DBusObject( object ):
         self.onReadyStatus = []
         self.onNetworkStatus = []
         self.onIncomingMessage = []
+        self.onIncomingUssd = []
         self.onIdleStateChanged = []
         self.onInputEvent = []
 
@@ -2626,6 +2635,7 @@ class DBusObject( object ):
             self.gsm_sim_iface.connect_to_signal( "ReadyStatus", self.cbReadyStatus )
             self.gsm_call_iface.connect_to_signal( "CallStatus", self.cbCallStatus )
             self.gsm_network_iface.connect_to_signal( "Status", self.cbNetworkStatus )
+            self.gsm_network_iface.connect_to_signal( "IncomingUssd", self.cbIncomingUssd )
         if self.gsm_device_obj is None:
             failcount += 1
         else:
@@ -2714,6 +2724,11 @@ class DBusObject( object ):
     def cbNetworkStatus( self, status ):
         for cb in self.onNetworkStatus:
             cb( status=status )
+
+    def cbIncomingUssd( self, mode, message ):
+        logger.info("New USSID")
+        for cb in self.onIncomingUssd:
+            cb( mode=mode, message=message )
 
     def cbIncomingMessage( self, index ):
         for cb in self.onIncomingMessage:
