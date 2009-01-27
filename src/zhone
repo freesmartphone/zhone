@@ -239,12 +239,13 @@ class pyphone_call(edje_group):
     def onCallStatus( self, id, status, properties ):
         self.call = id
         self.update_status(status)
-        try:
-            self.part_text_set( "label", self.main.groups["contacts"].tryNumberToName( properties[ "peer" ] ) )
-            self.part_text_set( "sublabel", properties[ "peer" ] )
-
-        except KeyError:
-            pass
+        if not status in ["release"]:
+            if "peer" in properties:
+                self.part_text_set( "label", self.main.groups["contacts"].tryNumberToName( properties[ "peer" ] ) )
+                self.part_text_set( "sublabel", properties[ "peer" ] )
+            else:
+                self.part_text_set( "label", _("unknown number") )
+                self.part_text_set( "sublabel", "" )
 
     @edje.decorators.signal_callback("call_button_pressed", "button_left")
     def on_edje_signal_call_button_left_pressed(self, emission, source):
