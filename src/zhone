@@ -919,7 +919,7 @@ class pyphone_wireless( edje_group ):
 #----------------------------------------------------------------------------#
     class NeighbourGraph( evas.ClippedSmartObject ):
         MAXCELLS = 7
-        MAXRXLEV = 100
+        MAXRXLEV = 64
         def __init__( self, *args, **kargs ):
             evas.ClippedSmartObject.__init__( self, *args, **kargs )
             self.img = self.Image()
