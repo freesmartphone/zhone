@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Zhone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-20 13:24+0100\n"
+"POT-Creation-Date: 2009-01-28 09:26+0100\n"
 "PO-Revision-Date: 2009-01-13 20:05+0400\n"
 "Last-Translator: Oleg Sadov <sadov at linux-ink dot ru>\n"
 "Language-Team: Russian\n"
@@ -15,322 +15,326 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: zhone:208
+#: zhone:211
 #, python-format
 msgid "Registered: %s"
 msgstr "Зарегистрированы в %s"
 
-#: zhone:215
+#: zhone:218
 msgid "Failed to register to network"
 msgstr "Ошибка регистрации в сети"
 
-#: zhone:219
+#: zhone:226
 msgid "active"
 msgstr "активный"
 
-#: zhone:220
+#: zhone:227
 msgid "incoming"
 msgstr "входящий"
 
-#: zhone:221
+#: zhone:228
 msgid "held"
 msgstr "удержание"
 
-#: zhone:222
+#: zhone:229
 msgid "outgoing"
 msgstr "исходящий"
 
-#: zhone:223
+#: zhone:230
 msgid "released"
 msgstr ""
 
-#: zhone:268 zhone:613 zhone:919 zhone:1929
+#: zhone:247
+msgid "unknown number"
+msgstr ""
+
+#: zhone:276 zhone:610 zhone:916 zhone:1927
 msgid "cancel"
 msgstr "выйти"
 
-#: zhone:270
+#: zhone:278
 msgid "hold"
 msgstr "удержать"
 
-#: zhone:271 zhone:278
+#: zhone:279 zhone:286
 msgid "hangup"
 msgstr "прервать"
 
-#: zhone:274
+#: zhone:282
 msgid "answer"
 msgstr "ответить"
 
-#: zhone:275
+#: zhone:283
 msgid "reject"
 msgstr "отменить"
 
-#: zhone:277
+#: zhone:285
 msgid "resume"
 msgstr "продолжить"
 
-#: zhone:349
+#: zhone:340
 msgid "open"
 msgstr "выбор"
 
-#: zhone:436 zhone:612
+#: zhone:429 zhone:609
 msgid "send"
 msgstr "отправить"
 
-#: zhone:445 zhone:448 zhone:612 zhone:787 zhone:790 zhone:918
+#: zhone:438 zhone:441 zhone:609 zhone:784 zhone:787 zhone:915
 msgid "delete"
 msgstr "удалить"
 
-#: zhone:447
+#: zhone:440
 msgid "delete?"
 msgstr "удалить?"
 
-#: zhone:448 zhone:790
+#: zhone:441 zhone:787
 msgid "abort"
 msgstr "прервать"
 
-#: zhone:452 zhone:612
+#: zhone:445 zhone:609
 msgid "forward"
 msgstr "переслать"
 
-#: zhone:461 zhone:612
+#: zhone:454 zhone:609
 msgid "reply"
 msgstr "ответить"
 
-#: zhone:484 zhone:594
+#: zhone:477 zhone:591
 msgid "From"
 msgstr "От"
 
-#: zhone:487 zhone:597
+#: zhone:480 zhone:594
 msgid "To"
 msgstr "Для"
 
-#: zhone:488 zhone:598
+#: zhone:481 zhone:595
 msgid "Unknown"
 msgstr "Неизвестно"
 
-#: zhone:492 zhone:602
+#: zhone:485 zhone:599
 #, python-format
 msgid "%s: %s<br>Date: %s<p>%s"
 msgstr "%s: %s<br>Дата: %s<p>%s"
 
-#: zhone:624
+#: zhone:621
 msgid "use"
 msgstr "выбор"
 
-#: zhone:638 zhone:671
+#: zhone:635 zhone:668
 #, python-format
 msgid "Current : %s"
 msgstr "Текущая : %s"
 
-#: zhone:687
+#: zhone:684
 msgid "dial"
 msgstr "вызов"
 
-#: zhone:763 zhone:918
+#: zhone:760 zhone:915
 msgid "edit name"
 msgstr "изменить имя"
 
-#: zhone:771 zhone:918
+#: zhone:768 zhone:915
 msgid "edit number"
 msgstr "изменить номер"
 
-#: zhone:779 zhone:918
+#: zhone:776 zhone:915
 msgid "new"
 msgstr "создать"
 
-#: zhone:783
+#: zhone:780
 msgid "name?"
 msgstr "имя?"
 
-#: zhone:789
+#: zhone:786
 #, python-format
 msgid "delete '%s'?"
 msgstr "удалить '%s'?"
 
-#: zhone:1370
+#: zhone:1368
 #, python-format
 msgid "GPS Time:<tab>%s"
 msgstr "GPS время:<tab>%s"
 
-#: zhone:1372
+#: zhone:1370
 msgid "GPS Time:<tab>N/A"
 msgstr "GPS время:<tab>Н/Д"
 
-#: zhone:1374
+#: zhone:1372
 #, python-format
 msgid "Fix:<tab>%s"
 msgstr "Фиксация:<tab>%s"
 
-#: zhone:1374
+#: zhone:1372
 msgid "none"
 msgstr "отсутствует"
 
-#: zhone:1376
+#: zhone:1374
 msgid "Fix:<tab>N/A"
 msgstr "Фиксация:<tab>Н/Д"
 
-#: zhone:1378
+#: zhone:1376
 #, python-format
 msgid "Lat:<tab>%s<br>Lon:<tab>%s<br>Alt:<tab>%s"
 msgstr "Шрт:<tab>%s<br>Длг:<tab>%s<br>Вст:<tab>%s"
 
-#: zhone:1380
+#: zhone:1378
 msgid "Lat:<tab>N/A<br>Lon:<tab>N/A<br>Alt:<tab>N/A"
 msgstr "Шрт:<tab>Н/Д<br>Длг:<tab>Н/Д<br>Вст:<tab>Н/Д"
 
-#: zhone:1382
+#: zhone:1380
 #, python-format
 msgid "Course:<tab>%s<br>Speed:<tab>%s<br>Climb:<tab>%s"
 msgstr "Курс:<tab>%s<br>Скорость:<tab>%s<br>Подъём:<tab>%s"
 
-#: zhone:1384
+#: zhone:1382
 msgid "Course:<tab>N/A<br>Speed:<tab>N/A<br>Climb:<tab>N/A"
 msgstr "Курс:<tab>Н/Д<br>Скорость:<tab>Н/Д<br>Подъём:<tab>Н/Д"
 
-#: zhone:1386
+#: zhone:1384
 #, python-format
 msgid "P/H/V-DOP:<tab>%s/%s/%s"
 msgstr "P/H/V-DOP:<tab>%s/%s/%s"
 
-#: zhone:1388
+#: zhone:1386
 msgid "P/H/V-DOP:<tab>N/A"
 msgstr "P/H/V-DOP:<tab>Н/Д"
 
-#: zhone:1924
+#: zhone:1922
 msgid "Take screenshot"
 msgstr "Снимок экрана"
 
-#: zhone:1925
+#: zhone:1923
 msgid "and upload to http://scap.linuxtogo.org"
 msgstr "и загрузка на http://scap.linuxtogo.org"
 
-#: zhone:1926
+#: zhone:1924
 msgid "Exit"
 msgstr "Выключить"
 
-#: zhone:1927
+#: zhone:1925
 msgid "Stop and exit Zhone"
 msgstr "телефон, остановив Zhone"
 
-#: zhone:2019
+#: zhone:2018
 msgid "Waiting for DBus"
 msgstr "Ожидаем DBus"
 
-#: zhone:2036
+#: zhone:2035
 msgid "Usage"
 msgstr "Выполняется"
 
-#: zhone:2051
+#: zhone:2050
 #, python-format
 msgid "Requesting resource %s"
 msgstr "Запрос ресурса %s"
 
-#: zhone:2059
+#: zhone:2058
 #, python-format
 msgid "Releasing resource %s"
 msgstr "Освобожение ресурса %s"
 
-#: zhone:2068
+#: zhone:2067
 #, python-format
 msgid "Requested resource %s"
 msgstr "Запрошен ресурс %s"
 
-#: zhone:2078
+#: zhone:2077
 #, python-format
 msgid "Requested resource %s with error"
 msgstr "Ошибка при запросе ресурса %s"
 
-#: zhone:2085
+#: zhone:2084
 #, python-format
 msgid "Released resource %s"
 msgstr "Освобожен ресурс %s"
 
-#: zhone:2091
+#: zhone:2090
 #, python-format
 msgid "Released resource %s with error"
 msgstr "Ошибка освобождения ресурса %s"
 
-#: zhone:2098
+#: zhone:2097
 msgid "Requesting resource list"
 msgstr "Запрос списка ресурсов"
 
-#: zhone:2104
+#: zhone:2103
 #, python-format
 msgid "Resource added %s"
 msgstr "Ресурс добавлен %s"
 
-#: zhone:2107
+#: zhone:2106
 #, python-format
 msgid "Resource removed %s"
 msgstr "Ресурс удален %s"
 
-#: zhone:2130
+#: zhone:2129
 msgid "Turning on Antenna"
 msgstr "Включение антенны"
 
-#: zhone:2139
+#: zhone:2138
 msgid "Registering to network"
 msgstr "Подключение к сети"
 
-#: zhone:2147
+#: zhone:2146
 msgid "Reading authentication status"
 msgstr "Чтение аутентификационного статуса"
 
-#: zhone:2155
+#: zhone:2154
 msgid "Telephony Ready"
 msgstr "Телефон включен"
 
-#: zhone:2159
+#: zhone:2158
 msgid "Waiting for PIN"
 msgstr "Ожидание PIN-кода"
 
-#: zhone:2163
+#: zhone:2162
 msgid "Enter PIN"
 msgstr "Введите PIN"
 
-#: zhone:2168
+#: zhone:2167
 msgid "Waiting for PUK"
 msgstr "Ожидание PUK-кода"
 
-#: zhone:2172
+#: zhone:2171
 msgid "Enter PUK"
 msgstr "Введите PUK"
 
-#: zhone:2180
+#: zhone:2179
 msgid "Failed to read authentication status"
 msgstr "Ошибка чтения статуса аутентификации"
 
-#: zhone:2184
+#: zhone:2183
 msgid "Sending PIN"
 msgstr "Проверка PIN"
 
-#: zhone:2195 zhone:2221
+#: zhone:2194 zhone:2220
 msgid "Error while sending PIN"
 msgstr "Неверный PIN"
 
-#: zhone:2204
+#: zhone:2203
 msgid "Enter new PIN"
 msgstr "Введите новый PIN"
 
-#: zhone:2210
+#: zhone:2209
 msgid "Sending PUK and new PIN"
 msgstr "Проверка PUK и установка нового PIN"
 
-#: zhone:2251
+#: zhone:2250
 #, python-format
 msgid "Requesting packet %s"
 msgstr "Запрос пакета %s"
 
-#: zhone:2260
+#: zhone:2259
 msgid "Requesting debug packets."
 msgstr "Запрос отладочного пакета"
 
-#: zhone:2266
+#: zhone:2265
 #, python-format
 msgid "Requested debug packet %s"
 msgstr "Запрос отладочного пакета %s"
 
-#: zhone:2272
+#: zhone:2271
 #, python-format
 msgid "Requested debug packet %s with error"
 msgstr "Запрошенный отладочный пакет %s имеет ошибки"
