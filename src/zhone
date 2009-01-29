@@ -1357,6 +1357,7 @@ class pyphone_location( edje_group ):
         self.accuracy = None
         self.course = None
         self.position = None
+        self.ttff = None
         self.update()
 
         #self.signalgraph.update( values = [(1, True, 20.0), (2, False, 34.0), (5, True, 25.0), (10, False, 0.0)] )
@@ -1368,7 +1369,9 @@ class pyphone_location( edje_group ):
             text.append( _("GPS Time:<tab>%s") % time.strftime("%H:%M:%S", time.gmtime(self.time)) )
         else:
             text.append( _("GPS Time:<tab>N/A") )
-        if self.fix:
+        if self.fix and self.ttff:
+            text.append( _("Fix:<tab>%s (%.1fs)") % ( { 1: _("none"), 2: "2D", 3: "3D" }[self.fix], self.ttff ) )
+        elif self.fix:
             text.append( _("Fix:<tab>%s") % { 1: _("none"), 2: "2D", 3: "3D" }[self.fix] )
         else:
             text.append( _("Fix:<tab>N/A") )
@@ -1441,7 +1444,12 @@ class pyphone_location( edje_group ):
 
     def onUBXDebugPacket( self, clid, length, data ):
         logger.debug( "gps got ubxdebug packet" )
-        if clid == "NAV-SVINFO":
+        if clid == "NAV-STATUS" and data and 'TTFF' in data[0]:
+            if data[0]['TTFF']:
+                self.ttff = data[0]['TTFF']/1000.0
+            else:
+                self.ttff = None
+        elif clid == "NAV-SVINFO":
             self.signalgraph.update( ubxinfo = data )
 
     def onShow( self ):
@@ -2731,7 +2739,7 @@ class DBusObject( object ):
 #=========================================================================#
 if __name__ == "__main__":
 #=========================================================================#
-
+    print "zhone starting"
     options, args = MyOptionParser().parse_args()
     dbus_object = DBusObject()
     gui = GUI( options, args )
