@@ -357,8 +357,8 @@ class pyphone_sms(edje_group):
     def cbReceiveUnsentError( self, e ):
         logger.info( "did not receive any unsent messages: %s" % e )
 
-    def cbSendReply( self, reference ):
-        logger.info( "sent message successfully w/ reference number %d" % reference )
+    def cbSendReply( self, reference, timestamp ):
+        logger.info( "sent message successfully w/ reference number %d (timestamp: %s)" % ( reference, timestamp ) )
 
     def cbSendError( self, e ):
         logger.error( "could not send message. leaving in outgoing. error was: %s" % e )
