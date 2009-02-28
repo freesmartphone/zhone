@@ -1207,7 +1207,7 @@ class pyphone_location( edje_group ):
                 elif self.generic:
                     for sv, (used, signal) in self.generic.items():
                         text = [ "", "%i" % sv, "%i" % signal, "", "", "" ]
-                        rows.append( ( cno, used, 0, text, "" ) )
+                        rows.append( ( signal, used, 0, text, "" ) )
                 if rows:
                     count = 1 + len( rows )
                     self.maxsignal = float( max( [x[0] for x in rows] + [self.maxsignal] ) )
