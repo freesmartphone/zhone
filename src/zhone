@@ -335,27 +335,12 @@ class pyphone_sms(edje_group):
         self.page = 0
         self.selected = None
         self.newindex = None
-        self.senderTimer = ecore.timer_add( 60, self.processUnsentMessages )
 
         self.part_text_set( "label_action_open", _("open") )
 
-    def processUnsentMessages( self ):
-        if not dbus_object.gsm_device_obj:
-            return True
-
-        logger.info( "checking for unsent messages" )
-        dbus_object.gsm_sim_iface.RetrieveMessagebook( "unsent", reply_handler=self.cbReceiveUnsentReply, error_handler=self.cbReceiveUnsentError )
-
-        return True # call me again
-
-    def cbReceiveUnsentReply( self, messages ):
-        for message in messages:
-            index, status, number, content, features = message
-            logger.info( "trying to send message w/ index %d..." % index )
-            dbus_object.gsm_sim_iface.SendStoredMessage( index, reply_handler=self.cbSendReply, error_handler=self.cbSendError )
-
-    def cbReceiveUnsentError( self, e ):
-        logger.info( "did not receive any unsent messages: %s" % e )
+    def sendMessage( self, index ):
+        logger.info( "trying to send message w/ index %d..." % index )
+        dbus_object.gsm_sim_iface.SendStoredMessage( index, reply_handler=self.cbSendReply, error_handler=self.cbSendError )
 
     def cbSendReply( self, reference, timestamp ):
         logger.info( "sent message successfully w/ reference number %d (timestamp: %s)" % ( reference, timestamp ) )
@@ -365,7 +350,7 @@ class pyphone_sms(edje_group):
 
     def cbStoreReply( self, result ):
         logger.info( "stored message lives at SIM position %d" % result )
-        self.processUnsentMessages()
+        self.sendMessage( result )
         if not self.busy:
             dbus_object.gsm_sim_iface.RetrieveMessagebook(
                 "all",
