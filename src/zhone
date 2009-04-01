@@ -1005,12 +1005,18 @@ class pyphone_wireless( edje_group ):
 
         self.timer = None
 
+        self.code = None
         self.gsm_serving = None
         self.gsm_neighbour = None
+        self.location = None
         self.update()
 
     def update( self ):
         text = []
+        if self.code:
+            text.append( "MCC/MNC:<tab>%s/%s" % ( self.code[:3], self.code[3:] ) )
+        else:
+            text.append( "MCC/MNC:<tab>N/A" )
         if self.gsm_serving:
             text.append( "ARFCN:<tab>%s" % self.gsm_serving['arfcn'] )
             text.append( "LAC/CID:<tab>%s/%s" % ( self.gsm_serving['lac'], self.gsm_serving['cid'] ) )
@@ -1025,6 +1031,15 @@ class pyphone_wireless( edje_group ):
             text.append( "Cell Type:<tab>%s" % self.gsm_serving['ctype'] )
         else:
             text.append( "Serving Cell:<tab>N/A" )
+        celldb = []
+        if self.location:
+            celldb.append( "Lat:<tab>%s" % self.location[1] )
+            celldb.append( "Lon:<tab>%s" % self.location[2] )
+            celldb.append( "Alt:<tab>%s" % self.location[3] )
+            celldb.append( "Size:<tab>%s" % self.location[4] )
+            celldb.append( "Count:<tab>%s" % self.location[5] )
+        else:
+            celldb.append( "Cell DB:<tab>N/A" )
         cells = []
         if self.gsm_serving:
             cells.append(self.gsm_serving)
@@ -1041,8 +1056,6 @@ class pyphone_wireless( edje_group ):
                 self.part_swallow( "swallow", self.neighbourgraph )
                 self.neighbourgraph.show()
             elif self.page == "right":
-                #self.part_swallow( "swallow", self.positiongraph )
-                #self.positiongraph.show()
                 pass
         if self.page == "left":
             self.part_text_set( "status", u"<br>".join( text ) )
@@ -1050,7 +1063,7 @@ class pyphone_wireless( edje_group ):
             self.part_text_set( "status", u"" )
             self.neighbourgraph.update(cells)
         elif self.page == "right":
-            self.part_text_set( "status", u"" )
+            self.part_text_set( "status", u"<br>".join( celldb ) )
 
     def cbServingCellReply( self, serving ):
         logger.debug( "gsm serving cell status updated: %s" % serving )
@@ -1091,7 +1104,33 @@ class pyphone_wireless( edje_group ):
             reply_handler=self.cbNeighbourCellReply,
             error_handler=self.cbNeighbourCellError,
         )
+        cells = []
+        if self.gsm_serving:
+            cells.append(self.gsm_serving)
+        if self.gsm_neighbour:
+            cells.extend(self.gsm_neighbour)
+        if self.code and cells:
+            ids = []
+            for cell in cells:
+                ids.append((int(cell['lac'], 16), int(cell['cid'], 16)))
+            print (self.code[:3], self.code[3:], ids)
+            location = dbus_object.gsm_data_iface.GetCellLocation(self.code[:3], self.code[3:], ids)
+            print location
+            if location is None:
+                self.location = None
+            if location[0] is False:
+                self.location = None
+            else:
+                self.location = location
+        else:
+            self.location = None
         return True
+
+    def onNetworkStatus( self, status ):
+        if 'code' in status:
+            self.code = str(status['code'])
+        else:
+            self.code = None
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_select_*" )
     def on_edje_signal_button_list_pressed( self, emission, source ):
@@ -2344,6 +2383,7 @@ class GUI(object):
         dbus_object.onIncomingUssd.append( self.groups["phone"].onIncomingUssd )
         dbus_object.onIdleStateChanged.append( self.lock_on_idle )
         dbus_object.onNetworkStatus.append( self.groups["phone"].onNetworkStatus )
+        dbus_object.onNetworkStatus.append( self.groups["wireless"].onNetworkStatus )
 
         logger.debug( "GUI init done" )
 
@@ -2524,6 +2564,8 @@ class DBusObject( object ):
         self.inputnotifier_iface = None
         self.prefs_obj = None
         self.prefs_iface = None
+        self.gsm_server_obj = None
+        self.gsm_data_iface = None
 
         self.fullinit = False
 
@@ -2600,7 +2642,7 @@ class DBusObject( object ):
 
         # Phone
         self.gsm_device_obj = self.tryGetProxy( 'org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Device' )
-
+        self.gsm_server_obj = self.tryGetProxy( 'org.freesmartphone.ogsmd', '/org/freesmartphone/GSM/Server' )
         if ( self.gsm_device_obj is not None ) and ( self.gsm_device_iface is None ):
             self.gsm_device_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.Device')
             self.gsm_sim_iface = Interface(self.gsm_device_obj, 'org.freesmartphone.GSM.SIM')
@@ -2613,7 +2655,9 @@ class DBusObject( object ):
             self.gsm_call_iface.connect_to_signal( "CallStatus", self.cbCallStatus )
             self.gsm_network_iface.connect_to_signal( "Status", self.cbNetworkStatus )
             self.gsm_network_iface.connect_to_signal( "IncomingUssd", self.cbIncomingUssd )
-        if self.gsm_device_obj is None:
+        if ( self.gsm_server_obj is not None ) and ( self.gsm_data_iface is None ):
+            self.gsm_data_iface = Interface(self.gsm_server_obj, 'org.freesmartphone.GSM.Data')
+        if self.gsm_device_obj is None or self.gsm_server_obj is None:
             failcount += 1
         else:
             logger.debug( "gsm ok: %s" % self.gsm_network_iface )
