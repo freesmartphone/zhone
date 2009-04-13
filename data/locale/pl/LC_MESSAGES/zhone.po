@@ -1,0 +1,363 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Zhone\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-01-28 09:26+0100\n"
+"PO-Revision-Date: 2009-04-13 15:10+0100\n"
+"Last-Translator: Sebastian Krzyszkowiak <seba.dos1@gmail.com>\n"
+"Language-Team: Polish\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: zhone:211
+#, python-format
+msgid "Registered: %s"
+msgstr "Zarejestrowano: %s"
+
+#: zhone:218
+msgid "Failed to register to network"
+msgstr "Nie można połączyć się z siecią"
+
+#: zhone:226
+msgid "active"
+msgstr "aktywny"
+
+#: zhone:227
+msgid "incoming"
+msgstr "przychodzący"
+
+#: zhone:228
+msgid "held"
+msgstr "zawieszony"
+
+#: zhone:229
+msgid "outgoing"
+msgstr "wychodzący"
+
+#: zhone:230
+msgid "released"
+msgstr "zakończony"
+
+#: zhone:247
+msgid "unknown number"
+msgstr "nieznany numer"
+
+#: zhone:276
+#: zhone:610
+#: zhone:916
+#: zhone:1927
+msgid "cancel"
+msgstr "anuluj"
+
+#: zhone:278
+msgid "hold"
+msgstr "zawieś"
+
+#: zhone:279
+#: zhone:286
+msgid "hangup"
+msgstr "rozłąć"
+
+#: zhone:282
+msgid "answer"
+msgstr "odbierz"
+
+#: zhone:283
+msgid "reject"
+msgstr "odrzuć"
+
+#: zhone:285
+msgid "resume"
+msgstr "wznów"
+
+#: zhone:340
+msgid "open"
+msgstr "otwórz"
+
+#: zhone:429
+#: zhone:609
+msgid "send"
+msgstr "wyślij"
+
+#: zhone:438
+#: zhone:441
+#: zhone:609
+#: zhone:784
+#: zhone:787
+#: zhone:915
+msgid "delete"
+msgstr "usuń"
+
+#: zhone:440
+msgid "delete?"
+msgstr "usunąć?"
+
+#: zhone:441
+#: zhone:787
+msgid "abort"
+msgstr "anuluj"
+
+#: zhone:445
+#: zhone:609
+msgid "forward"
+msgstr "prześlij dalej"
+
+#: zhone:454
+#: zhone:609
+msgid "reply"
+msgstr "odpowiedz"
+
+#: zhone:477
+#: zhone:591
+msgid "From"
+msgstr "Od:"
+
+#: zhone:480
+#: zhone:594
+msgid "To"
+msgstr "Do:"
+
+#: zhone:481
+#: zhone:595
+msgid "Unknown"
+msgstr "Nieznany"
+
+#: zhone:485
+#: zhone:599
+#, python-format
+msgid "%s: %s<br>Date: %s<p>%s"
+msgstr "%s: %s<br>Data: %s<p>%s"
+
+#: zhone:621
+msgid "use"
+msgstr "użyj"
+
+#: zhone:635
+#: zhone:668
+#, python-format
+msgid "Current : %s"
+msgstr "Aktualny : %s"
+
+#: zhone:684
+msgid "dial"
+msgstr "dzwoń"
+
+#: zhone:760
+#: zhone:915
+msgid "edit name"
+msgstr "edytuj nazwę"
+
+#: zhone:768
+#: zhone:915
+msgid "edit number"
+msgstr "edytuj numer"
+
+#: zhone:776
+#: zhone:915
+msgid "new"
+msgstr "nowy"
+
+#: zhone:780
+msgid "name?"
+msgstr "nazwa?"
+
+#: zhone:786
+#, python-format
+msgid "delete '%s'?"
+msgstr "usunąć '%s'?"
+
+#: zhone:1368
+#, python-format
+msgid "GPS Time:<tab>%s"
+msgstr "Czas GPS:<tab>%s"
+
+#: zhone:1370
+msgid "GPS Time:<tab>N/A"
+msgstr "Czas GPS:<tab>nieznany"
+
+#: zhone:1372
+#, python-format
+msgid "Fix:<tab>%s"
+msgstr "Fix:<tab>%s"
+
+#: zhone:1372
+msgid "none"
+msgstr "brak"
+
+#: zhone:1374
+msgid "Fix:<tab>N/A"
+msgstr "Fix:<tab>nieznany"
+
+#: zhone:1376
+#, python-format
+msgid "Lat:<tab>%s<br>Lon:<tab>%s<br>Alt:<tab>%s"
+msgstr "Szerokość:<tab>%s<br>Długość:<tab>%s<br>Wysokość:<tab>%s"
+
+#: zhone:1378
+msgid "Lat:<tab>N/A<br>Lon:<tab>N/A<br>Alt:<tab>N/A"
+msgstr "Szerokość:<tab>nieznana<br>Długość:<tab>nieznana<br>Wysokość:<tab>nieznana"
+
+#: zhone:1380
+#, python-format
+msgid "Course:<tab>%s<br>Speed:<tab>%s<br>Climb:<tab>%s"
+msgstr "Kierunek:<tab>%s<br>Szybkość:<tab>%s<br>Podejście:<tab>%s"
+
+#: zhone:1382
+msgid "Course:<tab>N/A<br>Speed:<tab>N/A<br>Climb:<tab>N/A"
+msgstr "Kierunek:<tab>nieznany<br>Szybkość:<tab>nieznana<br>Podejście:<tab>nieznane"
+
+#: zhone:1384
+#, python-format
+msgid "P/H/V-DOP:<tab>%s/%s/%s"
+msgstr "P/H/V-DOP:<tab>%s/%s/%s"
+
+#: zhone:1386
+msgid "P/H/V-DOP:<tab>N/A"
+msgstr "P/H/V-DOP:<tab>nieznane"
+
+#: zhone:1922
+msgid "Take screenshot"
+msgstr "Zrzut ekranu"
+
+#: zhone:1923
+msgid "and upload to http://scap.linuxtogo.org"
+msgstr "i wysłanie na http://scap.linuxtogo.org"
+
+#: zhone:1924
+msgid "Exit"
+msgstr "Wyjście"
+
+#: zhone:1925
+msgid "Stop and exit Zhone"
+msgstr "Wyjście z Zhone"
+
+#: zhone:2018
+msgid "Waiting for DBus"
+msgstr "Oczekiwanie na DBus"
+
+#: zhone:2035
+msgid "Usage"
+msgstr "Użycie"
+
+#: zhone:2050
+#, python-format
+msgid "Requesting resource %s"
+msgstr "Zamawianie zasobu %s"
+
+#: zhone:2058
+#, python-format
+msgid "Releasing resource %s"
+msgstr "Zwalnianie zasobu %s"
+
+#: zhone:2067
+#, python-format
+msgid "Requested resource %s"
+msgstr "Zamówiono zasób %s"
+
+#: zhone:2077
+#, python-format
+msgid "Requested resource %s with error"
+msgstr "Zamówiono zasób %s, ale wystąpiły błędy"
+
+#: zhone:2084
+#, python-format
+msgid "Released resource %s"
+msgstr "Zwolniono zasób %s"
+
+#: zhone:2090
+#, python-format
+msgid "Released resource %s with error"
+msgstr "Zwolniono zasób %s, ale wystąpiły błędy"
+
+#: zhone:2097
+msgid "Requesting resource list"
+msgstr "Ządanie listy zasobów"
+
+#: zhone:2103
+#, python-format
+msgid "Resource added %s"
+msgstr "Zasób %s dodany"
+
+#: zhone:2106
+#, python-format
+msgid "Resource removed %s"
+msgstr "Zasób %s usunięty"
+
+#: zhone:2129
+msgid "Turning on Antenna"
+msgstr "Włączanie anteny GSM"
+
+#: zhone:2138
+msgid "Registering to network"
+msgstr "Rejestrowanie do sieci"
+
+#: zhone:2146
+msgid "Reading authentication status"
+msgstr "Odczytywanie stanu autoryzacji"
+
+#: zhone:2154
+msgid "Telephony Ready"
+msgstr "Telefonia gotowa"
+
+#: zhone:2158
+msgid "Waiting for PIN"
+msgstr "Oczekiwanie na PIN"
+
+#: zhone:2162
+msgid "Enter PIN"
+msgstr "Wpisz PIN"
+
+#: zhone:2167
+msgid "Waiting for PUK"
+msgstr "Oczekiwanie na PUK"
+
+#: zhone:2171
+msgid "Enter PUK"
+msgstr "Wpisz PUK"
+
+#: zhone:2179
+msgid "Failed to read authentication status"
+msgstr "Nie udało się odczytać statusu autoryzacji"
+
+#: zhone:2183
+msgid "Sending PIN"
+msgstr "Wysyłanie PINu"
+
+#: zhone:2194
+#: zhone:2220
+msgid "Error while sending PIN"
+msgstr "Błąd podczas wysyłania PINu"
+
+#: zhone:2203
+msgid "Enter new PIN"
+msgstr "Wpisz nowy PIN"
+
+#: zhone:2209
+msgid "Sending PUK and new PIN"
+msgstr "Wysyłanie kodu PUK i nowego PINu"
+
+#: zhone:2250
+#, python-format
+msgid "Requesting packet %s"
+msgstr "Zamawianie pakietu %s"
+
+#: zhone:2259
+msgid "Requesting debug packets."
+msgstr "Zamawianie pakietów debugujących."
+
+#: zhone:2265
+#, python-format
+msgid "Requested debug packet %s"
+msgstr "Zamówiono pakiet debugujący %s"
+
+#: zhone:2271
+#, python-format
+msgid "Requested debug packet %s with error"
+msgstr "Zamówiono pakiet debugujący %s, ale wystąpiły błędy"
+
+#: zhone:2367
+msgid "connecting w/ dbus..."
+msgstr "łączenie z dbusem..."
+
+
