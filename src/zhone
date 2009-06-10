@@ -2441,15 +2441,7 @@ class GUI(object):
 class EvasCanvas(object):
 #----------------------------------------------------------------------------#
     def __init__(self, fullscreen, engine, size):
-        if engine == "x11":
-            f = ecore.evas.SoftwareX11
-        elif engine == "x11-16":
-            if ecore.evas.engine_type_supported_get("software_x11_16"):
-                f = ecore.evas.SoftwareX11_16
-            else:
-                logger.warning( "x11-16 is not supported, fallback to x11" )
-                f = ecore.evas.SoftwareX11
-
+        f = ecore.evas.SoftwareX11
         self.evas_obj = f(w=size[0], h=size[1])
         self.evas_obj.callback_delete_request = self.on_delete_request
         self.evas_obj.callback_resize = self.on_resize
