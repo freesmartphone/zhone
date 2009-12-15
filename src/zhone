@@ -2198,6 +2198,9 @@ class GSMAgent( Agent ):
         """
         This is called to start the authentication process
         """
+        self.turnOnAntenna()
+
+    def turnOnAntenna( self ):
         self.setState( _("Turning on Antenna") )
         dbus_object.gsm_device_iface.SetAntennaPower(
             True,
@@ -2215,6 +2218,9 @@ class GSMAgent( Agent ):
 
     def cbAntennaPowerError( self, e ):
         logger.info( "SIM seems to be protected. Checking auth status now." )
+        self.handleAuth()
+
+    def handleAuth( self ):
         self.setState( _("Reading authentication status") )
         dbus_object.gsm_sim_iface.GetAuthStatus(
             reply_handler=self.cbAuthStatusReply,
