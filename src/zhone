@@ -2713,7 +2713,10 @@ class DBusObject( object ):
         # Prefs
         self.prefs_obj = self.tryGetProxy( 'org.freesmartphone.opreferencesd', '/org/freesmartphone/Preferences' )
         self.prefs_iface = Interface( self.prefs_obj, 'org.freesmartphone.Preferences' )
-        logger.debug( "preferences ok: %s" % self.prefs_iface )
+	if self.prefs_obj is None:
+	    failcount += 1
+	else:
+            logger.debug( "preferences ok: %s" % self.prefs_iface )
 
         logger.debug( "failcount = %d" % failcount )
         if failcount == 0:
