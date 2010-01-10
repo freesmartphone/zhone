@@ -524,7 +524,6 @@ class pyphone_sms(edje_group):
 
     def onShow( self ):
         self.prepare()
-        self.updateList()
 
     def updateList( self):
         self.main.groups["contacts"].prepare()
@@ -783,6 +782,7 @@ class pyphone_contacts(edje_group):
         self.updateList()
         self.main.groups["main"].targets["contacts"] = True
         self.main.groups["main"].update()
+        self.main.groups["sms"].updateList()
 
     def cbPhonebookError( self, e ):
         logger.error( "error while retrieving phonebook %s" % e )
