@@ -1898,6 +1898,15 @@ class pyphone_text_edit( edje_group ):
         key = event.string
         if key == "\x08":
             self.text = self.text[:-1]
+        # Check if the key is aumlaut or oumlaut
+        elif event.key == "adiaeresis":
+            self.text += u"ä"
+        elif event.key == "odiaeresis":
+            self.text += u"ö"
+        elif event.key == "Adiaeresis":
+            self.text += u"Ä"
+        elif event.key == "Odiaeresis":
+            self.text += u"Ö"
         elif key is not None:
             self.text += key
         self.part_text_set( "label", self.text )
