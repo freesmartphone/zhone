@@ -2622,6 +2622,7 @@ class DBusObject( object ):
         object = None
         try:
             object = self.objects[ "%s:%s" % ( busname, objname ) ]
+            logger.info( "use cached proxy for %s:%s" % ( busname, objname ) )
         except KeyError:
             try:
                 object = self.bus.get_object( busname, objname )
@@ -2629,6 +2630,7 @@ class DBusObject( object ):
                 logger.warning( "could not create proxy for %s:%s" % ( busname, objname ) )
             else:
                 self.objects[ "%s:%s" % ( busname, objname ) ] = object
+                logger.info( "cached proxy for %s:%s" % ( busname, objname ) )
         return object
 
     def initialize( self ):
