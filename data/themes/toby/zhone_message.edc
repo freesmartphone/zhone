@@ -75,12 +75,12 @@ parts {
         description {                                                   \
             state: "default" 0.0;                                       \
             rel1 {                                                      \
-                relative: 0.25*xpos 0.25*ypos;                          \
+                relative: 0.25*xpos 0.33*ypos;                          \
                 offset: 1 1;                                            \
                 to: "kb_box";                                           \
             }                                                           \
             rel2 {                                                      \
-                relative: 0.25+(0.25*xpos) 0.25+(0.25*ypos);            \
+                relative: 0.25+(0.25*xpos) 0.33+(0.33*ypos);            \
                 offset: -2 -2;                                          \
                 to: "kb_box";                                           \
             }                                                           \
@@ -142,10 +142,59 @@ parts {
             }                                                           \
         }                                                               \
     }
+
     KB_ICON(0, 0);
     KB_ICON(1, 0);
     KB_ICON(2, 0);
-    KB_ICON(3, 0);
+
+    part {
+        name: "button_done";
+        type: IMAGE;
+        mouse_events: 1;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.75 0;
+                offset: 1 1;
+                to: "kb_box";
+            }
+            rel2 {
+                relative: 1.0 0.33;
+                offset: -2 -2;
+                to: "kb_box";
+            }
+            image { normal: "button_background.png"; }
+        }
+        description {
+            state: "active" 0.0;
+            inherit: "default" 0.0;
+            image { normal: "button_background_active.png"; }
+        }
+    }
+    part {
+        name: "icon_done";
+        mouse_events: 0;
+        type: IMAGE;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            aspect: 1.0 1.0;
+            aspect_preference: BOTH;
+            rel1 {
+                relative: 0.0 0.0;
+                offset: 0 0;
+                to: "button_done";
+            }
+            rel2 {
+                relative: 1.0 1.0;
+                offset: -1 -1;
+                to: "button_done";
+            }
+            image { normal: "icon_accept.png"; }
+        }
+    }
+
     KB_ICON(0, 1);
     KB_ICON(1, 1);
     KB_ICON(2, 1);
@@ -154,10 +203,6 @@ parts {
     KB_ICON(1, 2);
     KB_ICON(2, 2);
     KB_ICON(3, 2);
-    KB_ICON(0, 3);
-    KB_ICON(1, 3);
-    KB_ICON(2, 3);
-    KB_ICON(3, 3);
     
     part {
         name: "preview_box";
@@ -181,7 +226,7 @@ parts {
         description {
             state: "visible" 0.0;
             inherit: "default" 0.0;
-            visible: 1;
+            visible: 0;
         }
     }
     part {
@@ -227,19 +272,15 @@ programs {
     ACTIVATE("button_0_0");
     ACTIVATE("button_0_1");
     ACTIVATE("button_0_2");
-    ACTIVATE("button_0_3");
     ACTIVATE("button_1_0");
     ACTIVATE("button_1_1");
     ACTIVATE("button_1_2");
-    ACTIVATE("button_1_3");
     ACTIVATE("button_2_0");
     ACTIVATE("button_2_1");
     ACTIVATE("button_2_2");
-    ACTIVATE("button_2_3");
-    ACTIVATE("button_3_0");
+    ACTIVATE("button_done");
     ACTIVATE("button_3_1");
     ACTIVATE("button_3_2");
-    ACTIVATE("button_3_3");
     
     program {
         name: "show_preview";
@@ -260,19 +301,15 @@ programs {
         target: "button_0_0";
         target: "button_0_1";
         target: "button_0_2";
-        target: "button_0_3";
         target: "button_1_0";
         target: "button_1_1";
         target: "button_1_2";
-        target: "button_1_3";
         target: "button_2_0";
         target: "button_2_1";
         target: "button_2_2";
-        target: "button_2_3";
-        target: "button_3_0";
+        target: "button_done";
         target: "button_3_1";
         target: "button_3_2";
-        target: "button_3_3";
     }
     
     #define EMIT_KB_BUTTON_PRESSED(part_name)                           \
@@ -288,7 +325,6 @@ programs {
         signal: "mouse,up,1";                                           \
         source: part_name;                                              \
         action: SIGNAL_EMIT "kb_button_mouse_up" part_name;             \
-        after: "hide_preview";                                          \
     }                                                                   \
     program {                                                           \
         name: "emit_kb_button_mouse_in_"part_name;                      \
@@ -300,19 +336,14 @@ programs {
     EMIT_KB_BUTTON_PRESSED("button_0_0");
     EMIT_KB_BUTTON_PRESSED("button_0_1");
     EMIT_KB_BUTTON_PRESSED("button_0_2");
-    EMIT_KB_BUTTON_PRESSED("button_0_3");
     EMIT_KB_BUTTON_PRESSED("button_1_0");
     EMIT_KB_BUTTON_PRESSED("button_1_1");
     EMIT_KB_BUTTON_PRESSED("button_1_2");
-    EMIT_KB_BUTTON_PRESSED("button_1_3");
     EMIT_KB_BUTTON_PRESSED("button_2_0");
     EMIT_KB_BUTTON_PRESSED("button_2_1");
     EMIT_KB_BUTTON_PRESSED("button_2_2");
-    EMIT_KB_BUTTON_PRESSED("button_2_3");
-    EMIT_KB_BUTTON_PRESSED("button_3_0");
     EMIT_KB_BUTTON_PRESSED("button_3_1");
     EMIT_KB_BUTTON_PRESSED("button_3_2");
-    EMIT_KB_BUTTON_PRESSED("button_3_3");
     
     TRANSITION();
 }

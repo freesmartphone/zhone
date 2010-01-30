@@ -1525,9 +1525,14 @@ class pyphone_location( edje_group ):
 #----------------------------------------------------------------------------#
 class pyphone_message(edje_group):
 #----------------------------------------------------------------------------#
+    MODE = 1
     def __init__(self, main):
         edje_group.__init__(self, main, "message")
-        self.text = []
+        self.mode1_labels = [
+            [u" .,?!'-@<>", u"abc", "def", " "],
+            [u"ghi", u"jkl", "mno", " "],
+            [u"pqrs", u"tuv", "wxyz", u"⇦"]
+        ]
         self.button_labels2 = [
             [
                 [u".,?!", u"abc", "def", ""],
@@ -1646,12 +1651,60 @@ class pyphone_message(edje_group):
                 ["", "", "", ""],
             ]
         ]
-        self.set_button_text(0)
-        self.active = 0
+        self.x = None
+        self.y = None
+        self.char_index = 0
+        self.pending_char = None
+        self.kbdTimer = None
+
+    def addPendingChar(self):
+        self.stopKbdTimer()
+        self.part_text_set("label_preview", '')
+        if self.pending_char == u"⇦":
+            if len(self.text) > 0:
+                self.text = self.text[:len(self.text)-1]
+        elif self.pending_char is not None:
+            self.text.append(self.pending_char)
+        # The trailing whitespace is a workaround for the one char
+        # invisible bug due to some problems with scaling of text
+        # parts.
+        self.part_text_set("label", "".join(self.text)+" ")
+        self.pending_char = None
+        self.x = None
+        self.y = None
+        self.char_index = 0
+        return 0
+
+    def stopKbdTimer(self):
+        if self.kbdTimer is not None:
+            self.kbdTimer.delete()
+            self.kbdTimer = None
+
+    def restartKbdTimer(self):
+        self.stopKbdTimer()
+        self.kbdTimer = ecore.timer_add(1.5, self.addPendingChar)
 
     @edje.decorators.signal_callback("kb_button_mouse_up", "*")
     def on_edje_signal_dialer_button_mouse_up(self, emission, source):
-        now = time.time()
+        if self.MODE == 1:
+            x = int(source[-3:-2])
+            y = int(source[-1:])
+            if (self.x is None) or (x != self.x) or (y != self.y):
+                if self.pending_char is not None:
+                    self.addPendingChar()
+                self.x = x
+                self.y = y
+            self.pending_char = self.mode1_labels[y][x][self.char_index]
+            self.part_text_set("label_preview", self.pending_char)
+            self.char_index += 1
+            if self.char_index >= len(self.mode1_labels[y][x]):
+                self.char_index = 0
+            if self.pending_char == u"⇦":
+                self.addPendingChar()
+            else:
+                self.restartKbdTimer()
+            return
+        #now = time.time()
         x = int(source[-3:-2])
         y = int(source[-1:])
         key = self.button_labels[self.active][y][x]
@@ -1660,30 +1713,37 @@ class pyphone_message(edje_group):
         # bug due to some problems with scaling of text parts.
         self.part_text_set("label", "".join(self.text)+" ")
         self.set_button_text(0)
-        logger.debug( "mouse up: %s" % time.time()-now )
+        #logger.debug( "mouse up: %s" % time.time()-now )
 
     @edje.decorators.signal_callback("kb_button_mouse_down", "*")
     def on_edje_signal_dialer_button_mouse_down(self, emission, source):
-        now = time.time()
+        if self.MODE == 1:
+            return
+        #now = time.time()
         x = int(source[-3:-2])
         y = int(source[-1:])
         num = 4*y+x+1
         if self.active == 0:
             self.set_button_text(num)
-        logger.debug( "mouse down: %s" % time.time()-now )
+        #logger.debug( "mouse down: %s" % time.time()-now )
 
-    @edje.decorators.signal_callback("kb_button_mouse_in", "*")
+    @edje.decorators.signal_callback("kb_mutton_mouse_in", "*")
     def on_edje_signal_dialer_button_mouse_in(self, emission, source):
-        now = time.time()
+        if self.MODE == 1:
+            return
+        #now = time.time()
         x = int(source[-3:-2])
         y = int(source[-1:])
         self.part_text_set("label_preview", self.button_labels[self.active][y][x])
-        logger.debug( "mouse in: %s" % time.time()-now )
+        #logger.debug( "mouse in: %s" % time.time()-now )
 
     def set_button_text(self, num):
         for i in xrange(4):
-            for j in xrange(4):
-                text = self.button_labels[num][j][i]
+            for j in xrange(3):
+                if self.MODE == 1:
+                    text = self.mode1_labels[j][i][0:4]
+                else:
+                    text = self.button_labels[num][j][i]
                 self.part_text_set("label_%d_%d" % (i,j) , text)
         self.active = num
 
@@ -1691,9 +1751,44 @@ class pyphone_message(edje_group):
             num = 1
 
         for i in xrange(4):
-            for j in xrange(4):
-                text = self.button_labels2[num][j][i]
+            for j in xrange(3):
+                if self.MODE == 1:
+                    text = self.mode1_labels[j][i][4:]
+                else:
+                    text = self.button_labels2[num][j][i]
                 self.part_text_set("label2_%d_%d" % (i,j) , text)
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_*" )
+    def on_edje_signal_button_pressed( self, emission, source ):
+        key = source.split( "_", 1 )[1]
+        if key == "done":
+            if self.pending_char is not None:
+                self.addPendingChar()
+            if len(self.text) == 0:
+                self.main.groups["text_edit"].setup(
+                    self.parent_name,
+                    "",
+                    self.title,
+                    self.cb_data,
+                    self.cb
+                    )
+            else:
+                self.main.transition_to(self.parent_name)
+                self.cb( "".join(self.text), self.cb_data )
+        elif key == "cancel":
+            self.main.transition_to(self.parent_name)
+
+    def setup( self, parent_name, text, title, cb_data, cb ):
+        self.parent_name = parent_name
+        self.text = []
+        self.title = title
+        self.cb_data = cb_data
+        self.cb = cb
+        #self.part_text_set( "label_description", u" %s " % self.title )
+        self.part_text_set( "label", u"" )
+        self.set_button_text(0)
+        self.active = 0
+        self.main.transition_to("message")
 
 #----------------------------------------------------------------------------#
 class pyphone_list_choose(edje_group):
@@ -1911,8 +2006,17 @@ class pyphone_text_edit( edje_group ):
     def on_edje_signal_button_pressed( self, emission, source ):
         key = source.split( "_", 1 )[1]
         if key == "done":
-            self.main.transition_to(self.parent_name)
-            self.cb( self.text, self.cb_data )
+            if self.text == "":
+                self.main.groups["message"].setup(
+                    self.parent_name,
+                    self.text,
+                    self.title,
+                    self.cb_data,
+                    self.cb
+                    )
+            else:
+                self.main.transition_to(self.parent_name)
+                self.cb( self.text, self.cb_data )
         elif key == "cancel":
             self.main.transition_to(self.parent_name)
 
