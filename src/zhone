@@ -395,6 +395,7 @@ class pyphone_sms(edje_group):
                 del self.messagebook[i]
                 break
         self.updateList()
+        self.main.transition_to( "sms" )
 
     def cbForward( self, selected, text ):
         if dbus_object.gsm_device_obj:
@@ -1874,6 +1875,12 @@ class pyphone_text_show( edje_group ):
         self.parent_name = parent_name
         self.part_text_set( "text", text )
         self.main.transition_to("text_show")
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
+    def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
+        self.main.groups["menu"].activate( ( _("send"), _("delete"), _("forward"), _("reply") ),
+                                           self.main.groups["sms"].cbMenu )
+        self.main.groups["menu"].part_text_set( "target_label_cancel", _("cancel") )
 
 #----------------------------------------------------------------------------#
 class pyphone_text_edit( edje_group ):
