@@ -366,12 +366,12 @@ class pyphone_sms(edje_group):
         if e.get_dbus_name() == "org.freesmartphone.GSM.SIM.MemoryFull":
             self.main.groups["alert"].activate( "<title>Failed to send message</title>SIM Memory Full", [("OK")] )
 
-    def cbSend1( self, selected, cb_data ):
+    def cbSend1( self, contact, cb_data ):
         self.main.groups["text_edit"].setup(
             "sms",
             "", # text
-            selected[0], # title
-            selected[1], # reference
+            contact[0], # title
+            contact[1], # reference
             self.cbSend2
         )
 
@@ -397,10 +397,10 @@ class pyphone_sms(edje_group):
         self.updateList()
         self.main.transition_to( "sms" )
 
-    def cbForward( self, selected, text ):
+    def cbForward( self, contact, text ):
         if dbus_object.gsm_device_obj:
             dbus_object.gsm_sim_iface.StoreMessage(
-                selected[1], text, {},
+                contact[1], text, {},
                 reply_handler=self.cbStoreReply,
                 error_handler=self.cbStoreError
             )
