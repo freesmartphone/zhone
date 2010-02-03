@@ -443,7 +443,7 @@ class pyphone_sms(edje_group):
             self.main.groups["text_edit"].setup(
                 "sms",
                 "", # text
-                self.current[self.selected][2], # title = number
+                self.main.groups["contacts"].tryNumberToName( self.current[self.selected][2] ), # title = contact name or number
                 self.current[self.selected][2], # reference = number
                 self.cbReply
             )
