@@ -1408,6 +1408,7 @@ class pyphone_location( edje_group ):
 
         self.time = None
         self.fix = None
+        self.dgps = None
         self.accuracy = None
         self.course = None
         self.position = None
@@ -1429,6 +1430,10 @@ class pyphone_location( edje_group ):
             text.append( _("Fix:<tab>%s") % { 1: _("none"), 2: "2D", 3: "3D" }[self.fix] )
         else:
             text.append( _("Fix:<tab>N/A") )
+        if self.dgps == None:
+            text.append( _("DGPS:<tab>N/A") )
+        else:
+            text.append( _("DGPS:<tab>%s") % _({ 0: "no correction", 1: "PR+PRR", 2: "PR+PRR+CP", 3: "HA PR+PRR+CP" }[self.dgps]) )
         if self.position:
             text.append( _("Lat:<tab>%s<br>Lon:<tab>%s<br>Alt:<tab>%s") % self.position )
         else:
@@ -1498,11 +1503,17 @@ class pyphone_location( edje_group ):
 
     def onUBXDebugPacket( self, clid, length, data ):
         logger.debug( "gps got ubxdebug packet" )
-        if clid == "NAV-STATUS" and data and 'TTFF' in data[0]:
-            if data[0]['TTFF']:
-                self.ttff = data[0]['TTFF']/1000.0
+        if clid == "NAV-STATUS" and data and data[0]:
+            data = data[0]
+            if 'TTFF' in data and data['TTFF']:
+                self.ttff = data['TTFF']/1000.0
             else:
                 self.ttff = None
+            if 'DiffS' in data:
+                self.dgps = data["DiffS"] & 3
+            else:
+                self.dgps = None
+            self.update()
         elif clid == "NAV-SVINFO":
             self.signalgraph.update( ubxinfo = data )
 
