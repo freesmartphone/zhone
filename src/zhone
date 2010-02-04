@@ -1221,9 +1221,8 @@ class pyphone_location( edje_group ):
                         text.append( "%i" % chn )
                         text.append( "%i" % svid )
                         text.append( "%i" % cno )
-                        if almoreph: text.append( u"\u25CF" )
-                        else: text.append( "" )
                         if eph: text.append( u"\u25CF" )
+                        elif almoreph: text.append( u"\u25CB" )
                         else: text.append( "" )
                         if diff: text.append( u"\u25CF" )
                         else: text.append( "" )
@@ -1238,7 +1237,7 @@ class pyphone_location( edje_group ):
                     barwidth = 1.0/count
                     self.ctx.set_font_size( barwidth*0.6 )
                     self.ctx.set_source_rgba(0, 0, 0, 1)
-                    head = [ "CHN", " SV ", "SN", "ALM", "EPH", "DIFF" ]
+                    head = [ "CH", "PRN", "SNR", "A/E", "DIFF" ]
                     x_bearing, y_bearing, width, height = self.ctx.text_extents( " ".join( head ) )[:4]
                     w = 0.5*self.ctx.text_extents( u"\u25CF" )[2]
                     x = pixel[0]*3
