@@ -1302,7 +1302,7 @@ class pyphone_location( edje_group ):
 
         def proj( self, azim, elev ):
             x = math.sin( math.radians( azim ) )*( ( 90.0 - elev )/90.0 )
-            y = math.cos( math.radians( azim ) )*( ( 90.0 - elev )/90.0 )
+            y = - math.cos( math.radians( azim ) )*( ( 90.0 - elev )/90.0 )
             return ( x, y )
 
         def resize( self, w, h ):
@@ -1314,6 +1314,25 @@ class pyphone_location( edje_group ):
             self.update()
             self.img.resize( *self.img.image_size )
             self.img.fill_set(0, 0, *self.img.image_size )
+
+        def draw_blip( self, azim, elev, name = None ):
+            x, y = self.proj( azim, elev )
+            self.ctx.arc(
+                0.50+x*0.45,
+                0.50+y*0.45,
+                max( self.ctx.device_to_user_distance( 15, 15 ) ),
+                0.0, math.pi*2
+            )
+            self.ctx.fill()
+            if name is not None:
+                self.ctx.set_source_rgba(0, 0, 0, 1)
+                self.ctx.set_font_size( max( self.ctx.device_to_user_distance( 20, 20 ) ))
+                x_bearing, y_bearing, width, height = self.ctx.text_extents(name)[:4]
+                self.ctx.move_to(
+                    0.50+x*0.45 - width / 2 - x_bearing,
+                    0.50+y*0.45 - height / 2 - y_bearing
+                )
+                self.ctx.show_text( name )
 
         def update( self, values = None ):
             if values is not None:
@@ -1339,29 +1358,40 @@ class pyphone_location( edje_group ):
                 self.ctx.new_sub_path()
                 self.ctx.arc( 0.50, 0.50, 0.15, 0.0, math.pi*2 )
                 self.ctx.stroke()
+                # refs
+                d = max( self.ctx.device_to_user_distance( 5, 5 ) )
+                x_bearing, y_bearing, width, height = self.ctx.text_extents("N")[:4]
+                self.ctx.move_to(
+                    0.50 - width / 2 - x_bearing,
+                    0.05 + d - y_bearing
+                )
+                self.ctx.show_text( "N" )
+                x_bearing, y_bearing, width, height = self.ctx.text_extents("E")[:4]
+                self.ctx.move_to(
+                    0.95 - width - d - x_bearing,
+                    0.50 - height / 2 - y_bearing
+                )
+                self.ctx.show_text( "E" )
+                x_bearing, y_bearing, width, height = self.ctx.text_extents("S")[:4]
+                self.ctx.move_to(
+                    0.50 - width / 2 - x_bearing,
+                    0.95 - height - d - y_bearing
+                )
+                self.ctx.show_text( "S" )
+                x_bearing, y_bearing, width, height = self.ctx.text_extents("W")[:4]
+                self.ctx.move_to(
+                    0.05 + d - x_bearing,
+                    0.50 - height / 2 - y_bearing
+                )
+                self.ctx.show_text( "W" )
+                self.ctx.stroke()
                 # locations
                 for sv, used, azim, elev in self.values:
-                    sv = str( sv )
-                    x, y = self.proj( azim, elev )
                     if used:
                         self.ctx.set_source_rgba(0.0, 1.0, 0.0, 1.0)
                     else:
                         self.ctx.set_source_rgba(0.75, 0.75, 0.75, 1.0)
-                    self.ctx.arc(
-                        0.50+x*0.45,
-                        0.50+y*0.45,
-                        max( self.ctx.device_to_user_distance( 15, 15 ) ),
-                        0.0, math.pi*2
-                    )
-                    self.ctx.fill()
-                    self.ctx.set_source_rgba(0, 0, 0, 1)
-                    self.ctx.set_font_size( max( self.ctx.device_to_user_distance( 20, 20 ) ))
-                    x_bearing, y_bearing, width, height = self.ctx.text_extents(sv)[:4]
-                    self.ctx.move_to(
-                        0.50+x*0.45 - width / 2 - x_bearing,
-                        0.50+y*0.45 - height / 2 - y_bearing
-                    )
-                    self.ctx.show_text( sv )
+                    self.draw_blip( azim, elev, str( sv ) )
                 #self.surface.write_to_png( "/tmp/zhone-location.png" )
                 #self.img.file_set( "/tmp/zhone-location.png" )
                 self.img.image_data_set( self.surface.get_data() )
