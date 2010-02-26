@@ -1,0 +1,36 @@
+.TH ZHONE 1 "Feb 26, 2010" "Zhone"
+.SH NAME
+zhone - Debian/FSO phone UI
+.SH SYNOPSIS
+.B zhone
+.SH DESCRIPTION
+zhone is a UI for various Neo 1973 and Freerunner phone operations,
+including making and receiving calls, and sending and receiving SMS
+text messages.  The phone functions are implemented using the FSO API
+over D-Bus.
+.SH NOTES
+Use of zhone should be intuitive, and so not needing documentation
+here.  The following notes just cover a few points that are not (yet)
+obvious.
+.P
+When entering text - such as when writing a text message, or entering
+a contact name, zhone's default is to rely on some external input
+method, such as a soft keyboard (matchbox-keyboard, illume, literki,
+kbosd, cellwriter, etc.), or a Bluetooth or USB keyboard.  Therefore
+it simply shows a big text box, and key presses from the external
+keyboard are added to the text in that box.
+.P
+zhone also has a built-in keyboard like a phone keypad, and you can
+switch to using this by pressing the green tick button before starting
+to enter any text.  With this keypad, you can type 'a' by pressing 2
+once, 'b' by pressing 2 twice, 'c' by pressing 2 three times, 'd' by
+pressing 3 once, and so on.  This keypad does not yet support capital
+letters.
+.SH BUGS
+Please reports bugs to the FSO smartphones-userland mailing list
+<smartphones-userland@linuxtogo.org>.
+.SH AUTHOR
+This man page was written by Neil Jerram (but may be used by others).
+Zhone was written by Johannes 'Josch' Schauer, Michael 'Mickey' Lauer,
+Jan 'Shoragan' Luebbe, Daniel 'Alphaone' Willmann, Openmoko, Inc., and
+Neil Jerram.
