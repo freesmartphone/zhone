@@ -782,12 +782,21 @@ class pyphone_contacts(edje_group):
         if not self.ready and not self.busy:
             if dbus_object.gsm_device_obj:
                 logger.info( "retrieving phonebook..." )
+                try:
                 dbus_object.gsm_sim_iface.RetrievePhonebook(
                     "contacts",
                     reply_handler=self.cbPhonebookReply,
                     error_handler=self.cbPhonebookError
                 )
                 self.busy = True
+                except:
+                   logger.info( "error retrieving phonebook, trying new API" )
+                   dbus_object.gsm_sim_iface.RetrievePhonebook(
+                       "contacts",-1, -1,
+                       reply_handler=self.cbPhonebookReply,
+                       error_handler=self.cbPhonebookError
+                   )
+                   self.busy = True
             else:
                 # Fake phonebook...
                 self.cbPhonebookReply( [
