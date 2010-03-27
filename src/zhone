@@ -2084,7 +2084,7 @@ class pyphone_main_menu( edje_group ):
     def on_edje_signal_button_list_pressed( self, emission, source ):
         id = int( source.split( "_" )[-1] )
         if( id == 5 ):
-          os.system("halt")
+          gui.shutdown()
         if( id == 0 ):
           fp = os.popen("sleep 5 && \
                          n=/tmp/scap$$.png && \
