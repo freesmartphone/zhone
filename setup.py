@@ -68,7 +68,7 @@ setup(
     cmdclass = { 'build_ext': build_ext ,
                  'build'    : my_build  ,
                  'clean'    : my_clean  },
-    scripts = [ "src/zhone", "src/zhone-fsogsmd" ],
+    scripts = [ "src/zhone" ],
     data_files = [
         ( "zhone", ["data/themes/zhone.edj"] ),
         ( "zhone/locale/ru/LC_MESSAGES", ["data/locale/ru/LC_MESSAGES/zhone.mo"] ),
