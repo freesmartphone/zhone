@@ -63,7 +63,7 @@ setup(
     author_email = "mlauer@vanille-media.de",
     url = "http://www.freesmartphone.org",
     ext_modules = [
-        Extension( "illume", sources=['src/illume.pyx'], **pkgconfig('"ecore >= 0.9.9.050" ''"eina-0 >= 0.0.1"') )
+        Extension( "illume", sources=['src/illume.pyx'], **pkgconfig('"ecore >= 0.9.9.050" ''"eina >= 0.0.1"') )
         ],
     cmdclass = { 'build_ext': build_ext ,
                  'build'    : my_build  ,
