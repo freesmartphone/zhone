@@ -135,6 +135,7 @@ class pyphone_main(edje_group):
         edje_group.__init__(self, main, "main")
         self.targets = {
             "phone": False,
+            "calls": False,
             "contacts": False,
             "sms": False,
             "wireless": True,
@@ -703,16 +704,16 @@ class pyphone_contacts(edje_group):
                 break
         self.updateList()
 
-    def cbNew1( self, name, none ):
-        self.main.groups["number_edit"].setup(
+    def cbNew1( self, number, none ):
+        self.main.groups["text_edit"].setup(
             "contacts",
-            "", # number
-            name, # title = new name
-            name, # reference
+            "", # name
+            number, # title = new number
+            number, # reference
             self.cbNew2
         )
 
-    def cbNew2( self, number, name ):
+    def cbNew2( self, name, number ):
         ids = [ x[0] for x in self.phonebook ]
         ids.sort()
         reference = None
@@ -765,10 +766,10 @@ class pyphone_contacts(edje_group):
                 self.cbNumberEdit
             )
         elif result == _("new"):
-            self.main.groups["text_edit"].setup(
+            self.main.groups["number_edit"].setup(
                 "contacts",
-                "", # name
-                _("name?"), # title
+                "", # number
+                _("New entry?"), # title
                 None, # reference
                 self.cbNew1
             )
@@ -801,15 +802,15 @@ class pyphone_contacts(edje_group):
                 logger.info( "retrieving phonebook..." )
                 try:
                     dbus_object.gsm_sim_iface.RetrievePhonebook(
-                        "contacts",
+                        "contacts", -1, -1,
                         reply_handler=self.cbPhonebookReply,
                         error_handler=self.cbPhonebookError
                     )
                     self.busy = True
                 except:
-                   logger.info( "error retrieving phonebook, trying new API" )
+                   logger.info( "error retrieving phonebook, trying old API" )
                    dbus_object.gsm_sim_iface.RetrievePhonebook(
-                       "contacts",-1, -1,
+                       "contacts",
                        reply_handler=self.cbPhonebookReply,
                        error_handler=self.cbPhonebookError
                    )
@@ -914,6 +915,152 @@ class pyphone_contacts(edje_group):
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
         self.main.groups["menu"].activate((_("edit name"), _("edit number"), _("new"), _("delete")), self.cbMenu)
+        self.main.groups["menu"].part_text_set( "target_label_cancel", _("cancel") )
+
+#----------------------------------------------------------------------------#
+class pyphone_calls(edje_group):
+#----------------------------------------------------------------------------#
+    def __init__(self, main):
+        edje_group.__init__(self, main, "calls")
+        self.busy = False
+        self.phonebook = []
+        self.current = []
+        self.page = 0
+        self.selected = None
+
+        self.part_text_set( "label_action_dial", _("dial") )
+
+    def cbDelete( self, result, reference ):
+        if result == "abort":
+            return
+        if dbus_object.gsm_device_obj:
+            dbus_object.gsm_sim_iface.DeleteEntry(
+                "missed",
+                reference
+            )
+        for i in range( len( self.phonebook ) ):
+            if self.phonebook[i][0] == reference:
+                del self.phonebook[i]
+                break
+        self.updateList()
+
+    def cbMenu( self, result ):
+        if result == _("xxx"):
+           return
+        elif result == _("yyy"):
+           return
+        elif result == _("add"):
+            self.main.groups["number_edit"].setup(
+                "contacts",
+                self.current[self.selected][2], # number
+                _("Add entry?"), # title
+                None, # reference
+                self.main.groups["contacts"].cbNew1
+            )
+        elif result == _("delete"):
+            self.main.groups["alert"].activate(
+                _("delete '%s'?") % self.current[self.selected][1],
+                (_("abort"), _("delete")),
+                self.current[self.selected][0], # reference
+                self.cbDelete
+            )
+
+    def cbPhonebookReply( self, result ):
+        logger.info( "retrieved phonebook: %s" % result )
+        self.busy = False
+        self.phonebook = result
+        self.updateList()
+
+    def cbPhonebookError( self, e ):
+        logger.error( "error while retrieving phonebook %s" % e )
+        self.busy = False
+
+    def prepare( self ):
+        if not self.busy:
+            if dbus_object.gsm_device_obj:
+                logger.info( "retrieving missed calls..." )
+                try:
+                    dbus_object.gsm_sim_iface.RetrievePhonebook(
+                        "missed", -1, -1,
+                        reply_handler=self.cbPhonebookReply,
+                        error_handler=self.cbPhonebookError
+                    )
+                    self.busy = True
+                except:
+                   logger.debug( "error retrieving missed calls, trying old API" )
+                   dbus_object.gsm_sim_iface.RetrievePhonebook(
+                       "missed",
+                       reply_handler=self.cbPhonebookReply,
+                       error_handler=self.cbPhonebookError
+                   )
+                   self.busy = True
+            else:
+                # Fake missed calls
+                self.cbPhonebookReply( [
+                    (1, u'Nothing missed so far', '+012345'),
+                ] )
+
+    def onReadyStatus( self, status ):                                                       
+        logger.debug( "SIM is ready: %s" % status )                                          
+        if status:                                                                           
+           self.main.groups["main"].targets["calls"] = True                                                         
+           self.main.groups["main"].update()                                                                        
+
+    def onShow( self ):
+        self.prepare()
+        self.updateList()
+
+    def updateList( self ):
+        self.pages = max( ( len( self.phonebook ) - 1 ) / 6 + 1, 1 )
+        if self.page >= self.pages:
+            self.page = 0
+        if self.page < 0:
+            self.page = self.pages -1
+        self.current = self.phonebook[self.page*6:(self.page+1)*6]
+        text = u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) )
+        self.part_text_set( "pager", text )
+        for i in range( 0, len( self.current ) ):
+            self.part_text_set( "label_main_list_%i" % i, self.current[i][1] )
+            self.part_text_set( "label_sub_list_%i" % i, self.current[i][2] )
+        for i in range( len( self.current ), 6):
+            self.part_text_set( "label_main_list_%i" % i, u"" )
+            self.part_text_set( "label_sub_list_%i" % i, u"" )
+        self.selected = None
+        for i in range( 6 ):
+            self.signal_emit( "deactivate_target_list_%i" % i, "" )
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "target_list_*" )
+    def on_edje_signal_button_list_pressed( self, emission, source ):
+        id = int( source.split( "_" )[-1] )
+        if self.selected == id:
+            return
+        if self.selected is not None:
+            self.signal_emit( "deactivate_target_list_%i" % self.selected, "" )
+        self.signal_emit( "activate_target_list_%i" % id, "" )
+        self.selected = id
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_left" )
+    def on_edje_signal_button_action_left_pressed( self, emission, source ):
+        self.page -= 1
+        self.updateList()
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_right" )
+    def on_edje_signal_button_action_right_pressed( self, emission, source ):
+        self.page += 1
+        self.updateList()
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_dial" )
+    def on_edje_signal_button_action_dial_pressed( self, emission, source ):
+        if self.selected is not None:
+            if dbus_object.gsm_device_obj:
+                if self.current[self.selected][2][0] == "*":
+                    dbus_object.gsm_network_iface.SendUssdRequest( self.current[self.selected][2] )
+                else:
+                    dbus_object.gsm_call_iface.Initiate( self.current[self.selected][2], "voice" )
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
+    def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
+        self.main.groups["menu"].activate((_("xxx"), _("yyy"), _("add"), _("delete")), self.cbMenu)
         self.main.groups["menu"].part_text_set( "target_label_cancel", _("cancel") )
 
 #----------------------------------------------------------------------------#
@@ -1923,7 +2070,7 @@ class pyphone_number_edit( edje_group ):
 #----------------------------------------------------------------------------#
 class pyphone_pin_edit( edje_group ):
 #----------------------------------------------------------------------------#
-    DELAY = 1.0
+    DELAY = 0.1
     def __init__( self, main ):
         edje_group.__init__( self, main, "number_edit" )
         self.text = ""
@@ -2441,6 +2588,7 @@ class GSMAgent( Agent ):
     def cbRegisterError( self, e ):
         logger.exception( e )
         if dbus_object.gsm_sim_iface.GetSimReady():
+            self.main.groups["calls"].prepare()
             self.main.groups["contacts"].prepare()
             self.main.groups["sms"].prepare()
 
@@ -2522,6 +2670,7 @@ class GUI(object):
                 "main",
                 "phone", "call", "dtmf",
                 "sms",
+                "calls",
                 "contacts",
                 "location",
                 "wireless",
@@ -2558,6 +2707,7 @@ class GUI(object):
         dbus_object.onSatellitesChanged.append( self.groups["location"].onSatellitesChanged )
         dbus_object.onUBXDebugPacket.append( self.groups["location"].onUBXDebugPacket )
         dbus_object.onCallStatus.append( self.groups["call"].onCallStatus )
+        dbus_object.onReadyStatus.append( self.groups["calls"].onReadyStatus )
         dbus_object.onReadyStatus.append( self.groups["contacts"].onReadyStatus )
         dbus_object.onReadyStatus.append( self.groups["sms"].onReadyStatus )
         dbus_object.onIncomingMessage.append( self.groups["sms"].onIncomingMessage )
