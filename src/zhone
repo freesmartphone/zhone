@@ -322,8 +322,8 @@ class pyphone_dtmf(edje_group):
         # bug due to some problems with scaling of text parts.
         self.part_text_set("label", "".join(self.text)+" ")
 
-    @edje.decorators.signal_callback("call_button_pressed", "button_right")
-    def on_edje_signal_call_button_right_pressed(self, emission, source):
+    @edje.decorators.signal_callback("mouse,clicked,1", "button_bottom_right")    
+    def on_edje_signal_button_bottom_right_pressed(self, emission, source):
         self.main.transition_to("call")
 
 #----------------------------------------------------------------------------#
