@@ -208,7 +208,7 @@ class pyphone_phone(edje_group):
         self.last = time.time()
 
     def onNetworkStatus( self, status ):
-        logger.info( "network status changed: %s" % status )
+        logger.debug( "network status changed: %s" % status )
         #if(status.has_key("registration") != "busy")  # XXX this might work too.  which is better?
         if(status.has_key('provider')):
             self.main.agents["gsm"].setState(_("Registered: %s") % status['provider'])
@@ -271,6 +271,15 @@ class pyphone_call(edje_group):
                 dbus_object.gsm_call_iface.Release(self.call)
             else:
                 self.update_status("release")
+        elif self.status == "release":
+            if not (self.part_text_get( "label_right" ) == ""):
+                self.main.groups["number_edit"].setup(                                          
+                    "contacts",                                                                 
+                    self.peer,       # number                                    
+                    _("Add entry?"), # title                                                    
+                    None,            # reference                                                           
+                    self.main.groups["contacts"].cbNew1                                         
+                ) 
 
     def update_status(self, status):
         self.part_text_set( "label_description", _(status) )
@@ -289,6 +298,9 @@ class pyphone_call(edje_group):
             self.part_text_set( "label_right", _("hangup") )
         else:
             self.part_text_set( "label_left", u"" )
+            if not self.peer == "":
+               self.part_text_set( "label_right", u"add to PB" )
+            else:
             self.part_text_set( "label_right", u"" )
         if status in ["incoming", "outgoing"] and not self.status == status:
             # TODO make sure we get displayed
@@ -450,7 +462,7 @@ class pyphone_sms(edje_group):
             )
 
     def cbMessagebookReply( self, result ):
-        logger.info( "retrieved messagebook: %s" % result )
+        logger.debug( "retrieved messagebook: %s" % result )
         self.busy = False
         self.messagebook = result
         self.ready = True
@@ -592,15 +604,54 @@ class pyphone_configuration(edje_group):
         edje_group.__init__(self, main, "configuration")
         self.selected = None
         self.profiles = []
+        self.providers = []
+        self.configPage = "profiles"
         self.page = 0
+        self.busy = False
 
         self.part_text_set( "label_action_use", _("use") )
 
     def onShow( self ):
-        self.prepare()
+        if self.configPage == "profiles":
+           self.prepareProfiles()
+        elif self.configPage == "providers":
+           self.prepareProviders()
         self.updateList()
 
-    def prepare( self ):
+    def onHide( self ):
+        self.configPage = "profiles"
+
+    def cbListprovidersError( self, e ):                                                                             
+        self.part_text_set( "current_label", u"No providers found" )                                                    
+        self.busy = False 
+                                                                                         
+    def cbListprovidersReply( self, result ):                                                                        
+        logger.info( "retrieved providers: %s" % result )
+        self.busy = False
+        self.providers += result
+        self.part_text_set( "current_label", u"Choose provider" )
+        self.updateList()
+                         
+    def prepareProviders( self ):
+        if not self.busy:
+            self.providers = [["0", "", "auto", "", ""],
+                              ["-1", "", "unregister", "", ""]]
+            if dbus_object.gsm_device_obj:
+                logger.info( "retrieving providers..." )
+                dbus_object.gsm_network_iface.ListProviders(
+                    reply_handler=self.cbListprovidersReply,
+                    error_handler=self.cbListprovidersError
+                )
+                self.part_text_set( "current_label", u"Searching providers..." )
+                self.busy = True
+            else:
+                # Fake providerlist...                                                                              
+                self.cbListprovidersReply( [                                                                         
+                    (0, "26203", "current", "debitel", "", "GSM"),                                                       
+                    (1, "26201", "forbidden", "T-Mobile D", "TMO D", "GSM"),                                                           
+                ] )  
+ 
+    def prepareProfiles( self ):
         # Set the current profile label
         if dbus_object.prefs_obj:
             current = dbus_object.prefs_iface.GetProfile()
@@ -611,7 +662,7 @@ class pyphone_configuration(edje_group):
         self.part_text_set( "current_label", _("Current : %s") % current )
 
     def updateList( self):
-        self.main.groups["configuration"].prepare()
+        if self.configPage == "profiles":
         self.pages = max( ( len( self.profiles ) - 1 ) / 6 + 1, 1 )
         if self.page >= self.pages:
             self.page = 0
@@ -629,6 +680,42 @@ class pyphone_configuration(edje_group):
         self.selected = None
         for i in range( 6 ):
             self.signal_emit( "deactivate_target_list_%i" % i, "" )
+        elif self.configPage == "providers":
+            self.pages = max( ( len( self.providers ) - 1 ) / 6 + 1, 1 )
+            if self.page >= self.pages:
+                self.page = 0
+            if self.page < 0:
+                self.page = self.pages - 1
+            self.current = self.providers[self.page*6:(self.page+1)*6]
+            text = u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) )
+            self.part_text_set( "pager", text )
+            for i in range( 0, len( self.current ) ):
+                self.part_text_set( "label_main_list_%i" % i, self.current[i][2] )
+                self.part_text_set( "label_sub_list_%i" % i, self.current[i][1] )
+            for i in range( len( self.current ), 6):
+                self.part_text_set( "label_main_list_%i" % i, u"" )
+                self.part_text_set( "label_sub_list_%i" % i, u"" )
+            self.selected = None
+            for i in range( 6 ):
+                self.signal_emit( "deactivate_target_list_%i" % i, "" )
+
+    def cbMenu( self, result ):
+        if result == _("Profiles"):
+           self.configPage = "profiles"
+           self.page = 0
+           self.main.groups["configuration"].onShow()
+           return
+        elif result == _("Providers"):
+           self.configPage = "providers"
+           self.page = 0
+           self.main.groups["configuration"].onShow()
+           return
+        elif result == _("Dpy auto"):
+            self.main.agents["usage"].release( "Display" )
+            return
+        elif result == _("Dpy on"):
+            self.main.agents["usage"].request( "Display" )
+            return
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "target_list_*" )
     def on_edje_signal_button_list_pressed( self, emission, source ):
@@ -654,12 +741,32 @@ class pyphone_configuration(edje_group):
     def on_edje_signal_button_action_use_pressed( self, emission, source ):
         if self.selected is None:
             return
-        if self.selected >= len(self.profiles):
-            return
-        profile = self.profiles[self.selected]
+        if self.configPage == "profiles":
+            if self.selected >= len(self.current):
+                return
+            profile = self.current[self.selected]
         self.part_text_set( "current_label", _("Current : %s") % profile )
         if dbus_object.prefs_obj:
             dbus_object.prefs_iface.SetProfile(profile)
+        elif self.configPage == "providers":
+            if self.selected >= len(self.current):
+               return
+            provider = self.current[self.selected][0]
+            logger.info( "Trying to register to: %s" % provider )
+            if dbus_object.gsm_device_obj:
+                if provider == "0":
+                    dbus_object.gsm_network_iface.Register()
+                elif provider == "-1":
+                    dbus_object.gsm_network_iface.Unregister()
+                else:
+                   dbus_object.gsm_network_iface.RegisterWithProvider(provider)
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
+    def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
+        self.main.groups["menu"].activate( ( _("Profiles"), _("Providers"), _("Dpy auto"), _("Dpy on") ), self.cbMenu )
+        self.main.groups["menu"].part_text_set( "target_label_cancel", _("cancel") )
+
+
 
 #----------------------------------------------------------------------------#
 class pyphone_contacts(edje_group):
@@ -679,6 +786,7 @@ class pyphone_contacts(edje_group):
         for i in range( len( self.phonebook ) ):
             if self.phonebook[i][0] == reference:
                 self.phonebook[i] = ( reference, name, self.phonebook[i][2] )
+                logger.info( "after edit: %s %s %s" % (reference, name, self.phonebook[i][2]) )
                 if dbus_object.gsm_device_obj:
                     dbus_object.gsm_sim_iface.StoreEntry(
                         "contacts",
@@ -782,7 +890,7 @@ class pyphone_contacts(edje_group):
             )
 
     def cbPhonebookReply( self, result ):
-        logger.info( "retrieved phonebook: %s" % result )
+        logger.debug( "retrieved phonebook: %s" % result )
         self.busy = False
         self.phonebook = result
         self.phonebook.sort( key = lambda x: x[1].lower() )
@@ -966,7 +1074,7 @@ class pyphone_calls(edje_group):
             )
 
     def cbPhonebookReply( self, result ):
-        logger.info( "retrieved phonebook: %s" % result )
+        logger.debug( "retrieved phonebook: %s" % result )
         self.busy = False
         self.phonebook = result
         self.updateList()

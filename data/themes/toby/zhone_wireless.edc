@@ -64,7 +64,7 @@ parts {
 
     BUTTONS_BOTTOM();
     BUTTON_OPTIONS();
-    BUTTON_MENU();
+//    BUTTON_MENU();
     BUTTON_CLOSE();
 }
 programs {
