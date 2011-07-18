@@ -236,6 +236,7 @@ class pyphone_call(edje_group):
 #----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "call")
+        self.peer = ""
         self.update_status("idle")
         self.call = None
 
@@ -246,9 +247,14 @@ class pyphone_call(edje_group):
             if "peer" in properties:
                 self.part_text_set( "label", self.main.groups["contacts"].tryNumberToName( properties[ "peer" ] ) )
                 self.part_text_set( "sublabel", properties[ "peer" ] )
+                if self.main.groups["contacts"].tryNumberToName( properties[ "peer" ] ) == properties[ "peer" ]:
+                   self.peer = properties[ "peer" ]
+                else:
+                   self.peer =  ""
             else:
                 self.part_text_set( "label", _("unknown number") )
                 self.part_text_set( "sublabel", "" )
+                self.peer =  ""
 
     @edje.decorators.signal_callback("call_button_pressed", "button_left")
     def on_edje_signal_call_button_left_pressed(self, emission, source):
