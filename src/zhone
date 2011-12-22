@@ -307,7 +307,7 @@ class pyphone_call(edje_group):
             if not self.peer == "":
                self.part_text_set( "label_right", u"add to PB" )
             else:
-            self.part_text_set( "label_right", u"" )
+               self.part_text_set( "label_right", u"" )
         if status in ["incoming", "outgoing"] and not self.status == status:
             # TODO make sure we get displayed
             self.main.transition_to("call")
@@ -669,23 +669,23 @@ class pyphone_configuration(edje_group):
 
     def updateList( self):
         if self.configPage == "profiles":
-        self.pages = max( ( len( self.profiles ) - 1 ) / 6 + 1, 1 )
-        if self.page >= self.pages:
-            self.page = 0
-        if self.page < 0:
-            self.page = self.pages - 1
-        self.current = self.profiles[self.page*6:(self.page+1)*6]
-        text = u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) )
-        self.part_text_set( "pager", text )
-        for i in range( 0, len( self.current ) ):
-            self.part_text_set( "label_main_list_%i" % i, self.current[i] )
-            self.part_text_set( "label_sub_list_%i" % i, u"" )
-        for i in range( len( self.current ), 6):
-            self.part_text_set( "label_main_list_%i" % i, u"" )
-            self.part_text_set( "label_sub_list_%i" % i, u"" )
-        self.selected = None
-        for i in range( 6 ):
-            self.signal_emit( "deactivate_target_list_%i" % i, "" )
+            self.pages = max( ( len( self.profiles ) - 1 ) / 6 + 1, 1 )
+            if self.page >= self.pages:
+                self.page = 0
+            if self.page < 0:
+                self.page = self.pages - 1
+            self.current = self.profiles[self.page*6:(self.page+1)*6]
+            text = u"".join( [u"□"]*self.page+[u"▣"]+[u"□"]*(self.pages-self.page-1) )
+            self.part_text_set( "pager", text )
+            for i in range( 0, len( self.current ) ):
+                self.part_text_set( "label_main_list_%i" % i, self.current[i] )
+                self.part_text_set( "label_sub_list_%i" % i, u"" )
+            for i in range( len( self.current ), 6):
+                self.part_text_set( "label_main_list_%i" % i, u"" )
+                self.part_text_set( "label_sub_list_%i" % i, u"" )
+            self.selected = None
+            for i in range( 6 ):
+                self.signal_emit( "deactivate_target_list_%i" % i, "" )
         elif self.configPage == "providers":
             self.pages = max( ( len( self.providers ) - 1 ) / 6 + 1, 1 )
             if self.page >= self.pages:
@@ -751,9 +751,9 @@ class pyphone_configuration(edje_group):
             if self.selected >= len(self.current):
                 return
             profile = self.current[self.selected]
-        self.part_text_set( "current_label", _("Current : %s") % profile )
-        if dbus_object.prefs_obj:
-            dbus_object.prefs_iface.SetProfile(profile)
+            self.part_text_set( "current_label", _("Current : %s") % profile )
+            if dbus_object.prefs_obj:
+                dbus_object.prefs_iface.SetProfile(profile)
         elif self.configPage == "providers":
             if self.selected >= len(self.current):
                return
