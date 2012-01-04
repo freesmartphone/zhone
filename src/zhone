@@ -156,7 +156,7 @@ class pyphone_main(edje_group):
         target = source.split('_', 1)[1]
         if not self.targets[target]:
             return
-        if target == "phone" and not self.main.groups["call"].status in ["idle" , "release"]:
+        if target == "phone" and (len (self.main.groups["call"].callStat ) != 0):
             target = "call"
         self.main.transition_to(target)
 
@@ -168,6 +168,9 @@ class pyphone_phone(edje_group):
         edje_group.__init__(self, main, "phone")
         self.text = []
         self.last = 0.0
+
+    def onShow( self ):
+        self.part_text_set( "label_description", _("Dial") )
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_*" )
     def on_edje_signal_dialer_button_pressed(self, emission, source):
@@ -236,36 +239,94 @@ class pyphone_call(edje_group):
 #----------------------------------------------------------------------------#
     def __init__(self, main):
         edje_group.__init__(self, main, "call")
-        self.peer = ""
+        self.newPeer = {}     # a new (unknown) peer
+        self.peers = {}       # The list of peers
+        self.contacts = {}    # The list of peers if in contact list
+        self.call = None      # The current call ID
+        self.callStat = {}    # The list of call statuses
+        self.rHold = {}
+        self.visible = False
         self.update_status("idle")
-        self.call = None
+        
+    def onShow( self ):
+        self.visible = True
+        self.update_status(self.status)
+
+    def onHide( self ):
+        self.visible = False
+        j = self.findCallEntry("any")
+        if j is not None:
+            self.call = j
+            self.status = self.callStat[j]
+            if self.contacts[j] == self.peers[j]:  # a new number
+                self.newPeer[j] = True
+            else:
+                self.newPeer[j] = False
+
+    def findCallEntry(self, status):
+        if not ( len( self.callStat ) == 0):
+            for item in self.callStat:
+                if ( (status == "any") or (self.callStat[item] == status) ):
+                    return item
+        else:
+            return None
+
+    def setNextCall(self, dir):
+        if ( len( self.callStat ) < 2):
+            return
+        for index, item in enumerate( self.callStat ):
+            if (item == self.call):
+                break
+        if (dir == "up"):
+            index +=1
+            if (index >= len( self.callStat )):
+                index = 0
+        else:
+            index -=1
+            if (index <0 ):
+                index = len( self.callStat ) -1
+        self.call = self.callStat.keys()[index]
+        self.update_status(self.callStat[self.call])
 
     def onCallStatus( self, id, status, properties ):
+        try:
+            if ( self.callStat[id] != None ):
+                pass
+        except:
+            self.rHold[id] = False
         self.call = id
-        self.update_status(status)
+        self.callStat[id] = status
+        if "remotehold" in properties:                                                                                         
+            self.rHold[id] = properties[ "remotehold" ] 
         if not status in ["release"]:
+            self.newPeer[id] = False
             if "peer" in properties:
-                self.part_text_set( "label", self.main.groups["contacts"].tryNumberToName( properties[ "peer" ] ) )
-                self.part_text_set( "sublabel", properties[ "peer" ] )
-                if self.main.groups["contacts"].tryNumberToName( properties[ "peer" ] ) == properties[ "peer" ]:
-                   self.peer = properties[ "peer" ]
-                else:
-                   self.peer =  ""
+                self.peers[id] = properties[ "peer" ]
+                self.contacts[id] = self.main.groups["contacts"].tryNumberToName(self.peers[id])
+                if self.contacts[id] == self.peers[id]:  # a new number
+                    self.newPeer[id] = True
             else:
-                self.part_text_set( "label", _("unknown number") )
-                self.part_text_set( "sublabel", "" )
-                self.peer =  ""
+                self.peers[id] = ""
+                self.contacts[id] = _("unknown number")
+        else:
+            j = self.findCallEntry("release")
+            if j is not None:
+                del self.callStat[j]
+                self.rHold[j] = False
+        self.update_status(status)
+        if status in ["incoming", "outgoing"] and self.visible == False:
+            self.main.transition_to("call")
 
     @edje.decorators.signal_callback("call_button_pressed", "button_left")
     def on_edje_signal_call_button_left_pressed(self, emission, source):
         if self.status == "active":
             if dbus_object.gsm_device_obj:
-                #dbus_object.gsm_call_iface.Hold(self.call)
-                pass
+                dbus_object.gsm_call_iface.HoldActive()
             else:
                 self.update_status("held")
         elif self.status in ["incoming", "held"]:
             if dbus_object.gsm_device_obj:
+                logger.info( "activate %s ", self.call )
                 dbus_object.gsm_call_iface.Activate(self.call)
             else:
                 self.update_status("active")
@@ -278,17 +339,23 @@ class pyphone_call(edje_group):
             else:
                 self.update_status("release")
         elif self.status == "release":
-            if not (self.part_text_get( "label_right" ) == ""):
+            if self.newPeer[self.call] == True:
                 self.main.groups["number_edit"].setup(                                          
                     "contacts",                                                                 
-                    self.peer,       # number                                    
+                    self.peers[self.call],    # number                                    
                     _("Add entry?"), # title                                                    
                     None,            # reference                                                           
                     self.main.groups["contacts"].cbNew1                                         
                 ) 
 
     def update_status(self, status):
-        self.part_text_set( "label_description", _(status) )
+        if self.call != None and self.rHold[self.call] == True:
+            self.part_text_set( "label_description", _("%d: remote hold" % self.call) )
+        else:
+            if self.call != None:
+                self.part_text_set( "label_description", _("%d: %s" % (self.call, status)) )
+            else:
+                self.part_text_set( "label_description", _("-: %s" % status) )
         if status == "outgoing":
             self.part_text_set( "label_left", u"" )
             self.part_text_set( "label_right", _("cancel") )
@@ -304,18 +371,37 @@ class pyphone_call(edje_group):
             self.part_text_set( "label_right", _("hangup") )
         else:
             self.part_text_set( "label_left", u"" )
-            if not self.peer == "":
+            if self.call != None and self.newPeer[self.call] == True:
                self.part_text_set( "label_right", u"add to PB" )
             else:
                self.part_text_set( "label_right", u"" )
-        if status in ["incoming", "outgoing"] and not self.status == status:
-            # TODO make sure we get displayed
-            self.main.transition_to("call")
+        if self.call != None:
+            self.part_text_set( "label", self.contacts[self.call] )
+            self.part_text_set( "sublabel", self.peers[self.call] )
+        else:
+            self.part_text_set( "label", u"" )
+            self.part_text_set( "sublabel", u"" )
         self.status = status
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_left" )
+    def on_edje_signal_button_action_left_pressed( self, emission, source ):
+        self.setNextCall("up")
+
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_right" )
+    def on_edje_signal_button_action_right_pressed( self, emission, source ):
+        self.setNextCall("down")
+ 
+    @edje.decorators.signal_callback( "mouse,clicked,1", "button_action_conf" )
+    def on_edje_signal_button_action_dial_pressed( self, emission, source ):
+        if dbus_object.gsm_device_obj:
+           dbus_object.gsm_call_iface.ActivateConference(self.call)        
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_bottom_middle" )
     def on_edje_signal_button_bottom_middle_pressed( self, emission, source ):
-        self.main.transition_to("dtmf")
+        if self.call != None and self.callStat[self.call] != "held":
+            self.main.transition_to("dtmf")
+        else:
+            self.main.transition_to("phone")
 
 #----------------------------------------------------------------------------#
 class pyphone_dtmf(edje_group):
@@ -323,6 +409,9 @@ class pyphone_dtmf(edje_group):
     def __init__(self, main):
         edje_group.__init__(self, main, "dtmf")
         self.text = []
+
+    def onShow( self ):
+        self.part_text_set( "label_description", _("DTMF") )
 
     @edje.decorators.signal_callback( "mouse,clicked,1", "button_*" )
     def on_edje_signal_dialer_button_pressed(self, emission, source):
@@ -1390,9 +1479,9 @@ class pyphone_wireless( edje_group ):
             ids = []
             for cell in cells:
                 ids.append((int(cell['lac'], 16), int(cell['cid'], 16)))
-            print (self.code[:3], self.code[3:], ids)
+            #print (self.code[:3], self.code[3:], ids)
             location = dbus_object.gsm_data_iface.GetCellLocation(self.code[:3], self.code[3:], ids)
-            print location
+            #print location
             if location is None:
                 self.location = None
             if location[0] is False:
@@ -2363,6 +2452,8 @@ class pyphone_main_menu( edje_group ):
         id = int( source.split( "_" )[-1] )
         if( id == 5 ):
           gui.shutdown()
+        if( id == 4):
+            self.main.transition_to("call")
         if( id == 0 ):
           fp = os.popen("sleep 5 && \
                          n=/tmp/scap$$.png && \
@@ -2389,6 +2480,8 @@ class pyphone_main_menu( edje_group ):
 
         self.part_text_set( "label_main_list_0", _("Take screenshot") )
         self.part_text_set( "label_sub_list_0", _("and upload to http://scap.linuxtogo.org") )
+        self.part_text_set( "label_main_list_4", _("Test") )                  
+        self.part_text_set( "label_sub_list_4", _("phone_call") )
         self.part_text_set( "label_main_list_5", _("Exit") )
         self.part_text_set( "label_sub_list_5", _("Stop and exit Zhone") )
 

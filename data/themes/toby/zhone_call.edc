@@ -106,18 +106,40 @@ parts {
         description {
             state: "default" 0.0;
             rel1 {
-                relative: 0.0 0.7;
+                relative: 0.0 0.6;
                 offset: 0 0;
                 to: "swallow_main";
             }
             rel2 {
-                relative: 1.0 0.9;
+                relative: 1.0 0.8;
                 offset: -1 -1;
                 to: "swallow_main";
             }
             color: 255 255 255 255;
         }
     }
+
+    PAGER(0.65, 0.75);
+
+    part {
+        name: "action_button_box";
+        type: RECT;
+        mouse_events: 0;
+        clip_to: "swallow_clip";
+        description {
+            state: "default" 0.0;
+            rel1 {
+                relative: 0.0 0.75;
+                offset: 0 0;
+            }
+            rel2 {
+                relative: 1.0 0.9;
+                offset: -1 -1;
+            }
+            color: 0 0 0 0;
+        }
+    }
+
     
     #define CALL_XSIZE (1/2)
     #define CALL_YSIZE (1/1)
@@ -177,6 +199,10 @@ parts {
     }
     CALL_ICON("left", 0, 0, "");
     CALL_ICON("right", 1, 0, "");
+
+    GRID_BUTTON_SYMBOL("action_button_box", "action_left", 0, 0, 3, 1, SYMBOL_LEFT);
+    GRID_BUTTON("action_button_box", "action_conf", 1, 0, 3, 1, "conf");
+    GRID_BUTTON_SYMBOL("action_button_box", "action_right", 2, 0, 3, 1, SYMBOL_RIGHT);
     
     BUTTONS_BOTTOM();
     BUTTON_OPTIONS();
@@ -200,6 +226,10 @@ programs {
     
     EMIT_CALL_BUTTON_PRESSED("button_left");
     EMIT_CALL_BUTTON_PRESSED("button_right");
+
+    ACTIVATE("button_action_left");
+    ACTIVATE("button_action_conf");
+    ACTIVATE("button_action_right");
     
     TRANSITION();
 }
